@@ -23,6 +23,8 @@ function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/events/:id" element={<HomePage />} />
+            <Route path="/events/:id/:tab" element={<HomePage />} />
           </Route>
         </Routes>
       </BrowserRouter>
