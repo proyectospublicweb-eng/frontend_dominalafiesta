@@ -1505,11 +1505,15 @@ function GestorEvento({
 
                       <button
                         type="button"
-                        className="mt-4 w-full rounded-xl py-2.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition"
+                        onClick={() =>
+                          window.open(baseShareUrl, "_blank", "noopener,noreferrer")
+                        }
+                        className="mt-4 w-full cursor-pointer rounded-xl py-2.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                         style={{
                           backgroundColor:
                             invForm.color_secundario || "#00f0ff",
                         }}
+                        title="Haz clic para abrir y probar el formulario real de Confirmación de Asistencia"
                       >
                         {invForm.texto_boton_rsvp || "Confirmar Asistencia"}
                       </button>
@@ -1639,11 +1643,15 @@ function GestorEvento({
                       <div className="mt-6 flex items-center gap-3">
                         <button
                           type="button"
-                          className="flex-1 rounded-xl py-3 text-xs font-bold uppercase tracking-widest text-black shadow-lg"
+                          onClick={() =>
+                            window.open(baseShareUrl, "_blank", "noopener,noreferrer")
+                          }
+                          className="flex-1 cursor-pointer rounded-xl py-3 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                           style={{
                             backgroundColor:
                               invForm.color_secundario || "#00f0ff",
                           }}
+                          title="Haz clic para abrir y probar el formulario real de Confirmación de Asistencia"
                         >
                           {invForm.texto_boton_rsvp || "Confirmar Asistencia"}
                         </button>
@@ -1655,6 +1663,26 @@ function GestorEvento({
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Barra inferior para probar la Invitación Pública en Local */}
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#00f0ff]/30 bg-[#07080d] px-4 py-3 text-xs">
+              <div className="text-gray-300">
+                <span className="font-bold text-[#00f0ff]">
+                  🔗 Enlace Público Activo:
+                </span>{" "}
+                <code className="font-mono text-[11px] text-white">
+                  {baseShareUrl}
+                </code>
+              </div>
+              <a
+                href={baseShareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl bg-[#00f0ff]/20 px-4 py-2 text-xs font-bold text-[#00f0ff] transition hover:bg-[#00f0ff] hover:text-black"
+              >
+                🚀 Abrir Invitación Pública en Vivo ↗
+              </a>
             </div>
           </div>
         </div>
@@ -1827,116 +1855,248 @@ function GestorEvento({
             </div>
 
             {addMode === "individual" ? (
-              <form
-                onSubmit={handleAddGuest}
-                className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-9"
-              >
-                <input
-                  type="text"
-                  required
-                  value={guestForm.nombre}
-                  onChange={(e) =>
-                    setGuestForm((p) => ({ ...p, nombre: e.target.value }))
-                  }
-                  placeholder="Nombre completo *"
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38] lg:col-span-2"
-                />
-                <input
-                  type="text"
-                  value={guestForm.telefono}
-                  onChange={(e) =>
-                    setGuestForm((p) => ({ ...p, telefono: e.target.value }))
-                  }
-                  placeholder="Teléfono / WhatsApp"
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
-                />
-                <input
-                  type="email"
-                  value={guestForm.correo}
-                  onChange={(e) =>
-                    setGuestForm((p) => ({ ...p, correo: e.target.value }))
-                  }
-                  placeholder="Correo electrónico"
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
-                />
-                <select
-                  value={guestForm.grupo}
-                  onChange={(e) =>
-                    setGuestForm((p) => ({ ...p, grupo: e.target.value }))
-                  }
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
-                >
-                  <option value="Familia">Grupo: Familia</option>
-                  <option value="Amigos">Grupo: Amigos</option>
-                  <option value="VIP">Grupo: VIP</option>
-                  <option value="Trabajo">Grupo: Trabajo</option>
-                </select>
+              <form onSubmit={handleAddGuest} className="mt-5 space-y-4">
+                {/* FILA 1: Nombre, Teléfono, Correo y Grupo */}
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-12">
+                  {/* Campo 1: Nombre Completo */}
+                  <div className="group relative lg:col-span-4">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                      <span>Nombre del Invitado *</span>
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                        ?
+                      </span>
+                    </label>
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-60 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                      Nombre y apellido del invitado principal tal como
+                      aparecerá en su invitación y pase digital.
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={guestForm.nombre}
+                      onChange={(e) =>
+                        setGuestForm((p) => ({ ...p, nombre: e.target.value }))
+                      }
+                      placeholder="Ej. Sofía Hernández *"
+                      title="Nombre y apellido del invitado principal tal como aparecerá en su invitación y pase digital."
+                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                    />
+                  </div>
 
-                <select
-                  value={
-                    guestForm.modalidad_pase ||
-                    invForm.modalidad_invitados ||
-                    "Adultos y niños"
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setGuestForm((p) => ({ ...p, modalidad_pase: val }));
-                    handleChangeModalidadInvitados(val);
-                  }}
-                  className="rounded-xl border border-[#00f0ff]/40 bg-[#07080d] px-3 py-2.5 text-xs font-semibold text-[#00f0ff] outline-none focus:border-[#ff1e38]"
-                  title="Modalidad de asistencia notificada en la invitación"
-                >
-                  {MODALIDADES_INVITADOS.map((mod) => (
-                    <option key={mod} value={mod}>
-                      {mod}
-                    </option>
-                  ))}
-                </select>
+                  {/* Campo 2: Teléfono / WhatsApp */}
+                  <div className="group relative lg:col-span-3">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                      <span>Teléfono / WhatsApp</span>
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                        ?
+                      </span>
+                    </label>
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-60 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                      Número celular (con código de país opcional) para enviarle
+                      su pase directo o recordatorios por WhatsApp.
+                    </div>
+                    <input
+                      type="text"
+                      value={guestForm.telefono}
+                      onChange={(e) =>
+                        setGuestForm((p) => ({
+                          ...p,
+                          telefono: e.target.value,
+                        }))
+                      }
+                      placeholder="Ej. +52 55 1234 5678"
+                      title="Número celular para enviarle su pase directo o recordatorios por WhatsApp."
+                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                    />
+                  </div>
 
-                <div className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-[#07080d] px-2.5 py-1.5 text-xs">
-                  <span className="text-[10px] text-gray-400">Adultos:</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    value={guestForm.adultos}
-                    onChange={(e) =>
-                      setGuestForm((p) => ({ ...p, adultos: e.target.value }))
-                    }
-                    className="w-10 bg-transparent text-center font-bold text-white outline-none"
-                  />
-                  <span className="text-[10px] text-gray-400">Niños:</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    value={guestForm.ninos}
-                    onChange={(e) =>
-                      setGuestForm((p) => ({ ...p, ninos: e.target.value }))
-                    }
-                    className="w-10 bg-transparent text-center font-bold text-[#00f0ff] outline-none"
-                  />
+                  {/* Campo 3: Correo electrónico */}
+                  <div className="group relative lg:col-span-3">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                      <span>Correo Electrónico</span>
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                        ?
+                      </span>
+                    </label>
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-60 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                      Dirección de correo del invitado para el envío de
+                      invitaciones con diseño HTML.
+                    </div>
+                    <input
+                      type="email"
+                      value={guestForm.correo}
+                      onChange={(e) =>
+                        setGuestForm((p) => ({ ...p, correo: e.target.value }))
+                      }
+                      placeholder="ejemplo@correo.com"
+                      title="Dirección de correo del invitado para el envío de invitaciones con diseño HTML."
+                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                    />
+                  </div>
+
+                  {/* Campo 4: Grupo */}
+                  <div className="group relative lg:col-span-2">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                      <span>Grupo / Categoría</span>
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                        ?
+                      </span>
+                    </label>
+                    <div className="pointer-events-none invisible absolute bottom-full right-0 z-30 mb-1.5 w-60 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                      Clasifica al invitado (Familia, Amigos, VIP o Trabajo)
+                      para organizar y filtrar tu lista fácilmente.
+                    </div>
+                    <select
+                      value={guestForm.grupo}
+                      onChange={(e) =>
+                        setGuestForm((p) => ({ ...p, grupo: e.target.value }))
+                      }
+                      title="Clasifica al invitado (Familia, Amigos, VIP o Trabajo) para organizar y filtrar tu lista fácilmente."
+                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                    >
+                      <option value="Familia">Grupo: Familia</option>
+                      <option value="Amigos">Grupo: Amigos</option>
+                      <option value="VIP">Grupo: VIP</option>
+                      <option value="Trabajo">Grupo: Trabajo</option>
+                    </select>
+                  </div>
                 </div>
 
-                <input
-                  type="text"
-                  value={guestForm.nota_alimentacion}
-                  onChange={(e) =>
-                    setGuestForm((p) => ({
-                      ...p,
-                      nota_alimentacion: e.target.value,
-                    }))
-                  }
-                  placeholder="Menú / Alergias (ej. Vegano)"
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
-                />
+                {/* FILA 2: Modalidad de Asistencia, Adultos/Niños, Menú/Alergias y Botón Agregar */}
+                <div className="grid grid-cols-1 items-end gap-3.5 sm:grid-cols-2 lg:grid-cols-12">
+                  {/* Campo 5: Modalidad de Pase */}
+                  <div className="group relative lg:col-span-3">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                      <span>Modalidad de Asistencia</span>
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                        ?
+                      </span>
+                    </label>
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-64 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                      Tipo de invitación asignada (Solo adultos, Adultos y
+                      niños, etc.). También actualiza el aviso en la tarjeta de
+                      invitación.
+                    </div>
+                    <select
+                      value={
+                        guestForm.modalidad_pase ||
+                        invForm.modalidad_invitados ||
+                        "Adultos y niños"
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setGuestForm((p) => ({ ...p, modalidad_pase: val }));
+                        handleChangeModalidadInvitados(val);
+                      }}
+                      title="Tipo de invitación asignada (Solo adultos, Adultos y niños, etc.). También actualiza el aviso en la tarjeta de invitación."
+                      className="w-full rounded-xl border border-[#00f0ff]/40 bg-[#07080d] px-3 py-2.5 text-xs font-semibold text-[#00f0ff] outline-none focus:border-[#ff1e38]"
+                    >
+                      {MODALIDADES_INVITADOS.map((mod) => (
+                        <option key={mod} value={mod}>
+                          {mod}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <button
-                  type="submit"
-                  className="btn-glow-red rounded-xl bg-[#ff1e38] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#ff334b]"
-                >
-                  + Agregar
-                </button>
+                  {/* Campo 6: Pases (Adultos y Niños) */}
+                  <div className="group relative lg:col-span-3">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                      <span>Cantidad de Pases</span>
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                        ?
+                      </span>
+                    </label>
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-64 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                      Indica el número de adultos y de niños incluidos en el
+                      pase de este invitado para calcular el aforo total.
+                    </div>
+                    <div
+                      title="Indica el número de adultos y de niños incluidos en el pase de este invitado."
+                      className="grid grid-cols-2 gap-2 rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-1 border-r border-white/10 pr-2">
+                        <span className="text-[11px] text-gray-400">
+                          Adultos:
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="20"
+                          value={guestForm.adultos}
+                          onChange={(e) =>
+                            setGuestForm((p) => ({
+                              ...p,
+                              adultos: e.target.value,
+                            }))
+                          }
+                          className="w-12 bg-transparent text-center font-bold text-white outline-none"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-1 pl-1">
+                        <span className="text-[11px] text-gray-400">
+                          Niños:
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="20"
+                          value={guestForm.ninos}
+                          onChange={(e) =>
+                            setGuestForm((p) => ({
+                              ...p,
+                              ninos: e.target.value,
+                            }))
+                          }
+                          className="w-12 bg-transparent text-center font-bold text-[#00f0ff] outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Campo 7: Menú / Alergias */}
+                  <div className="group relative lg:col-span-4">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                      <span>Menú Especial / Alergias</span>
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                        ?
+                      </span>
+                    </label>
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-64 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                      Anota si el invitado requiere menú especial, tiene alguna
+                      alergia alimentaria o preferencia (ej. Vegano, Sin gluten,
+                      Menú infantil).
+                    </div>
+                    <input
+                      type="text"
+                      value={guestForm.nota_alimentacion}
+                      onChange={(e) =>
+                        setGuestForm((p) => ({
+                          ...p,
+                          nota_alimentacion: e.target.value,
+                        }))
+                      }
+                      placeholder="Ej. Vegano, Sin gluten, Menú infantil..."
+                      title="Anota si el invitado requiere menú especial o tiene alguna alergia alimentaria."
+                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                    />
+                  </div>
+
+                  {/* Botón + Agregar */}
+                  <div className="group relative lg:col-span-2">
+                    <div className="pointer-events-none invisible absolute bottom-full right-0 z-30 mb-1.5 w-56 rounded-xl border border-[#ff1e38]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                      Registra al invitado en el evento y genera su enlace único
+                      de confirmación RSVP.
+                    </div>
+                    <button
+                      type="submit"
+                      title="Registra al invitado en el evento y genera su enlace único de confirmación RSVP."
+                      className="btn-glow-red w-full cursor-pointer rounded-xl bg-[#ff1e38] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#ff334b]"
+                    >
+                      + Agregar
+                    </button>
+                  </div>
+                </div>
               </form>
             ) : (
               /* Importación Masiva Excel / CSV */
@@ -2817,6 +2977,56 @@ function GestorEvento({
               </div>
             </div>
 
+            {pendientesList.length > 0 && (
+              <div className="mt-4 rounded-xl border border-amber-500/20 bg-[#07080d] p-3">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-amber-300">
+                  🟡 Invitados en estado &ldquo;Pendiente&rdquo; ({pendientesList.length}) — Envío directo por WhatsApp:
+                </p>
+                <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+                  {pendientesList.map((g) => (
+                    <div
+                      key={g.idinvitado}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-[#0b0d14] px-3 py-2 text-xs"
+                    >
+                      <div>
+                        <span className="font-bold text-white">{g.nombre}</span>{" "}
+                        <span className="text-[10px] text-gray-400">
+                          ({g.telefono || "Sin teléfono"} •{" "}
+                          {g.correo || "Sin correo"})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const text = formatGuestMessage(
+                            invForm.recordatorio_mensaje,
+                            g
+                          );
+                          const cleanPhone = String(g.telefono || "").replace(
+                            /\D/g,
+                            ""
+                          );
+                          const waUrl = cleanPhone
+                            ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                                text
+                              )}`
+                            : `https://wa.me/?text=${encodeURIComponent(text)}`;
+                          window.open(waUrl, "_blank", "noopener,noreferrer");
+                          await handleUpdateGuest(g.idinvitado, {
+                            invitacion_enviada: true,
+                            canal_ultimo_envio: "Recordatorio WhatsApp",
+                          });
+                        }}
+                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-emerald-500"
+                      >
+                        📲 Enviar Recordatorio WhatsApp
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
               <button
                 type="button"
@@ -2827,14 +3037,36 @@ function GestorEvento({
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  handleBroadcastMasivo({
+                onClick={async () => {
+                  if (pendientesList.length === 0) {
+                    showNotice(
+                      "ℹ️ Actualmente hay 0 invitados en estado 'Pendiente'. Solo se envía a quienes aún no han confirmado."
+                    );
+                    return;
+                  }
+                  const firstPending = pendientesList[0];
+                  if (firstPending) {
+                    const text = formatGuestMessage(
+                      invForm.recordatorio_mensaje,
+                      firstPending
+                    );
+                    const cleanPhone = String(
+                      firstPending.telefono || ""
+                    ).replace(/\D/g, "");
+                    const waUrl = cleanPhone
+                      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                          text
+                        )}`
+                      : `https://wa.me/?text=${encodeURIComponent(text)}`;
+                    window.open(waUrl, "_blank", "noopener,noreferrer");
+                  }
+                  await handleBroadcastMasivo({
                     soloPendientes: true,
                     canal: "Recordatorio Automático",
                     estadoFiltro: "Pendiente",
-                  })
-                }
-                className="rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-amber-400"
+                  });
+                }}
+                className="cursor-pointer rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-amber-400"
               >
                 ⚡ Disparar Ahora a {pendientesList.length} Pendientes
               </button>

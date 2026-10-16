@@ -55,3 +55,13 @@ export const updatePresupuestoRequest = (idEvento, idGasto, payload) =>
 
 export const deletePresupuestoRequest = (idEvento, idGasto) =>
   instanceAxios.delete(`/eventos/${idEvento}/presupuesto/${idGasto}`);
+
+// Invitación Pública y Confirmación RSVP (/rsvp/:id)
+export const getInvitacionPublicaRequest = (idEvento, guestToken = "") =>
+  instanceAxios.get(
+    `/rsvp/${idEvento}${guestToken ? `?guest=${encodeURIComponent(guestToken)}` : ""}`
+  );
+
+export const confirmarRsvpPublicoRequest = (idEvento, payload) =>
+  instanceAxios.post(`/rsvp/${idEvento}`, payload);
+
