@@ -79,18 +79,33 @@ const EMAIL_HTML_TEMPLATES = [
     name: "Gala Neón VIP (Oscuro)",
     subject: "✨ Invitación Exclusiva: {evento}",
     badge: "VIP ACCESS",
+    gradient: "from-[#1c0810] via-[#0d0714] to-[#081921]",
+    borderClass: "border-[#ff1e38]/40",
+    badgeColor: "#00f0ff",
+    accentHex: "#ff1e38",
+    buttonClass: "bg-[#ff1e38] text-white",
   },
   {
     id: "minimal-gold",
     name: "Etiqueta Dorada Elegante",
     subject: "🥂 Estás invitado a {evento} - Confirma tu asistencia",
     badge: "RSVP INVITATION",
+    gradient: "from-[#241907] via-[#120e07] to-[#0a0906]",
+    borderClass: "border-amber-400/40",
+    badgeColor: "#fde68a",
+    accentHex: "#f59e0b",
+    buttonClass: "bg-amber-400 text-[#07080d]",
   },
   {
     id: "club-pass",
     name: "Pase Nocturno / Afterparty",
     subject: "🎧 Tu pase digital para {evento} está listo",
     badge: "OFFICIAL PASS",
+    gradient: "from-[#061e24] via-[#0c0a20] to-[#1a0726]",
+    borderClass: "border-[#00f0ff]/40",
+    badgeColor: "#a855f7",
+    accentHex: "#00f0ff",
+    buttonClass: "bg-[#00f0ff] text-[#050508]",
   },
 ];
 
@@ -239,6 +254,9 @@ function GestorEvento({
   );
   const [broadcastChannel, setBroadcastChannel] = useState("Email HTML");
   const [selectedHtmlTemplate, setSelectedHtmlTemplate] = useState("neon-vip");
+  const [showHtmlPreviewModal, setShowHtmlPreviewModal] = useState(false);
+  const [htmlPreviewTab, setHtmlPreviewTab] = useState("visual"); // "visual" | "code"
+  const [previewGuestId, setPreviewGuestId] = useState("");
 
   // Tab D: Logística (Seating Chart Drag & Drop, Checklist con fecha límite, Cronograma)
   const [draggedGuestId, setDraggedGuestId] = useState(null);
@@ -632,6 +650,74 @@ function GestorEvento({
       .replaceAll("{enlace}", link);
   };
 
+  const activeEmailTemplate =
+    EMAIL_HTML_TEMPLATES.find((t) => t.id === selectedHtmlTemplate) ||
+    EMAIL_HTML_TEMPLATES[0];
+
+  const previewGuestObj =
+    invitados.find((g) => String(g.idinvitado) === String(previewGuestId)) ||
+    null;
+
+  const buildEmailHtmlCode = (guest) => {
+    const link = guest ? getGuestPersonalLink(guest) : baseShareUrl;
+    const guestName = guest?.nombre || "Invitado Especial";
+    const modalidade =
+      guest?.modalidad_pase ||
+      invForm?.modalidad_invitados ||
+      evento.modalidad_invitados ||
+      "Adultos y niños";
+    const pasesCount = guest?.pases || 2;
+    const btnText = invForm?.texto_boton_rsvp || "Confirmar Asistencia";
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>${formatGuestMessage(activeEmailTemplate.subject, guest)}</title>
+</head>
+<body style="margin:0;padding:24px;background-color:#050508;font-family:Arial,sans-serif;color:#ffffff;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background-color:#0b0d14;border:1px solid ${activeEmailTemplate.accentHex};border-radius:16px;overflow:hidden;">
+    <tr>
+      <td style="padding:28px 24px;text-align:center;background:linear-gradient(135deg,#1c0810,#081921);">
+        <div style="font-size:11px;font-weight:bold;letter-spacing:3px;color:${activeEmailTemplate.badgeColor};text-transform:uppercase;">
+          ${activeEmailTemplate.badge} • ${evento.tipo_evento || "Evento Exclusivo"}
+        </div>
+        <h1 style="margin:10px 0 6px;font-size:28px;text-transform:uppercase;color:#ffffff;">
+          ${evento.nombre}
+        </h1>
+        <p style="margin:0;font-size:14px;color:#d1d5db;">
+          ¡Hola <strong>${guestName}</strong>! ${invForm?.mensaje_bienvenida || "Estás cordialmente invitado(a) a celebrar con nosotros."}
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px;text-align:center;">
+        <p style="margin:0 0 12px;font-size:13px;color:#e5e7eb;">
+          📅 <strong>Fecha:</strong> ${formatDateInput(evento.fecha_evento)} &nbsp;|&nbsp;
+          ⏰ <strong>Hora:</strong> ${evento.hora_evento || "20:00"} hrs
+        </p>
+        <p style="margin:0 0 12px;font-size:13px;color:#e5e7eb;">
+          📍 <strong>Lugar:</strong> ${evento.lugar || "Salón VIP"} &nbsp;|&nbsp;
+          👔 <strong>Dress Code:</strong> ${invForm?.codigo_vestimenta || "Formal / Libre"}
+        </p>
+        <div style="margin:16px auto;padding:10px 14px;background-color:rgba(0,240,255,0.1);border:1px solid rgba(0,240,255,0.35);border-radius:10px;display:inline-block;font-size:12px;color:#00f0ff;">
+          🔔 <strong>Modalidad de Asistencia:</strong> ${modalidade} (${pasesCount} pases)
+        </div>
+        <div style="margin-top:22px;">
+          <a href="${link}" style="display:inline-block;padding:12px 28px;background-color:${activeEmailTemplate.accentHex};color:#ffffff;text-decoration:none;font-weight:bold;font-size:13px;border-radius:10px;text-transform:uppercase;letter-spacing:1px;">
+            ${btnText}
+          </a>
+        </div>
+        <p style="margin-top:18px;font-size:11px;color:#9ca3af;">
+          Enlace directo a tu pase digital: <a href="${link}" style="color:${activeEmailTemplate.badgeColor};">${link}</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+  };
+
   const handleSendWhatsApp = async (guest) => {
     const text = formatGuestMessage(whatsappMsg, guest);
     const cleanPhone = String(guest.telefono || "").replace(/\D/g, "");
@@ -1020,7 +1106,7 @@ function GestorEvento({
 
       {/* Pestañas Superiores del Evento Activo (Tab A - Tab E) */}
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {GESTOR_TABS.map((t) => {
+        {GESTOR_TABS.filter((t) => !t.hidden).map((t) => {
           const active = currentTab === t.id;
           return (
             <button
@@ -2335,27 +2421,36 @@ function GestorEvento({
 
               {/* Vista previa de la Plantilla HTML de Correo */}
               <div className="mt-4 rounded-xl border border-white/15 bg-[#050508] p-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-2 text-[11px] text-gray-400">
-                  <span>
+                <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2 text-[11px] text-gray-400">
+                  <span className="truncate">
                     <strong>Asunto:</strong>{" "}
-                    {formatGuestMessage(
-                      EMAIL_HTML_TEMPLATES.find(
-                        (t) => t.id === selectedHtmlTemplate
-                      )?.subject,
-                      null
-                    )}
+                    {formatGuestMessage(activeEmailTemplate.subject, null)}
                   </span>
-                  <span className="rounded bg-[#ff1e38]/20 px-2 py-0.5 text-[9px] font-bold text-[#ff4d63]">
-                    HTML PREVIEW
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHtmlPreviewTab("visual");
+                      setShowHtmlPreviewModal(true);
+                    }}
+                    className="shrink-0 cursor-pointer rounded-lg border border-[#ff1e38]/40 bg-[#ff1e38]/20 px-2.5 py-1 text-[10px] font-bold text-[#ff4d63] transition hover:bg-[#ff1e38] hover:text-white"
+                    title="Abrir vista previa completa del correo HTML y ver código fuente"
+                  >
+                    👁️ HTML PREVIEW
+                  </button>
                 </div>
-                <div className="mt-3 rounded-xl bg-gradient-to-r from-[#1c0810] to-[#081921] p-4 text-center">
-                  <p className="text-[10px] font-bold tracking-widest text-[#00f0ff]">
-                    {
-                      EMAIL_HTML_TEMPLATES.find(
-                        (t) => t.id === selectedHtmlTemplate
-                      )?.badge
-                    }
+                <div
+                  onClick={() => {
+                    setHtmlPreviewTab("visual");
+                    setShowHtmlPreviewModal(true);
+                  }}
+                  className={`mt-3 cursor-pointer rounded-xl border bg-gradient-to-r p-4 text-center transition hover:brightness-110 ${activeEmailTemplate.gradient} ${activeEmailTemplate.borderClass}`}
+                  title="Haz clic para ampliar la vista previa HTML"
+                >
+                  <p
+                    className="text-[10px] font-bold tracking-widest"
+                    style={{ color: activeEmailTemplate.badgeColor }}
+                  >
+                    {activeEmailTemplate.badge}
                   </p>
                   <p className="font-display mt-1 text-2xl font-bold uppercase text-white">
                     {evento.nombre}
@@ -2364,7 +2459,9 @@ function GestorEvento({
                     📅 {formatDateInput(evento.fecha_evento)} • ⏰{" "}
                     {evento.hora_evento} hrs • 📍 {evento.lugar || "Salón VIP"}
                   </p>
-                  <span className="mt-3 inline-block rounded-lg bg-[#ff1e38] px-4 py-1.5 text-[10px] font-bold uppercase text-white">
+                  <span
+                    className={`mt-3 inline-block rounded-lg px-4 py-1.5 text-[10px] font-bold uppercase ${activeEmailTemplate.buttonClass}`}
+                  >
                     {invForm.texto_boton_rsvp || "Confirmar Asistencia"}
                   </span>
                 </div>
@@ -2397,6 +2494,254 @@ function GestorEvento({
                 </button>
               </div>
             </div>
+
+            {/* Modal Interactivo de Vista Previa Completa de Plantilla HTML */}
+            {showHtmlPreviewModal && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+                onClick={() => setShowHtmlPreviewModal(false)}
+              >
+                <div
+                  className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/15 bg-[#0b0d14] p-6 shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+                        VISTA PREVIA DE PLANTILLA DE CORREO •{" "}
+                        {activeEmailTemplate.name}
+                      </span>
+                      <h4 className="font-display text-2xl font-bold uppercase text-white">
+                        ✉️ Previsualizador HTML de Invitación
+                      </h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowHtmlPreviewModal(false)}
+                      className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-gray-300 hover:border-[#ff1e38] hover:text-white"
+                    >
+                      ✕ Cerrar
+                    </button>
+                  </div>
+
+                  {/* Controles superiores: Selector de Invitado de Prueba y Pestaña Visual vs Código */}
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-semibold text-gray-400">
+                        Previsualizar como:
+                      </label>
+                      <select
+                        value={previewGuestId}
+                        onChange={(e) => setPreviewGuestId(e.target.value)}
+                        className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-1.5 text-xs font-semibold text-white outline-none focus:border-[#00f0ff]"
+                      >
+                        <option value="">Invitado General (Demo)</option>
+                        {invitados.map((g) => (
+                          <option key={g.idinvitado} value={g.idinvitado}>
+                            {g.nombre} ({g.pases} pases)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex rounded-xl border border-white/15 bg-[#07080d] p-1">
+                      <button
+                        type="button"
+                        onClick={() => setHtmlPreviewTab("visual")}
+                        className={`rounded-lg px-3 py-1 text-xs font-bold transition ${
+                          htmlPreviewTab === "visual"
+                            ? "bg-[#ff1e38] text-white"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        👁️ Vista Visual
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHtmlPreviewTab("code")}
+                        className={`rounded-lg px-3 py-1 text-xs font-bold transition ${
+                          htmlPreviewTab === "code"
+                            ? "bg-[#ff1e38] text-white"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        💻 Código HTML
+                      </button>
+                    </div>
+                  </div>
+
+                  {htmlPreviewTab === "visual" ? (
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-white/15 bg-[#050508]">
+                      {/* Cabecera simulada del cliente de correo */}
+                      <div className="space-y-1 border-b border-white/10 bg-[#07080d] px-4 py-3 text-xs text-gray-300">
+                        <p>
+                          <span className="font-semibold text-gray-500">
+                            De:
+                          </span>{" "}
+                          Invitaciones Oficiales &lt;no-reply@dominalafiesta.com&gt;
+                        </p>
+                        <p>
+                          <span className="font-semibold text-gray-500">
+                            Para:
+                          </span>{" "}
+                          {previewGuestObj
+                            ? `${previewGuestObj.nombre} <${
+                                previewGuestObj.correo || "invitado@correo.com"
+                              }>`
+                            : "Invitado Especial <invitado@correo.com>"}
+                        </p>
+                        <p>
+                          <span className="font-semibold text-gray-500">
+                            Asunto:
+                          </span>{" "}
+                          <strong className="text-white">
+                            {formatGuestMessage(
+                              activeEmailTemplate.subject,
+                              previewGuestObj
+                            )}
+                          </strong>
+                        </p>
+                      </div>
+
+                      {/* Cuerpo del correo HTML renderizado */}
+                      <div className="p-5">
+                        <div
+                          className={`mx-auto max-w-lg overflow-hidden rounded-2xl border bg-gradient-to-br shadow-xl ${activeEmailTemplate.gradient} ${activeEmailTemplate.borderClass}`}
+                        >
+                          {invForm.imagen_portada && (
+                            <div className="relative h-44 w-full overflow-hidden border-b border-white/10">
+                              <img
+                                src={invForm.imagen_portada}
+                                alt={evento.nombre}
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                            </div>
+                          )}
+
+                          <div className="p-6 text-center">
+                            <span
+                              className="inline-block rounded-full border border-white/15 bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
+                              style={{ color: activeEmailTemplate.badgeColor }}
+                            >
+                              {activeEmailTemplate.badge} •{" "}
+                              {evento.tipo_evento || "Evento Exclusivo"}
+                            </span>
+
+                            <h2 className="font-display mt-3 text-3xl font-bold uppercase tracking-wide text-white">
+                              {evento.nombre}
+                            </h2>
+
+                            <p className="mt-2 text-xs leading-relaxed text-gray-200">
+                              ¡Hola{" "}
+                              <strong className="text-white">
+                                {previewGuestObj?.nombre || "Invitado Especial"}
+                              </strong>
+                              !{" "}
+                              {invForm.mensaje_bienvenida ||
+                                "Estás cordialmente invitado(a) a celebrar con nosotros."}
+                            </p>
+
+                            <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-xl border border-white/10 bg-black/40 p-3.5 text-left text-xs text-gray-200">
+                              <div>
+                                <span className="block text-[10px] uppercase text-gray-400">
+                                  📅 Fecha
+                                </span>
+                                <strong className="text-white">
+                                  {formatDateInput(evento.fecha_evento)}
+                                </strong>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase text-gray-400">
+                                  ⏰ Hora
+                                </span>
+                                <strong className="text-white">
+                                  {evento.hora_evento || "20:00"} hrs
+                                </strong>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase text-gray-400">
+                                  📍 Lugar
+                                </span>
+                                <strong className="text-white">
+                                  {evento.lugar || "Salón VIP"}
+                                </strong>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase text-gray-400">
+                                  👔 Código de Vestimenta
+                                </span>
+                                <strong className="text-white">
+                                  {invForm.codigo_vestimenta || "Formal / Libre"}
+                                </strong>
+                              </div>
+                            </div>
+
+                            {/* Notificación de Modalidad de Asistencia */}
+                            <div className="mt-3 rounded-xl border border-[#00f0ff]/35 bg-[#00f0ff]/10 px-3.5 py-2 text-xs text-[#00f0ff]">
+                              🔔 <strong>Modalidad de Asistencia:</strong>{" "}
+                              {previewGuestObj?.modalidad_pase ||
+                                invForm.modalidad_invitados ||
+                                "Adultos y niños"}{" "}
+                              ({previewGuestObj?.pases || 2} pases)
+                            </div>
+
+                            <div className="mt-5">
+                              <a
+                                href={
+                                  previewGuestObj
+                                    ? getGuestPersonalLink(previewGuestObj)
+                                    : baseShareUrl
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`inline-block rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-wider shadow-lg transition hover:opacity-90 ${activeEmailTemplate.buttonClass}`}
+                              >
+                                {invForm.texto_boton_rsvp ||
+                                  "Confirmar Asistencia"}
+                              </a>
+                            </div>
+
+                            <p className="mt-4 break-all font-mono text-[10px] text-gray-400">
+                              Enlace del pase:{" "}
+                              {previewGuestObj
+                                ? getGuestPersonalLink(previewGuestObj)
+                                : baseShareUrl}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-400">
+                          Código HTML con estilos en línea listo para clientes
+                          de correo (Gmail, Outlook, Apple Mail):
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              buildEmailHtmlCode(previewGuestObj)
+                            );
+                            showNotice(
+                              "✓ Código HTML de la invitación copiado al portapapeles."
+                            );
+                          }}
+                          className="rounded-xl bg-[#00f0ff]/20 px-3.5 py-1.5 text-xs font-bold text-[#00f0ff] hover:bg-[#00f0ff]/30"
+                        >
+                          📋 Copiar Código HTML
+                        </button>
+                      </div>
+                      <pre className="max-h-80 overflow-auto rounded-xl border border-white/15 bg-[#050508] p-4 font-mono text-[11px] leading-relaxed text-emerald-300">
+                        {buildEmailHtmlCode(previewGuestObj)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 4. Sección de Recordatorios Automatizados */}

@@ -26,6 +26,7 @@ export const GESTOR_TABS = [
     label: "Tab D: 📋 Logística del Evento",
     short: "📋 Logística (Mesas/Tareas)",
     pathHint: "/events/[id]/logistics",
+    hidden: true, // Oculto temporalmente sin eliminar la funcionalidad
   },
   {
     id: "budget",
@@ -52,8 +53,8 @@ export function normalizeGestorTab(rawTab) {
     invitados: "guests",
     broadcast: "broadcast",
     difusion: "broadcast",
-    logistics: "logistics",
-    logistica: "logistics",
+    logistics: "invitation", // Redirige a invitation mientras Logística esté oculta
+    logistica: "invitation",
     budget: "budget",
     presupuesto: "budget",
     settings: "settings",

@@ -437,7 +437,7 @@ function HomePage() {
                             onClick={() =>
                               openEventManager(ev.idevento, "logistics")
                             }
-                            className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs text-gray-300 transition hover:text-white"
+                            className="hidden rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs text-gray-300 transition hover:text-white"
                           >
                             📋 Logística
                           </button>
