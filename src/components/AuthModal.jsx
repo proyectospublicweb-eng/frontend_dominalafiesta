@@ -65,21 +65,21 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#2D3047]/75 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-[#ff1e38]/50 bg-[#0b0d14] p-8 shadow-[0_0_50px_rgba(255,30,56,0.3)]"
+        className="relative w-full max-w-md overflow-hidden rounded-3xl border border-[#DCE0F0] bg-white p-8 shadow-[0_24px_60px_rgba(45,48,71,0.28)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Línea superior neón */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[#ff1e38] to-[#00f0ff]" />
+        {/* Franja superior Periwinkle Indigo + Mint Aqua */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-[#6C7EE1] via-[#4CE0B3] to-[#F98880]" />
 
         {/* Botón cerrar */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 transition hover:bg-white/10 hover:text-white"
+          className="absolute right-4 top-4 rounded-xl p-1.5 text-[#8E94A9] transition hover:bg-[#F0F2F8] hover:text-[#2D3047]"
           aria-label="Cerrar modal"
         >
           <svg
@@ -99,13 +99,13 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="text-center">
-            <span className="font-heading text-xs font-bold uppercase tracking-[0.25em] text-[#ff1e38]">
-              PROYECTO EVENTOS
+            <span className="inline-block rounded-full bg-[#ECEFFA] px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-widest text-[#6C7EE1]">
+              Recuerdalo.com.mx
             </span>
-            <h2 className="mt-1 text-3xl font-bold text-white">
+            <h2 className="mt-3 text-3xl font-extrabold text-[#2D3047]">
               {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
             </h2>
-            <p className="mt-1.5 text-sm text-gray-400">
+            <p className="mt-1.5 text-sm text-[#6E748A]">
               {mode === "login"
                 ? "Accede para gestionar tus fiestas y servicios"
                 : "Únete y empieza a organizar tus eventos"}
@@ -113,7 +113,7 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
           </div>
 
           {error && (
-            <p className="rounded-lg border border-[#ff1e38]/40 bg-[#ff1e38]/10 px-3 py-2 text-sm text-[#ff4d63]">
+            <p className="rounded-xl border border-[#F98880]/40 bg-[#FFF2F1] px-3.5 py-2.5 text-sm font-medium text-[#E05349]">
               {error}
             </p>
           )}
@@ -124,7 +124,7 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
               type="email"
               placeholder="Correo electrónico"
               autoComplete="email"
-              className="w-full rounded-lg border border-white/15 bg-[#07080d] px-4 py-3 text-sm text-white placeholder-gray-500 outline-none transition focus:border-[#ff1e38] focus:ring-2 focus:ring-[#ff1e38]/25"
+              className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-4 py-3 text-sm text-[#2D3047] placeholder-[#8E94A9] outline-none transition focus:border-[#6C7EE1] focus:bg-white focus:ring-2 focus:ring-[#6C7EE1]/30"
               required
             />
 
@@ -145,12 +145,12 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
             )}
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-400">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-[#6E748A]">
             <input
               type="checkbox"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
-              className="h-4 w-4 accent-[#ff1e38]"
+              className="h-4 w-4 accent-[#6C7EE1]"
             />
             Recordarme
           </label>
@@ -158,16 +158,16 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glow-red w-full rounded-lg bg-[#ff1e38] py-3 text-sm font-semibold text-white transition hover:bg-[#ff334b] disabled:opacity-60"
+            className="w-full rounded-xl bg-gradient-to-r from-[#7587EB] to-[#6475DC] py-3.5 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(108,126,225,0.3)] transition hover:from-[#6475DC] hover:to-[#5A6CD0] disabled:opacity-60"
           >
             {submitting
               ? "Procesando..."
               : mode === "login"
-              ? "Entrar"
+              ? "Entrar a mi cuenta"
               : "Crear cuenta"}
           </button>
 
-          <p className="text-center text-sm text-gray-400">
+          <p className="text-center text-sm text-[#6E748A]">
             {mode === "login" ? (
               <>
                 ¿No tienes cuenta?{" "}
@@ -177,7 +177,7 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
                     setMode("register");
                     setError("");
                   }}
-                  className="font-semibold text-[#ff1e38] hover:text-[#00f0ff] hover:underline"
+                  className="font-bold text-[#2D3047] underline decoration-[#6C7EE1] decoration-2 underline-offset-4 hover:text-[#6C7EE1]"
                 >
                   Regístrate
                 </button>
@@ -191,7 +191,7 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
                     setMode("login");
                     setError("");
                   }}
-                  className="font-semibold text-[#ff1e38] hover:text-[#00f0ff] hover:underline"
+                  className="font-bold text-[#2D3047] underline decoration-[#6C7EE1] decoration-2 underline-offset-4 hover:text-[#6C7EE1]"
                 >
                   Inicia sesión
                 </button>
@@ -205,4 +205,3 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
 }
 
 export default AuthModal;
-

@@ -9,15 +9,15 @@ export const GESTOR_TABS = [
   {
     id: "guests",
     route: "guests",
-    label: "Tab B: 👥 Lista de Invitados y RSVP",
-    short: "👥 Invitados y RSVP",
+    label: "Tab B: 👥 Lista de Invitados",
+    short: "👥 Invitados",
     pathHint: "/events/[id]/guests",
   },
   {
     id: "broadcast",
     route: "broadcast",
-    label: "Tab C: 📤 Centro de Envíos y Difusión",
-    short: "📤 Envíos y Difusión",
+    label: "Tab C: 📤 Compartir WhatsApp/Email",
+    short: "📤 Compartir WhatsApp/Email",
     pathHint: "/events/[id]/broadcast",
   },
   {

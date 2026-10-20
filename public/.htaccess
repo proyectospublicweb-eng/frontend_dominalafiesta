@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # No redirigir las peticiones dirigidas a la API de Node.js (Phusion Passenger)
+  RewriteRule ^apiproyectoeventos(/.*)?$ - [L]
+
+  # Si el archivo o directorio existe físicamente (assets, imágenes, css, js), servirlo directo
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Cualquier otra ruta (/home, /events/:id, /rsvp/:id, /invitacion/:id) la maneja React Router
+  RewriteRule ^ index.html [L]
+</IfModule>
+

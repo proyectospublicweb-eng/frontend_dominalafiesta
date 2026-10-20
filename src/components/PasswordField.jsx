@@ -16,13 +16,13 @@ function PasswordField({
         placeholder={placeholder}
         minLength={minLength}
         autoComplete={autoComplete}
-        className="w-full rounded border border-white/15 bg-[#0b0d14] px-4 py-3 pr-11 text-sm text-white placeholder-gray-500 outline-none transition focus:border-[#ff1e38] focus:ring-2 focus:ring-[#ff1e38]/25"
+        className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-4 py-3 pr-11 text-sm text-[#2D3047] placeholder-[#8E94A9] outline-none transition focus:border-[#6C7EE1] focus:bg-white focus:ring-2 focus:ring-[#6C7EE1]/30"
         required
       />
       <button
         type="button"
         onClick={() => setShow((v) => !v)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-[#ff1e38]"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8E94A9] transition hover:text-[#2D3047]"
         aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
       >
         {show ? (

@@ -37,14 +37,19 @@ function RegisterPage() {
     <AuthLayout>
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white">Crear cuenta</h1>
-          <p className="mt-2 text-sm text-gray-400">
+          <span className="inline-block rounded-md bg-[#15B2F5] px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white">
+            Registro Gratis
+          </span>
+          <h1 className="mt-3 text-3xl font-extrabold text-[#171F39]">
+            Crear cuenta
+          </h1>
+          <p className="mt-1.5 text-sm text-gray-500">
             Únete y empieza a organizar tus eventos
           </p>
         </div>
 
         {error && (
-          <p className="rounded-lg border border-[#ff1e38]/40 bg-[#ff1e38]/10 px-3 py-2 text-sm text-[#ff4d63]">
+          <p className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-600">
             {error}
           </p>
         )}
@@ -53,9 +58,9 @@ function RegisterPage() {
           <input
             name="correoRegistro"
             type="email"
-            placeholder="Correo"
+            placeholder="Correo electrónico"
             autoComplete="email"
-            className="w-full rounded-lg border border-white/15 bg-[#07080d] px-4 py-3 text-sm text-white placeholder-gray-500 outline-none transition focus:border-[#ff1e38] focus:ring-2 focus:ring-[#ff1e38]/25"
+            className="w-full rounded-xl border border-gray-200 bg-[#F3F6FA] px-4 py-3 text-sm text-[#171F39] placeholder-gray-400 outline-none transition focus:border-[#15B2F5] focus:bg-white focus:ring-2 focus:ring-[#15B2F5]/40"
             required
           />
 
@@ -72,28 +77,28 @@ function RegisterPage() {
           />
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-400">
+        <label className="flex items-center gap-2 text-sm text-gray-600">
           <input
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="h-4 w-4 accent-[#ff1e38]"
+            className="h-4 w-4 accent-[#142257]"
           />
           Recordarme
         </label>
 
         <button
           type="submit"
-          className="btn-glow-red w-full rounded-lg bg-[#ff1e38] py-3 text-sm font-semibold text-white transition hover:bg-[#ff334b]"
+          className="w-full rounded-xl bg-[#15B2F5] py-3.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#0E9DE0]"
         >
           Crear cuenta
         </button>
 
-        <p className="text-center text-sm text-gray-400">
+        <p className="text-center text-sm text-gray-500">
           ¿Ya tienes cuenta?{" "}
           <Link
             to="/login"
-            className="font-semibold text-[#ff1e38] hover:text-[#00f0ff] hover:underline"
+            className="font-bold text-[#171F39] underline decoration-[#15B2F5] decoration-2 underline-offset-4 hover:text-[#0E9DE0]"
           >
             Inicia sesión
           </Link>

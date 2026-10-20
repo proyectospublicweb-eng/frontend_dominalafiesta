@@ -8,41 +8,80 @@ import {
 const PLANTILLAS = [
   {
     id: "neon-crimson",
-    name: "Carmesí Neón",
-    accent: "#ff1e38",
-    secondary: "#00f0ff",
-    bg: "from-[#21070d] via-[#0b0d14] to-[#050508]",
-    border: "border-[#ff1e38]",
+    name: "Azul Celeste Pro",
+    accent: "#15b2f5",
+    secondary: "#15b2f5",
+    bg: "from-[#142257] via-[#1B2D6E] to-[#171F39]",
+    border: "border-[#15B2F5]",
   },
   {
     id: "cyber-cyan",
-    name: "Cian Eléctrico",
-    accent: "#00f0ff",
-    secondary: "#ff1e38",
-    bg: "from-[#061e24] via-[#0b0d14] to-[#050508]",
-    border: "border-[#00f0ff]",
+    name: "Esmeralda VIP",
+    accent: "#10b981",
+    secondary: "#15b2f5",
+    bg: "from-[#062419] via-[#171F39] to-[#121316]",
+    border: "border-emerald-400",
   },
   {
     id: "gold-gala",
     name: "Gala Dorada VIP",
     accent: "#f59e0b",
     secondary: "#fde68a",
-    bg: "from-[#221706] via-[#0b0d14] to-[#050508]",
+    bg: "from-[#221706] via-[#171F39] to-[#121316]",
     border: "border-amber-400",
   },
   {
     id: "midnight-vip",
-    name: "Medianoche Violeta",
-    accent: "#a855f7",
-    secondary: "#00f0ff",
-    bg: "from-[#190729] via-[#0b0d14] to-[#050508]",
-    border: "border-purple-500",
+    name: "Carbón Minimal",
+    accent: "#84cc16",
+    secondary: "#15b2f5",
+    bg: "from-[#142257] via-[#171F39] to-[#0B1336]",
+    border: "border-lime-400",
   },
 ];
 
 function formatDateInput(val) {
   if (!val) return "";
   return String(val).slice(0, 10);
+}
+
+function getGoogleMapsUrls(lugar, direccion) {
+  const rawDir = String(direccion || "").trim();
+  const rawLugar = String(lugar || "").trim();
+  const isDirectUrl = /^https?:\/\//i.test(rawDir);
+
+  let queryForEmbed = [rawLugar, isDirectUrl ? "" : rawDir]
+    .filter(Boolean)
+    .join(", ")
+    .trim();
+
+  if (!queryForEmbed && isDirectUrl) {
+    const matchCoord = rawDir.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const matchQ = rawDir.match(/[?&]q=([^&]+)/);
+    if (matchCoord) {
+      queryForEmbed = `${matchCoord[1]},${matchCoord[2]}`;
+    } else if (matchQ) {
+      queryForEmbed = decodeURIComponent(matchQ[1].replace(/\+/g, " "));
+    } else {
+      queryForEmbed = rawLugar || "Ciudad de México";
+    }
+  }
+
+  if (!queryForEmbed) {
+    queryForEmbed = "Ciudad de México";
+  }
+
+  const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(
+    queryForEmbed
+  )}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+
+  const externalUrl = isDirectUrl
+    ? rawDir
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        [rawLugar, rawDir].filter(Boolean).join(", ") || "Ciudad de México"
+      )}`;
+
+  return { embedUrl, externalUrl };
 }
 
 function buildQrMatrix(text) {
@@ -179,10 +218,10 @@ function InvitacionPublicaPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050508] p-6 text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#F3F6FA] p-6 text-[#171F39]">
         <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[#00f0ff] border-t-transparent" />
-          <p className="mt-4 text-sm text-gray-400">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-3 border-[#142257] border-t-[#15B2F5]" />
+          <p className="mt-4 text-sm font-medium text-gray-500">
             Abriendo tu invitación digital...
           </p>
         </div>
@@ -192,13 +231,13 @@ function InvitacionPublicaPage() {
 
   if (error || !evento) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050508] p-6 text-white">
-        <div className="max-w-md rounded-2xl border border-rose-500/30 bg-[#0b0d14] p-8 text-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#F3F6FA] p-6 text-[#171F39]">
+        <div className="max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-lg">
           <span className="text-4xl">🎟️</span>
-          <h1 className="mt-3 text-xl font-bold text-white">
+          <h1 className="mt-3 text-xl font-extrabold text-[#171F39]">
             Invitación no disponible
           </h1>
-          <p className="mt-2 text-xs text-gray-400">{error}</p>
+          <p className="mt-2 text-xs text-gray-500">{error}</p>
         </div>
       </div>
     );
@@ -206,6 +245,7 @@ function InvitacionPublicaPage() {
 
   const tpl =
     PLANTILLAS.find((p) => p.id === evento.plantilla_tema) || PLANTILLAS[0];
+  const mapLocation = getGoogleMapsUrls(evento.lugar, evento.direccion);
   const fechaStr = formatDateInput(evento.fecha_evento);
   const diasParaEvento = Math.max(
     0,
@@ -248,11 +288,11 @@ function InvitacionPublicaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050508] px-4 py-10 text-white">
+    <div className="min-h-screen bg-[#F3F6FA] px-4 py-10 text-white">
       <div className="mx-auto max-w-md">
         {/* Tarjeta Principal de Invitación Virtual */}
         <div
-          className={`overflow-hidden rounded-[2.2rem] border bg-gradient-to-b shadow-[0_0_60px_rgba(0,0,0,0.9)] ${tpl.bg} ${tpl.border}`}
+          className={`overflow-hidden rounded-[2.2rem] border-2 bg-gradient-to-b shadow-[0_24px_60px_rgba(0,0,0,0.22)] ${tpl.bg} ${tpl.border}`}
         >
           {evento.imagen_portada && (
             <div className="relative h-56 w-full overflow-hidden">
@@ -261,28 +301,31 @@ function InvitacionPublicaPage() {
                 alt={evento.nombre}
                 className="h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#06070b] via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#171F39] via-black/30 to-transparent" />
             </div>
           )}
 
           <div className="p-6 text-center">
             <span
-              className="inline-block rounded-full px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow"
+              className="inline-block rounded-lg px-3.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-[#171F39] shadow"
               style={{
-                backgroundColor: evento.color_acento || tpl.accent,
+                backgroundColor:
+                  evento.color_acento === "#ff1e38"
+                    ? "#15b2f5"
+                    : evento.color_acento || tpl.accent,
               }}
             >
               {evento.tipo_evento || "Evento Exclusivo"}
             </span>
 
             {invitado && (
-              <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-200">
+              <div className="mt-3 rounded-xl border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-gray-200">
                 🎟️ Pase Personal para:{" "}
-                <strong className="text-[#00f0ff]">{invitado.nombre}</strong>
+                <strong className="text-[#15B2F5]">{invitado.nombre}</strong>
               </div>
             )}
 
-            <h1 className="font-display mt-3 text-4xl font-bold uppercase tracking-wide text-white">
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               {evento.nombre}
             </h1>
 
@@ -292,9 +335,9 @@ function InvitacionPublicaPage() {
             </p>
 
             {/* Contador de Días, Hora y Tipo de Pase */}
-            <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-black/50 p-3 text-center">
+            <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-black/35 p-3 text-center">
               <div>
-                <span className="block text-xl font-bold text-white">
+                <span className="block text-xl font-extrabold text-white">
                   {diasParaEvento}
                 </span>
                 <span className="text-[10px] uppercase text-gray-400">
@@ -302,7 +345,7 @@ function InvitacionPublicaPage() {
                 </span>
               </div>
               <div>
-                <span className="block text-xl font-bold text-white">
+                <span className="block text-xl font-extrabold text-white">
                   {evento.hora_evento || "20:00"}
                 </span>
                 <span className="text-[10px] uppercase text-gray-400">
@@ -310,7 +353,7 @@ function InvitacionPublicaPage() {
                 </span>
               </div>
               <div>
-                <span className="block text-xl font-bold text-[#00f0ff]">
+                <span className="block text-xl font-extrabold text-[#15B2F5]">
                   {invitado?.grupo || "VIP"}
                 </span>
                 <span className="text-[10px] uppercase text-gray-400">
@@ -320,48 +363,77 @@ function InvitacionPublicaPage() {
             </div>
 
             {/* Datos de Fecha, Lugar y Dress Code */}
-            <div className="mt-4 space-y-2 rounded-2xl border border-white/10 bg-black/40 p-4 text-left text-xs text-gray-200">
+            <div className="mt-4 space-y-2 rounded-2xl border border-white/10 bg-black/30 p-4 text-left text-xs text-gray-200">
               <p>
                 📅 <strong>Fecha:</strong> {fechaStr}
               </p>
               <p>
                 📍 <strong>Lugar:</strong> {evento.lugar || "Por confirmar"}
               </p>
+              {evento.direccion && (
+                <p>
+                  🗺️ <strong>Dirección:</strong> {evento.direccion}
+                </p>
+              )}
               <p>
                 👔 <strong>Dress Code:</strong>{" "}
                 {evento.codigo_vestimenta || "Formal / Libre"}
               </p>
             </div>
 
+            {/* Mapa Interactivo de Ubicación del Evento en la Tarjeta de Invitación */}
+            <div className="mt-4 overflow-hidden rounded-2xl border border-white/15 bg-black/35 text-left">
+              <iframe
+                title="Mapa de ubicación del evento"
+                src={mapLocation.embedUrl}
+                className="h-40 w-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
+                <span className="truncate font-semibold text-gray-200">
+                  📍 {evento.lugar || "Ubicación del Evento"}
+                </span>
+                <a
+                  href={mapLocation.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 font-extrabold text-[#15B2F5] hover:underline"
+                >
+                  🗺️ Cómo llegar en Google Maps ↗
+                </a>
+              </div>
+            </div>
+
             {/* Notificación de Modalidad de Asistencia */}
-            <div className="mt-4 rounded-2xl border border-[#00f0ff]/40 bg-[#00f0ff]/10 px-4 py-3 text-center shadow-[0_0_20px_rgba(0,240,255,0.15)]">
-              <span className="block text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+            <div className="mt-4 rounded-2xl border border-[#15B2F5]/40 bg-[#15B2F5]/15 px-4 py-3 text-center">
+              <span className="block text-[10px] font-extrabold uppercase tracking-widest text-[#15B2F5]">
                 🔔 MODALIDAD DE ASISTENCIA
               </span>
-              <strong className="mt-0.5 block text-sm font-bold uppercase tracking-wider text-white">
+              <strong className="mt-0.5 block text-sm font-extrabold uppercase tracking-wider text-white">
                 🎟️ {modalidadEvento}
               </strong>
             </div>
 
             {/* Mensaje de confirmación tras enviar formulario */}
             {feedbackMsg && (
-              <div className="mt-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/15 p-3.5 text-xs font-semibold text-emerald-200">
+              <div className="mt-4 rounded-2xl border border-[#15B2F5]/40 bg-[#15B2F5]/20 p-3.5 text-xs font-bold text-[#15B2F5]">
                 ✓ {feedbackMsg}
               </div>
             )}
 
             {/* Si el invitado ya confirmó su asistencia, mostramos su Pase Digital con QR */}
             {invitado && invitado.estado_rsvp === "Confirmado" && !showRsvpForm ? (
-              <div className="mt-5 rounded-2xl border border-emerald-500/40 bg-[#07090f]/90 p-5 text-center">
-                <span className="inline-block rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300">
+              <div className="mt-5 rounded-2xl border border-[#15B2F5]/40 bg-[#0F1A45] p-5 text-center">
+                <span className="inline-block rounded-lg bg-[#15B2F5] px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white">
                   🟢 ASISTENCIA CONFIRMADA
                 </span>
-                <p className="mt-2 text-sm font-bold text-white">
+                <p className="mt-2 text-sm font-extrabold text-white">
                   {invitado.nombre}
                 </p>
                 <p className="text-xs text-gray-400">
                   Pases confirmados:{" "}
-                  <strong className="text-[#00f0ff]">{invitado.pases}</strong> (
+                  <strong className="text-[#15B2F5]">{invitado.pases}</strong> (
                   {invitado.adultos} adultos, {invitado.ninos} niños) • Mesa:{" "}
                   <strong className="text-white">
                     {invitado.mesa_asignada || "Por asignar"}
@@ -384,14 +456,14 @@ function InvitacionPublicaPage() {
                             y={rIdx}
                             width={1}
                             height={1}
-                            fill="#050508"
+                            fill="#171F39"
                           />
                         ) : null
                       )
                     )}
                   </svg>
                 </div>
-                <p className="mt-2 font-mono text-[11px] font-bold text-[#00f0ff]">
+                <p className="mt-2 font-mono text-[11px] font-extrabold text-[#15B2F5]">
                   TOKEN: {invitado.token_invitacion}
                 </p>
                 <p className="mt-1 text-[10px] text-gray-400">
@@ -401,7 +473,7 @@ function InvitacionPublicaPage() {
                 <button
                   type="button"
                   onClick={() => setShowRsvpForm(true)}
-                  className="mt-4 w-full rounded-xl border border-white/15 bg-white/5 py-2 text-[11px] font-semibold text-gray-300 transition hover:border-white/30 hover:text-white"
+                  className="mt-4 w-full rounded-xl border border-white/15 bg-white/10 py-2 text-[11px] font-bold text-gray-200 transition hover:bg-white/20"
                 >
                   ✏️ Modificar mi respuesta o datos
                 </button>
@@ -431,10 +503,7 @@ function InvitacionPublicaPage() {
                   type="button"
                   disabled={!evento.rsvp_habilitado}
                   onClick={() => setShowRsvpForm(true)}
-                  className="mt-5 w-full cursor-pointer rounded-xl py-3.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{
-                    backgroundColor: evento.color_secundario || tpl.secondary,
-                  }}
+                  className="mt-5 w-full cursor-pointer rounded-xl bg-[#15B2F5] py-3.5 text-xs font-extrabold uppercase tracking-widest text-white shadow-lg transition hover:bg-[#0E9DE0] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {evento.rsvp_habilitado
                     ? evento.texto_boton_rsvp || "CONFIRMAR ASISTENCIA"
@@ -446,10 +515,10 @@ function InvitacionPublicaPage() {
             {showRsvpForm && (
               <form
                 onSubmit={handleConfirmSubmit}
-                className="mt-5 space-y-3.5 rounded-2xl border border-[#00f0ff]/40 bg-[#07080d]/95 p-5 text-left shadow-2xl"
+                className="mt-5 space-y-3.5 rounded-2xl border border-[#15B2F5]/40 bg-[#0F1A45] p-5 text-left shadow-2xl"
               >
                 <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                  <h3 className="font-display text-lg font-bold uppercase tracking-wide text-[#00f0ff]">
+                  <h3 className="text-base font-extrabold uppercase tracking-wide text-[#15B2F5]">
                     📋 Confirmar Asistencia (RSVP)
                   </h3>
                   <button
@@ -471,9 +540,9 @@ function InvitacionPublicaPage() {
                       onClick={() =>
                         setForm((p) => ({ ...p, estado_rsvp: "Confirmado" }))
                       }
-                      className={`rounded-xl border py-2.5 text-xs font-bold transition ${
+                      className={`rounded-xl border py-2.5 text-xs font-extrabold transition ${
                         form.estado_rsvp === "Confirmado"
-                          ? "border-emerald-400 bg-emerald-500/20 text-emerald-300"
+                          ? "border-[#15B2F5] bg-[#15B2F5] text-white"
                           : "border-white/10 bg-black/40 text-gray-400 hover:text-white"
                       }`}
                     >
@@ -484,7 +553,7 @@ function InvitacionPublicaPage() {
                       onClick={() =>
                         setForm((p) => ({ ...p, estado_rsvp: "Rechazado" }))
                       }
-                      className={`rounded-xl border py-2.5 text-xs font-bold transition ${
+                      className={`rounded-xl border py-2.5 text-xs font-extrabold transition ${
                         form.estado_rsvp === "Rechazado"
                           ? "border-rose-400 bg-rose-500/20 text-rose-300"
                           : "border-white/10 bg-black/40 text-gray-400 hover:text-white"
@@ -507,7 +576,7 @@ function InvitacionPublicaPage() {
                       setForm((p) => ({ ...p, nombre: e.target.value }))
                     }
                     placeholder="Ej. Ana García"
-                    className="w-full rounded-xl border border-white/15 bg-[#0b0d14] px-3.5 py-2 text-xs text-white outline-none focus:border-[#00f0ff]"
+                    className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5]"
                   />
                 </div>
 
@@ -523,7 +592,7 @@ function InvitacionPublicaPage() {
                         setForm((p) => ({ ...p, telefono: e.target.value }))
                       }
                       placeholder="+52 55..."
-                      className="w-full rounded-xl border border-white/15 bg-[#0b0d14] px-3.5 py-2 text-xs text-white outline-none focus:border-[#00f0ff]"
+                      className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5]"
                     />
                   </div>
                   <div>
@@ -537,7 +606,7 @@ function InvitacionPublicaPage() {
                         setForm((p) => ({ ...p, correo: e.target.value }))
                       }
                       placeholder="correo@ejemplo.com"
-                      className="w-full rounded-xl border border-white/15 bg-[#0b0d14] px-3.5 py-2 text-xs text-white outline-none focus:border-[#00f0ff]"
+                      className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5]"
                     />
                   </div>
                 </div>
@@ -561,7 +630,7 @@ function InvitacionPublicaPage() {
                               adultos: e.target.value,
                             }))
                           }
-                          className="w-full rounded-xl border border-white/15 bg-[#0b0d14] px-3.5 py-2 text-xs text-white outline-none focus:border-[#00f0ff] disabled:opacity-40"
+                          className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5] disabled:opacity-40"
                         />
                       </div>
                       <div>
@@ -580,7 +649,7 @@ function InvitacionPublicaPage() {
                               ninos: e.target.value,
                             }))
                           }
-                          className="w-full rounded-xl border border-white/15 bg-[#0b0d14] px-3.5 py-2 text-xs text-white outline-none focus:border-[#00f0ff] disabled:opacity-40"
+                          className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5] disabled:opacity-40"
                         />
                       </div>
                     </div>
@@ -599,7 +668,7 @@ function InvitacionPublicaPage() {
                           }))
                         }
                         placeholder="Ej. Vegetariano, sin gluten, ¡felicidades!"
-                        className="w-full rounded-xl border border-white/15 bg-[#0b0d14] px-3.5 py-2 text-xs text-white outline-none focus:border-[#00f0ff]"
+                        className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5]"
                       />
                     </div>
                   </>
@@ -608,10 +677,7 @@ function InvitacionPublicaPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full cursor-pointer rounded-xl py-3 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110 disabled:opacity-50"
-                  style={{
-                    backgroundColor: evento.color_secundario || tpl.secondary,
-                  }}
+                  className="w-full cursor-pointer rounded-xl bg-[#15B2F5] py-3 text-xs font-extrabold uppercase tracking-widest text-white shadow-lg transition hover:bg-[#0E9DE0] disabled:opacity-50"
                 >
                   {submitting
                     ? "Guardando respuesta..."
@@ -627,4 +693,3 @@ function InvitacionPublicaPage() {
 }
 
 export default InvitacionPublicaPage;
-

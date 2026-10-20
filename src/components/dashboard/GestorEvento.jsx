@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  createEventoRequest,
   getEventoDetalleRequest,
   updateEventoRequest,
   duplicarEventoRequest,
@@ -22,18 +23,18 @@ import { GESTOR_TABS, normalizeGestorTab } from "./gestorTabs.js";
 const PLANTILLAS = [
   {
     id: "neon-crimson",
-    name: "Carmesí Neón",
-    accent: "#ff1e38",
-    secondary: "#00f0ff",
-    bg: "from-[#21070d] via-[#0b0d14] to-[#050508]",
-    border: "border-[#ff1e38]",
+    name: "Azul Celeste Pro",
+    accent: "#15b2f5",
+    secondary: "#171f39",
+    bg: "from-[#142257] via-[#142257] to-[#0B1336]",
+    border: "border-[#15b2f5]",
   },
   {
     id: "cyber-cyan",
     name: "Cian Eléctrico",
     accent: "#00f0ff",
-    secondary: "#ff1e38",
-    bg: "from-[#061e24] via-[#0b0d14] to-[#050508]",
+    secondary: "#15b2f5",
+    bg: "from-[#061e24] via-[#142257] to-[#0B1336]",
     border: "border-[#00f0ff]",
   },
   {
@@ -41,22 +42,22 @@ const PLANTILLAS = [
     name: "Gala Dorada VIP",
     accent: "#f59e0b",
     secondary: "#fde68a",
-    bg: "from-[#221706] via-[#0b0d14] to-[#050508]",
+    bg: "from-[#221706] via-[#142257] to-[#0B1336]",
     border: "border-amber-400",
   },
   {
     id: "midnight-vip",
     name: "Medianoche Violeta",
     accent: "#a855f7",
-    secondary: "#00f0ff",
-    bg: "from-[#190729] via-[#0b0d14] to-[#050508]",
+    secondary: "#15b2f5",
+    bg: "from-[#190729] via-[#142257] to-[#0B1336]",
     border: "border-purple-500",
   },
 ];
 
 const POSTER_PRESETS = [
   {
-    label: "Sin póster (Degradado Neón)",
+    label: "Sin póster (Degradado Tech)",
     url: "",
   },
   {
@@ -76,36 +77,36 @@ const POSTER_PRESETS = [
 const EMAIL_HTML_TEMPLATES = [
   {
     id: "neon-vip",
-    name: "Gala Neón VIP (Oscuro)",
+    name: "Gala Azul Real VIP",
     subject: "✨ Invitación Exclusiva: {evento}",
     badge: "VIP ACCESS",
-    gradient: "from-[#1c0810] via-[#0d0714] to-[#081921]",
-    borderClass: "border-[#ff1e38]/40",
-    badgeColor: "#00f0ff",
-    accentHex: "#ff1e38",
-    buttonClass: "bg-[#ff1e38] text-white",
+    gradient: "from-[#142257] via-[#142257] to-[#121316]",
+    borderClass: "border-[#15b2f5]/40",
+    badgeColor: "#15b2f5",
+    accentHex: "#15b2f5",
+    buttonClass: "bg-[#15b2f5] text-[#171F39]",
   },
   {
     id: "minimal-gold",
     name: "Etiqueta Dorada Elegante",
     subject: "🥂 Estás invitado a {evento} - Confirma tu asistencia",
     badge: "RSVP INVITATION",
-    gradient: "from-[#241907] via-[#120e07] to-[#0a0906]",
+    gradient: "from-[#241907] via-[#142257] to-[#121316]",
     borderClass: "border-amber-400/40",
     badgeColor: "#fde68a",
     accentHex: "#f59e0b",
-    buttonClass: "bg-amber-400 text-[#07080d]",
+    buttonClass: "bg-amber-400 text-[#0F1A45]",
   },
   {
     id: "club-pass",
     name: "Pase Nocturno / Afterparty",
     subject: "🎧 Tu pase digital para {evento} está listo",
     badge: "OFFICIAL PASS",
-    gradient: "from-[#061e24] via-[#0c0a20] to-[#1a0726]",
+    gradient: "from-[#061e24] via-[#142257] to-[#1a0726]",
     borderClass: "border-[#00f0ff]/40",
-    badgeColor: "#a855f7",
+    badgeColor: "#15b2f5",
     accentHex: "#00f0ff",
-    buttonClass: "bg-[#00f0ff] text-[#050508]",
+    buttonClass: "bg-[#00f0ff] text-[#0F1A45]",
   },
 ];
 
@@ -207,15 +208,61 @@ function parseCsvRows(rawText) {
   return parsed;
 }
 
+function getGoogleMapsUrls(lugar, direccion) {
+  const rawDir = String(direccion || "").trim();
+  const rawLugar = String(lugar || "").trim();
+  const isDirectUrl = /^https?:\/\//i.test(rawDir);
+
+  let queryForEmbed = [rawLugar, isDirectUrl ? "" : rawDir]
+    .filter(Boolean)
+    .join(", ")
+    .trim();
+
+  if (!queryForEmbed && isDirectUrl) {
+    const matchCoord = rawDir.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const matchQ = rawDir.match(/[?&]q=([^&]+)/);
+    if (matchCoord) {
+      queryForEmbed = `${matchCoord[1]},${matchCoord[2]}`;
+    } else if (matchQ) {
+      queryForEmbed = decodeURIComponent(matchQ[1].replace(/\+/g, " "));
+    } else {
+      queryForEmbed = rawLugar || "Ciudad de México";
+    }
+  }
+
+  if (!queryForEmbed) {
+    queryForEmbed = "Ciudad de México";
+  }
+
+  const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(
+    queryForEmbed
+  )}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+
+  const externalUrl = isDirectUrl
+    ? rawDir
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        [rawLugar, rawDir].filter(Boolean).join(", ") || "Ciudad de México"
+      )}`;
+
+  return {
+    embedUrl,
+    externalUrl,
+    hasLocation: Boolean(rawLugar || rawDir),
+  };
+}
+
 function GestorEvento({
   eventos,
   selectedEventoId,
+  draftEvento,
+  onDraftSaved,
   onSelectEvento,
   activeSubTab,
   onChangeSubTab,
   onEventoUpdated,
   onEventoDuplicated,
   onEventoDeleted,
+  onRequestDeleteEvento,
   onGoToWizard,
 }) {
   const currentTab = normalizeGestorTab(activeSubTab);
@@ -298,6 +345,33 @@ function GestorEvento({
   useEffect(() => {
     let active = true;
     async function fetchDetail() {
+      if (!selectedEventoId && draftEvento) {
+        const draftObj = {
+          ...draftEvento,
+          idevento: null,
+          fecha_evento: formatDateInput(draftEvento.fecha_evento),
+          color_secundario: draftEvento.color_secundario || "#6C7EE1",
+          imagen_portada: draftEvento.imagen_portada || "",
+          texto_boton_rsvp:
+            draftEvento.texto_boton_rsvp || "Confirmar Asistencia",
+          modalidad_invitados:
+            draftEvento.modalidad_invitados || "Adultos y niños",
+          recordatorio_dias: draftEvento.recordatorio_dias ?? 3,
+          recordatorio_activo: Boolean(draftEvento.recordatorio_activo),
+          recordatorio_mensaje:
+            draftEvento.recordatorio_mensaje ||
+            "¡Hola {nombre}! Faltan {dias} días para {evento}. Por favor confirma tu asistencia en tu enlace único: {enlace}",
+        };
+        setDetalle({
+          evento: draftObj,
+          invitados: [],
+          logistica: [],
+          presupuesto: [],
+        });
+        setInvForm(draftObj);
+        setLoading(false);
+        return;
+      }
       if (!selectedEventoId) return;
       setLoading(true);
       try {
@@ -307,7 +381,7 @@ function GestorEvento({
         setInvForm({
           ...data.evento,
           fecha_evento: formatDateInput(data.evento.fecha_evento),
-          color_secundario: data.evento.color_secundario || "#00f0ff",
+          color_secundario: data.evento.color_secundario || "#6C7EE1",
           imagen_portada: data.evento.imagen_portada || "",
           texto_boton_rsvp:
             data.evento.texto_boton_rsvp || "Confirmar Asistencia",
@@ -334,17 +408,17 @@ function GestorEvento({
     return () => {
       active = false;
     };
-  }, [selectedEventoId]);
+  }, [selectedEventoId, draftEvento]);
 
   const csvPreviewRows = useMemo(() => parseCsvRows(csvText), [csvText]);
 
-  if (!eventos || eventos.length === 0) {
+  if ((!eventos || eventos.length === 0) && !draftEvento) {
     return (
-      <div className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[#0b0d14] p-10 text-center">
-        <h2 className="text-2xl font-bold text-white">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-10 text-center">
+        <h2 className="text-2xl font-bold text-[#2D3047]">
           Aún no tienes eventos activos
         </h2>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-[#8E94A9]">
           Crea tu primer evento en el Wizard paso a paso para acceder al Gestor
           del Evento Activo (Diseño Virtual, Invitados RSVP, Difusión, Seating
           Chart y Código QR).
@@ -352,7 +426,7 @@ function GestorEvento({
         <button
           type="button"
           onClick={onGoToWizard}
-          className="btn-glow-red mt-6 rounded-xl bg-[#ff1e38] px-6 py-3 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-[#ff334b]"
+          className="btn-glow-red mt-6 rounded-xl bg-[#6C7EE1] px-6 py-3 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-[#5A6CD0]"
         >
           ➕ Crear Mi Primer Evento
         </button>
@@ -363,7 +437,7 @@ function GestorEvento({
   if (loading || !detalle || !invForm) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-[#8E94A9]">
           Cargando panel del evento activo...
         </p>
       </div>
@@ -373,8 +447,9 @@ function GestorEvento({
   const { evento, invitados, logistica, presupuesto } = detalle;
   const tpl =
     PLANTILLAS.find((p) => p.id === invForm.plantilla_tema) || PLANTILLAS[0];
+  const mapLocation = getGoogleMapsUrls(invForm.lugar, invForm.direccion);
 
-  const baseShareUrl = `${window.location.origin}/rsvp/${evento.idevento}`;
+  const baseShareUrl = `${window.location.origin}/rsvp/${evento.idevento || "nuevo"}`;
   const getGuestPersonalLink = (guest) =>
     `${baseShareUrl}?guest=${guest.token_invitacion || guest.idinvitado}`;
 
@@ -394,6 +469,16 @@ function GestorEvento({
     e?.preventDefault();
     const payload = customPatch ? { ...invForm, ...customPatch } : invForm;
     try {
+      if (!evento.idevento) {
+        const { data } = await createEventoRequest(payload);
+        showNotice("✓ Evento guardado correctamente.");
+        if (onDraftSaved) {
+          await onDraftSaved(data);
+        } else {
+          onEventoUpdated();
+        }
+        return;
+      }
       const { data } = await updateEventoRequest(evento.idevento, payload);
       setDetalle((prev) => ({ ...prev, evento: data }));
       setInvForm({
@@ -401,11 +486,11 @@ function GestorEvento({
         fecha_evento: formatDateInput(data.fecha_evento),
       });
       onEventoUpdated();
-      showNotice("✓ Cambios guardados sin alterar los enlaces compartidos.");
+      showNotice("✓ Evento guardado correctamente.");
     } catch (err) {
       showNotice(
         err.response?.data?.message ||
-          "Error al guardar los cambios del evento"
+          "Error al guardar el evento"
       );
     }
   };
@@ -479,6 +564,10 @@ function GestorEvento({
   };
 
   const handleDeleteEvento = async () => {
+    if (onRequestDeleteEvento && evento?.idevento) {
+      onRequestDeleteEvento(evento);
+      return;
+    }
     if (
       !window.confirm(
         `¿Seguro que deseas eliminar permanentemente el evento "${evento.nombre}" y todos sus registros?`
@@ -675,8 +764,8 @@ function GestorEvento({
   <meta charset="UTF-8" />
   <title>${formatGuestMessage(activeEmailTemplate.subject, guest)}</title>
 </head>
-<body style="margin:0;padding:24px;background-color:#050508;font-family:Arial,sans-serif;color:#ffffff;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background-color:#0b0d14;border:1px solid ${activeEmailTemplate.accentHex};border-radius:16px;overflow:hidden;">
+<body style="margin:0;padding:24px;background-color:#0F1A45;font-family:Arial,sans-serif;color:#ffffff;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background-color:#142257;border:1px solid ${activeEmailTemplate.accentHex};border-radius:16px;overflow:hidden;">
     <tr>
       <td style="padding:28px 24px;text-align:center;background:linear-gradient(135deg,#1c0810,#081921);">
         <div style="font-size:11px;font-weight:bold;letter-spacing:3px;color:${activeEmailTemplate.badgeColor};text-transform:uppercase;">
@@ -700,7 +789,7 @@ function GestorEvento({
           📍 <strong>Lugar:</strong> ${evento.lugar || "Salón VIP"} &nbsp;|&nbsp;
           👔 <strong>Dress Code:</strong> ${invForm?.codigo_vestimenta || "Formal / Libre"}
         </p>
-        <div style="margin:16px auto;padding:10px 14px;background-color:rgba(0,240,255,0.1);border:1px solid rgba(0,240,255,0.35);border-radius:10px;display:inline-block;font-size:12px;color:#00f0ff;">
+        <div style="margin:16px auto;padding:10px 14px;background-color:rgba(21,178,245,0.1);border:1px solid rgba(21,178,245,0.35);border-radius:10px;display:inline-block;font-size:12px;color:#6C7EE1;">
           🔔 <strong>Modalidad de Asistencia:</strong> ${modalidade} (${pasesCount} pases)
         </div>
         <div style="margin-top:22px;">
@@ -999,7 +1088,7 @@ function GestorEvento({
         if (active) {
           rects += `<rect x="${quietZone + cIdx * cellSize}" y="${
             quietZone + rIdx * cellSize
-          }" width="${cellSize}" height="${cellSize}" fill="#050508" />`;
+          }" width="${cellSize}" height="${cellSize}" fill="#0F1A45" />`;
         }
       });
     });
@@ -1011,12 +1100,12 @@ function GestorEvento({
       ${rects}
       <text x="50%" y="${
         totalDim + 16
-      }" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="11" fill="#050508">${
+      }" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="11" fill="#0F1A45">${
       evento.nombre
     }</text>
       <text x="50%" y="${
         totalDim + 32
-      }" text-anchor="middle" font-family="monospace" font-size="10" fill="#ff1e38">${
+      }" text-anchor="middle" font-family="monospace" font-size="10" fill="#6C7EE1">${
       invForm.codigo_acceso_qr || "QR-GATE"
     }</text>
     </svg>`;
@@ -1034,89 +1123,155 @@ function GestorEvento({
     <div className="space-y-6">
       {/* Notificación flotante */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-xl border border-[#00f0ff]/50 bg-[#0b0d14]/95 px-5 py-3 text-xs font-semibold text-[#00f0ff] shadow-[0_0_25px_rgba(0,240,255,0.25)] backdrop-blur-md">
+        <div className="fixed bottom-6 right-6 z-50 rounded-xl border border-[#6C7EE1]/50 bg-[#142257]/95 px-5 py-3 text-xs font-semibold text-[#6C7EE1] shadow-[0_0_25px_rgba(21,178,245,0.25)] backdrop-blur-md">
           {toast}
         </div>
       )}
 
       {/* =====================================================================
-          CABECERA DEL GESTOR DEL EVENTO ACTIVO (/events/[id])
+          3 TARJETAS SUPERIORES CON DEGRADADO ESTILO UIUX EN TODAS LAS VISTAS DEL GESTOR (REDUCIDAS AL 50%)
          ===================================================================== */}
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-[#0b0d14] p-5 lg:flex-row lg:items-center">
-        <div className="flex flex-wrap items-center gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-heading text-[11px] font-bold uppercase tracking-[0.2em] text-[#ff1e38]">
-                🛠️ GESTOR DEL EVENTO ACTIVO
-              </span>
-              <span className="rounded bg-white/5 px-2 py-0.5 font-mono text-[10px] text-[#00f0ff]">
-                /events/{evento.idevento}/
-                {GESTOR_TABS.find((t) => t.id === currentTab)?.route ||
-                  "invitation"}
-              </span>
-            </div>
-            <div className="mt-1.5 flex flex-wrap items-center gap-3">
+      <div className="grid max-w-3xl grid-cols-1 gap-3 md:grid-cols-3">
+        {/* Tarjeta 1: Periwinkle Indigo (#6C7EE1) con barra Mint Aqua (#4CE0B3) */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#7587EB] to-[#6475DC] p-3 text-white shadow-[0_8px_18px_rgba(108,126,225,0.22)]">
+          <div className="relative z-10">
+            <span className="inline-block rounded-full bg-white/20 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
+              Evento Seleccionado
+            </span>
+            <div className="mt-1">
               <select
-                value={evento.idevento}
-                onChange={(e) => onSelectEvento(Number(e.target.value))}
-                className="rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2 text-sm font-bold text-white outline-none focus:border-[#ff1e38]"
+                value={evento.idevento || "draft"}
+                onChange={(e) => {
+                  if (e.target.value !== "draft") {
+                    onSelectEvento(Number(e.target.value));
+                  }
+                }}
+                className="w-full max-w-[185px] rounded-lg border border-white/40 bg-white/15 px-2 py-1 text-[11px] font-extrabold text-white outline-none backdrop-blur-xs"
               >
+                {!evento.idevento && (
+                  <option value="draft" className="text-[#2D3047]">
+                    ✨ {invForm.nombre || "Nuevo Evento"} (Por guardar)
+                  </option>
+                )}
                 {eventos.map((ev) => (
-                  <option key={ev.idevento} value={ev.idevento}>
+                  <option
+                    key={ev.idevento}
+                    value={ev.idevento}
+                    className="text-[#2D3047]"
+                  >
                     {ev.nombre} ({formatDateInput(ev.fecha_evento)})
                   </option>
                 ))}
               </select>
-
-              <span
-                className={`rounded-full px-3 py-1 text-[11px] font-bold ${
-                  invForm.rsvp_habilitado
-                    ? "border border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
-                    : "border border-amber-500/40 bg-amber-500/15 text-amber-300"
-                }`}
-              >
-                {invForm.rsvp_habilitado
-                  ? "🟢 RSVP Activo"
-                  : "⏸️ RSVP Pausado"}
-              </span>
-
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-gray-300">
-                ⏳ Faltan <strong>{diasParaEvento}</strong> días
-              </span>
+            </div>
+            <p className="mt-1 text-[10px] text-white/90">
+              ⏳ Faltan <strong>{diasParaEvento}</strong> días •{" "}
+              {invForm.rsvp_habilitado ? "RSVP Activo" : "RSVP Pausado"}
+            </p>
+            <div className="mt-1.5 h-1 w-24 overflow-hidden rounded-full bg-white/25">
+              <div className="h-full w-4/5 rounded-full bg-[#4CE0B3]" />
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs">
-          <div className="rounded-xl border border-white/10 bg-[#07080d] px-3.5 py-2">
-            <span className="text-gray-400">Confirmados: </span>
-            <strong className="text-emerald-400">
-              {pasesConfirmadosCount} / {evento.capacidad} pases
-            </strong>
+        {/* Tarjeta 2: Coral Salmón (#F98880) con diana circular */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FA938B] to-[#F77D75] p-3 text-white shadow-[0_8px_18px_rgba(249,136,128,0.22)]">
+          <div className="relative z-10 max-w-[76%]">
+            <span className="text-sm font-extrabold tracking-tight">
+              {pasesConfirmadosCount} / {evento.capacidad}
+            </span>
+            <h3 className="text-[11px] font-bold tracking-tight">
+              Asistencia RSVP
+            </h3>
+            <p className="mt-0.5 text-[9px] leading-tight text-white/90">
+              {pendientesList.length} invitaciones pendientes por confirmar
+            </p>
+            <button
+              type="button"
+              onClick={() => onChangeSubTab("guests")}
+              className="mt-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-[9px] font-bold text-white transition hover:bg-white hover:text-[#F77D75]"
+            >
+              Ver Invitados
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onGoToWizard}
-            className="rounded-xl border border-[#ff1e38]/40 bg-[#ff1e38]/15 px-3.5 py-2 font-semibold text-[#ff4d63] transition hover:bg-[#ff1e38] hover:text-white"
+          <svg
+            viewBox="0 0 100 100"
+            className="pointer-events-none absolute -bottom-1 -right-1 h-14 w-14 opacity-85"
           >
-            ➕ Nuevo Evento
-          </button>
+            <circle cx="52" cy="52" r="34" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="4" />
+            <circle cx="52" cy="52" r="20" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="4" />
+            <circle cx="52" cy="52" r="6" fill="#FFFFFF" />
+            <path d="M52 52 L82 22" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+          </svg>
+        </div>
+
+        {/* Tarjeta 3: Deep Twilight Navy (#2D3047) con tarjeta flotante blanca y anillo neón */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#323650] to-[#26293E] p-3 text-white shadow-[0_8px_18px_rgba(45,48,71,0.2)]">
+          <div className="relative z-10 flex items-start justify-between gap-2">
+            <div className="max-w-[65%]">
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-[11px] font-extrabold tracking-tight">
+                  Invitación y QR
+                </h3>
+                <span className="h-1.5 w-1.5 rounded-full bg-[#4CE0B3]" />
+              </div>
+              <p className="mt-0.5 text-[9px] leading-tight text-[#9DA3C0]">
+                Enlace activo y código QR listo para recepción
+              </p>
+              <div className="mt-1.5 h-1 w-16 overflow-hidden rounded-full bg-white/15">
+                <div className="h-full w-full rounded-full bg-[#4CE0B3]" />
+              </div>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => onChangeSubTab("broadcast")}
+                  className="rounded-full bg-[#6C7EE1] px-2.5 py-0.5 text-[9px] font-bold text-white transition hover:bg-[#5A6CD0]"
+                >
+                  Compartir
+                </button>
+                <button
+                  type="button"
+                  onClick={onGoToWizard}
+                  className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-bold text-white transition hover:bg-white hover:text-[#2D3047]"
+                >
+                  ＋ Nuevo
+                </button>
+              </div>
+            </div>
+            <div className="rounded-xl bg-white p-1.5 text-center text-[#2D3047] shadow-md">
+              <div className="mx-auto flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#4CE0B3] text-[8px] font-bold text-white">
+                ✓
+              </div>
+              <p className="mt-0.5 text-[8px] font-bold leading-tight text-[#2D3047]">
+                ¡Enlace
+                <br />
+                Activo!
+              </p>
+            </div>
+          </div>
+          <div className="pointer-events-none absolute bottom-1.5 right-3 h-4 w-4 rounded-full border-2 border-[#6C7EE1] shadow-[0_0_8px_#6C7EE1]" />
         </div>
       </div>
 
-      {/* Pestañas Superiores del Evento Activo (Tab A - Tab E) */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {GESTOR_TABS.filter((t) => !t.hidden).map((t) => {
+      {/* Pestañas Superiores Estilo Carpeta con la Paleta de Colores (#6C7EE1, #F98880, #2D3047) */}
+      <div className="flex flex-wrap items-end gap-2 border-b border-[#DCE0F0] pb-0">
+        {GESTOR_TABS.filter((t) => !t.hidden).map((t, idx) => {
           const active = currentTab === t.id;
+          const tabPalette = [
+            "bg-[#6C7EE1] text-white shadow-[#6C7EE1]/30",
+            "bg-[#F98880] text-white shadow-[#F98880]/30",
+            "bg-[#2D3047] text-white shadow-[#2D3047]/30",
+          ];
+          const colorClass = tabPalette[idx % tabPalette.length];
           return (
             <button
               key={t.id}
               type="button"
               onClick={() => onChangeSubTab(t.id)}
-              className={` whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-bold transition ${
+              className={`whitespace-nowrap rounded-t-2xl px-6 py-3.5 text-xs font-extrabold transition ${colorClass} ${
                 active
-                  ? "btn-glow-red bg-[#ff1e38] text-white"
-                  : "border border-white/10 bg-[#0b0d14] text-gray-400 hover:border-white/25 hover:text-white"
+                  ? " -translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
+                  : "opacity-85 hover:opacity-100"
               }`}
             >
               {t.short}
@@ -1133,23 +1288,23 @@ function GestorEvento({
           {/* Editor Rápido (Columna Izquierda: 5 cols) */}
           <form
             onSubmit={handleSaveEvento}
-            className="space-y-5 rounded-2xl border border-white/10 bg-[#0b0d14] p-6 xl:col-span-5"
+            className="space-y-5 rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6 xl:col-span-5"
           >
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center justify-between border-b border-[#E6E9F4] pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                   TAB A • /events/{evento.idevento}/invitation
                 </span>
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-white">
+                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                   📇 Editor Rápido de Invitación
                 </h3>
               </div>
             </div>
 
             {/* Banner de enlace permanente */}
-            <div className="rounded-xl border border-[#00f0ff]/30 bg-[#00f0ff]/10 p-3 text-xs">
+            <div className="rounded-xl border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 p-3 text-xs">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-[#00f0ff]">
+                <span className="font-bold text-[#6C7EE1]">
                   🔗 Enlace Permanente Activo
                 </span>
                 <button
@@ -1158,15 +1313,15 @@ function GestorEvento({
                     navigator.clipboard.writeText(baseShareUrl);
                     showNotice("✓ Enlace copiado al portapapeles.");
                   }}
-                  className="rounded bg-[#00f0ff]/20 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-[#00f0ff]/40"
+                  className="rounded bg-[#6C7EE1] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#6C7EE1]/40"
                 >
                   Copiar URL
                 </button>
               </div>
-              <p className="mt-1 truncate font-mono text-[11px] text-gray-300">
+              <p className="mt-1 truncate font-mono text-[11px] text-[#5B617A]">
                 {baseShareUrl}
               </p>
-              <p className="mt-1 text-[10px] text-gray-400">
+              <p className="mt-1 text-[10px] text-[#8E94A9]">
                 Modifica textos, colores, botones o póster en cualquier momento
                 sin alterar los enlaces ya compartidos.
               </p>
@@ -1174,7 +1329,7 @@ function GestorEvento({
 
             {/* Plantilla y Colores */}
             <div>
-              <label className="mb-2 block text-xs font-semibold text-gray-300">
+              <label className="mb-2 block text-xs font-semibold text-[#5B617A]">
                 Tema Visual y Colores de Acento / Botones
               </label>
               <div className="grid grid-cols-2 gap-2.5">
@@ -1192,8 +1347,8 @@ function GestorEvento({
                     }
                     className={`rounded-xl border p-2.5 text-left transition ${
                       invForm.plantilla_tema === p.id
-                        ? "border-[#ff1e38] bg-[#ff1e38]/15"
-                        : "border-white/10 bg-[#07080d] hover:border-white/30"
+                        ? "border-[#6C7EE1] bg-[#6C7EE1]/15"
+                        : "border-[#E6E9F4] bg-[#F7F8FC] hover:border-[#6C7EE1]"
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -1201,7 +1356,7 @@ function GestorEvento({
                         className="h-3.5 w-3.5 rounded-full"
                         style={{ backgroundColor: p.accent }}
                       />
-                      <span className="text-xs font-bold text-white">
+                      <span className="text-xs font-bold text-[#2D3047]">
                         {p.name}
                       </span>
                     </div>
@@ -1210,13 +1365,13 @@ function GestorEvento({
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-3">
-                <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#07080d] px-3 py-2">
-                  <span className="text-[11px] text-gray-400">
+                <div className="flex items-center justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] px-3 py-2">
+                  <span className="text-[11px] text-[#8E94A9]">
                     Color Principal
                   </span>
                   <input
                     type="color"
-                    value={invForm.color_acento || "#ff1e38"}
+                    value={invForm.color_acento || "#6C7EE1"}
                     onChange={(e) =>
                       setInvForm((prev) => ({
                         ...prev,
@@ -1226,13 +1381,13 @@ function GestorEvento({
                     className="h-6 w-10 cursor-pointer rounded border border-white/20 bg-transparent"
                   />
                 </div>
-                <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#07080d] px-3 py-2">
-                  <span className="text-[11px] text-gray-400">
+                <div className="flex items-center justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] px-3 py-2">
+                  <span className="text-[11px] text-[#8E94A9]">
                     Color Botón / Detalles
                   </span>
                   <input
                     type="color"
-                    value={invForm.color_secundario || "#00f0ff"}
+                    value={invForm.color_secundario || "#6C7EE1"}
                     onChange={(e) =>
                       setInvForm((prev) => ({
                         ...prev,
@@ -1247,7 +1402,7 @@ function GestorEvento({
 
             {/* Imagen / Póster Principal */}
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-gray-300">
+              <label className="block text-xs font-semibold text-[#5B617A]">
                 Imagen / Póster Principal de la Invitación
               </label>
               <div className="flex flex-wrap gap-1.5">
@@ -1263,8 +1418,8 @@ function GestorEvento({
                     }
                     className={`rounded-lg border px-2.5 py-1 text-[10px] font-semibold transition ${
                       invForm.imagen_portada === preset.url
-                        ? "border-[#00f0ff] bg-[#00f0ff]/15 text-[#00f0ff]"
-                        : "border-white/10 bg-[#07080d] text-gray-400 hover:text-white"
+                        ? "border-[#6C7EE1] bg-[#6C7EE1]/15 text-[#6C7EE1]"
+                        : "border-[#E6E9F4] bg-[#F7F8FC] text-[#8E94A9] hover:text-[#6C7EE1]"
                     }`}
                   >
                     {preset.label}
@@ -1282,9 +1437,9 @@ function GestorEvento({
                     }))
                   }
                   placeholder="Pega la URL de tu póster o sube una imagen..."
-                  className="flex-1 rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs text-white outline-none focus:border-[#ff1e38]"
+                  className="flex-1 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
-                <label className="cursor-pointer rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-[#00f0ff] hover:text-white">
+                <label className="cursor-pointer rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-3 py-2 text-xs font-semibold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]">
                   📷 Subir
                   <input
                     type="file"
@@ -1299,7 +1454,7 @@ function GestorEvento({
             {/* Textos y Botón CTA */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-semibold text-gray-300">
+                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
                   Título Principal en la Invitación
                 </label>
                 <input
@@ -1308,12 +1463,12 @@ function GestorEvento({
                   onChange={(e) =>
                     setInvForm((prev) => ({ ...prev, nombre: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2 text-sm text-white outline-none focus:border-[#ff1e38]"
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-sm text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-300">
+                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
                   Código de Vestimenta
                 </label>
                 <input
@@ -1325,12 +1480,12 @@ function GestorEvento({
                       codigo_vestimenta: e.target.value,
                     }))
                   }
-                  className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs text-white outline-none focus:border-[#ff1e38]"
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-300">
+                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
                   Texto del Botón de Confirmación
                 </label>
                 <input
@@ -1342,12 +1497,12 @@ function GestorEvento({
                       texto_boton_rsvp: e.target.value,
                     }))
                   }
-                  className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs text-white outline-none focus:border-[#ff1e38]"
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-semibold text-gray-300">
+                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
                   Mensaje de Invitación para los Asistentes
                 </label>
                 <textarea
@@ -1359,40 +1514,141 @@ function GestorEvento({
                       mensaje_invitacion: e.target.value,
                     }))
                   }
-                  className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2 text-xs text-white outline-none focus:border-[#ff1e38]"
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                />
+              </div>
+            </div>
+
+            {/* Configuración de Ubicación del Evento con Google Maps */}
+            <div className="space-y-3 rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
+                    📍 UBICACIÓN EN LA TARJETA DE INVITACIÓN
+                  </span>
+                  <h4 className="text-xs font-extrabold text-[#2D3047]">
+                    Configurar Salón / Dirección con Google Maps
+                  </h4>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!navigator.geolocation) {
+                        showNotice("Tu navegador no soporta geolocalización.");
+                        return;
+                      }
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          const coords = `${pos.coords.latitude.toFixed(
+                            6
+                          )}, ${pos.coords.longitude.toFixed(6)}`;
+                          setInvForm((prev) => ({
+                            ...prev,
+                            direccion: coords,
+                          }));
+                          showNotice(
+                            "✓ Coordenadas GPS aplicadas al mapa de la invitación."
+                          );
+                        },
+                        () => {
+                          showNotice(
+                            "No se pudo obtener el GPS. Escribe la dirección o pega el enlace de Google Maps."
+                          );
+                        }
+                      );
+                    }}
+                    className="rounded-lg border border-[#DCE0F0] bg-white px-2.5 py-1 text-[10px] font-bold text-[#2D3047] shadow-2xs transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                  >
+                    🎯 Usar mi GPS
+                  </button>
+                  <a
+                    href={mapLocation.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-[#6C7EE1]/15 px-2.5 py-1 text-[10px] font-bold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
+                  >
+                    🗺️ Abrir Google Maps ↗
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                    Nombre del Salón, Jardín o Recinto
+                  </label>
+                  <input
+                    type="text"
+                    value={invForm.lugar || ""}
+                    onChange={(e) =>
+                      setInvForm((prev) => ({ ...prev, lugar: e.target.value }))
+                    }
+                    placeholder="Ej. Salón Jardín Imperial / Hacienda Los Morales"
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                    Dirección Exacta, Coordenadas o Enlace de Google Maps
+                  </label>
+                  <input
+                    type="text"
+                    value={invForm.direccion || ""}
+                    onChange={(e) =>
+                      setInvForm((prev) => ({
+                        ...prev,
+                        direccion: e.target.value,
+                      }))
+                    }
+                    placeholder="Ej. Av. Paseo de la Reforma 500, CDMX o pega el link de Google Maps"
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                  />
+                </div>
+              </div>
+
+              {/* Mapa Interactivo de Google Maps en Vivo */}
+              <div className="overflow-hidden rounded-xl border border-[#DCE0F0] bg-white shadow-2xs">
+                <iframe
+                  title="Vista previa de ubicación en Google Maps"
+                  src={mapLocation.embedUrl}
+                  className="h-40 w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="btn-glow-red w-full rounded-xl bg-[#ff1e38] px-5 py-3 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-[#ff334b]"
+              className="btn-glow-red w-full rounded-xl bg-[#6C7EE1] px-5 py-3 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-[#5A6CD0]"
             >
-              💾 Guardar Diseño e Invitación Virtual
+              Guardar Evento
             </button>
           </form>
 
           {/* Vista Previa en Vivo: Móvil y Escritorio (Columna Derecha: 7 cols) */}
-          <div className="flex flex-col rounded-2xl border border-white/10 bg-[#0b0d14] p-6 xl:col-span-7">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="flex flex-col rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6 xl:col-span-7">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E9F4] pb-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#00f0ff]">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6C7EE1]">
                   VISTA PREVIA EN VIVO
                 </span>
-                <h4 className="text-sm font-bold text-white">
+                <h4 className="text-sm font-bold text-[#2D3047]">
                   Simulador de Invitación Virtual Interactiva
                 </h4>
               </div>
 
               {/* Selector de dispositivo: Móvil vs Escritorio */}
-              <div className="flex rounded-xl border border-white/15 bg-[#07080d] p-1">
+              <div className="flex rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1">
                 <button
                   type="button"
                   onClick={() => setPreviewDevice("mobile")}
                   className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
                     previewDevice === "mobile"
-                      ? "bg-[#ff1e38] text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? "bg-[#6C7EE1] text-white"
+                      : "text-[#8E94A9] hover:text-[#6C7EE1]"
                   }`}
                 >
                   📱 Móvil
@@ -1402,8 +1658,8 @@ function GestorEvento({
                   onClick={() => setPreviewDevice("desktop")}
                   className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
                     previewDevice === "desktop"
-                      ? "bg-[#ff1e38] text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? "bg-[#6C7EE1] text-white"
+                      : "text-[#8E94A9] hover:text-[#6C7EE1]"
                   }`}
                 >
                   🖥️ Escritorio
@@ -1415,7 +1671,7 @@ function GestorEvento({
             <div className="mt-6 flex flex-1 items-center justify-center">
               {previewDevice === "mobile" ? (
                 /* SIMULADOR DE PANTALLA MÓVIL */
-                <div className="w-full max-w-[360px] rounded-[2.6rem] border-[6px] border-white/15 bg-[#050508] p-3 shadow-[0_0_50px_rgba(0,0,0,0.85)]">
+                <div className="w-full max-w-[360px] rounded-[2.6rem] border-[6px] border-white/15 bg-[#0F1A45] p-3 shadow-[0_0_50px_rgba(0,0,0,0.85)]">
                   {/* Notch de smartphone */}
                   <div className="mx-auto mb-2.5 h-1.5 w-20 rounded-full bg-white/20" />
 
@@ -1470,7 +1726,7 @@ function GestorEvento({
                           </span>
                         </div>
                         <div>
-                          <span className="block text-base font-bold text-[#00f0ff]">
+                          <span className="block text-base font-bold text-[#15b2f5]">
                             VIP
                           </span>
                           <span className="text-[9px] uppercase text-gray-400">
@@ -1487,15 +1743,44 @@ function GestorEvento({
                           📍 <strong>Lugar:</strong>{" "}
                           {invForm.lugar || "Por confirmar"}
                         </p>
+                        {invForm.direccion && (
+                          <p className="truncate">
+                            🗺️ <strong>Dirección:</strong> {invForm.direccion}
+                          </p>
+                        )}
                         <p>
                           👔 <strong>Dress Code:</strong>{" "}
                           {invForm.codigo_vestimenta}
                         </p>
                       </div>
 
+                      {/* Ubicación interactiva de Google Maps en la Tarjeta Móvil */}
+                      <div className="mt-3 overflow-hidden rounded-xl border border-white/15 bg-black/40 text-left">
+                        <iframe
+                          title="Mapa del evento en invitación móvil"
+                          src={mapLocation.embedUrl}
+                          className="h-28 w-full border-0"
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                        />
+                        <div className="flex items-center justify-between px-3 py-2 text-[10px]">
+                          <span className="truncate font-semibold text-gray-300">
+                            📍 {invForm.lugar || "Ubicación del Evento"}
+                          </span>
+                          <a
+                            href={mapLocation.externalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 font-extrabold text-[#15b2f5] hover:underline"
+                          >
+                            🗺️ Ver en Maps ↗
+                          </a>
+                        </div>
+                      </div>
+
                       {/* Notificación de Modalidad de Invitados en la Tarjeta Móvil */}
-                      <div className="mt-3 rounded-xl border border-[#00f0ff]/40 bg-[#00f0ff]/10 px-3 py-2 text-center shadow-[0_0_15px_rgba(0,240,255,0.15)]">
-                        <span className="block text-[9px] font-bold uppercase tracking-widest text-[#00f0ff]">
+                      <div className="mt-3 rounded-xl border border-[#15b2f5]/40 bg-[#15b2f5]/10 px-3 py-2 text-center shadow-[0_0_15px_rgba(21,178,245,0.15)]">
+                        <span className="block text-[9px] font-bold uppercase tracking-widest text-[#15b2f5]">
                           🔔 MODALIDAD DE ASISTENCIA
                         </span>
                         <strong className="mt-0.5 block text-xs font-bold uppercase tracking-wider text-white">
@@ -1511,7 +1796,7 @@ function GestorEvento({
                         className="mt-4 w-full cursor-pointer rounded-xl py-2.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                         style={{
                           backgroundColor:
-                            invForm.color_secundario || "#00f0ff",
+                            invForm.color_secundario || "#15b2f5",
                         }}
                         title="Haz clic para abrir y probar el formulario real de Confirmación de Asistencia"
                       >
@@ -1522,9 +1807,9 @@ function GestorEvento({
                 </div>
               ) : (
                 /* SIMULADOR DE PANTALLA DE ESCRITORIO */
-                <div className="w-full overflow-hidden rounded-2xl border border-white/15 bg-[#050508] shadow-2xl">
+                <div className="w-full overflow-hidden rounded-2xl border border-white/15 bg-[#0F1A45] shadow-2xl">
                   {/* Barra de navegador simulada */}
-                  <div className="flex items-center justify-between border-b border-white/10 bg-[#0b0d14] px-4 py-2">
+                  <div className="flex items-center justify-between border-b border-white/10 bg-[#142257] px-4 py-2">
                     <div className="flex items-center gap-1.5">
                       <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
                       <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
@@ -1533,7 +1818,7 @@ function GestorEvento({
                     <span className="rounded bg-black/50 px-3 py-0.5 font-mono text-[10px] text-gray-400">
                       {baseShareUrl}
                     </span>
-                    <span className="text-[10px] text-[#00f0ff]">100% HD</span>
+                    <span className="text-[10px] text-[#15b2f5]">100% HD</span>
                   </div>
 
                   <div
@@ -1581,7 +1866,7 @@ function GestorEvento({
                           >
                             {invForm.tipo_evento}
                           </span>
-                          <span className="font-mono text-xs text-[#00f0ff]">
+                          <span className="font-mono text-xs text-[#15b2f5]">
                             Faltan {diasParaEvento} días
                           </span>
                         </div>
@@ -1623,20 +1908,31 @@ function GestorEvento({
                             <span className="block text-[10px] uppercase text-gray-400">
                               Dress Code
                             </span>
-                            <strong className="text-[#00f0ff]">
+                            <strong className="text-[#15b2f5]">
                               {invForm.codigo_vestimenta}
                             </strong>
                           </div>
                         </div>
 
                         {/* Notificación de Modalidad de Invitados en la Tarjeta de Escritorio */}
-                        <div className="mt-4 flex items-center justify-between rounded-xl border border-[#00f0ff]/40 bg-[#00f0ff]/10 px-4 py-2.5 shadow-[0_0_15px_rgba(0,240,255,0.15)]">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+                        <div className="mt-4 flex items-center justify-between rounded-xl border border-[#15b2f5]/40 bg-[#15b2f5]/10 px-4 py-2.5 shadow-[0_0_15px_rgba(21,178,245,0.15)]">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#15b2f5]">
                             🔔 Modalidad de Asistencia Notificada:
                           </span>
                           <strong className="text-xs font-bold uppercase tracking-wider text-white">
                             🎟️ {invForm.modalidad_invitados || "Adultos y niños"}
                           </strong>
+                        </div>
+
+                        {/* Mapa Interactivo de Ubicación en la Tarjeta de Escritorio */}
+                        <div className="mt-4 overflow-hidden rounded-xl border border-white/15 bg-black/40">
+                          <iframe
+                            title="Mapa del evento en invitación de escritorio"
+                            src={mapLocation.embedUrl}
+                            className="h-36 w-full border-0"
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                          />
                         </div>
                       </div>
 
@@ -1649,15 +1945,20 @@ function GestorEvento({
                           className="flex-1 cursor-pointer rounded-xl py-3 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                           style={{
                             backgroundColor:
-                              invForm.color_secundario || "#00f0ff",
+                              invForm.color_secundario || "#15b2f5",
                           }}
                           title="Haz clic para abrir y probar el formulario real de Confirmación de Asistencia"
                         >
                           {invForm.texto_boton_rsvp || "Confirmar Asistencia"}
                         </button>
-                        <span className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-xs text-gray-300">
-                          🗺️ Ver Mapa
-                        </span>
+                        <a
+                          href={mapLocation.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-xs font-bold text-gray-200 transition hover:border-[#15b2f5] hover:text-[#15b2f5]"
+                        >
+                          🗺️ Ver Mapa ↗
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -1666,9 +1967,9 @@ function GestorEvento({
             </div>
 
             {/* Barra inferior para probar la Invitación Pública en Local */}
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#00f0ff]/30 bg-[#07080d] px-4 py-3 text-xs">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#15b2f5]/30 bg-[#0F1A45] px-4 py-3 text-xs">
               <div className="text-gray-300">
-                <span className="font-bold text-[#00f0ff]">
+                <span className="font-bold text-[#15b2f5]">
                   🔗 Enlace Público Activo:
                 </span>{" "}
                 <code className="font-mono text-[11px] text-white">
@@ -1679,7 +1980,7 @@ function GestorEvento({
                 href={baseShareUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-xl bg-[#00f0ff]/20 px-4 py-2 text-xs font-bold text-[#00f0ff] transition hover:bg-[#00f0ff] hover:text-black"
+                className="rounded-xl bg-[#15b2f5]/20 px-4 py-2 text-xs font-bold text-[#15b2f5] transition hover:bg-[#15b2f5] hover:text-black"
               >
                 🚀 Abrir Invitación Pública en Vivo ↗
               </a>
@@ -1695,57 +1996,57 @@ function GestorEvento({
         <div className="space-y-6">
           {/* Resumen Estadístico Superior */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-            <div className="rounded-2xl border border-white/10 bg-[#0b0d14] p-4">
-              <span className="text-[11px] text-gray-400">Total Invitados</span>
-              <p className="mt-1 text-2xl font-bold text-white">
+            <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-4">
+              <span className="text-[11px] text-[#8E94A9]">Total Invitados</span>
+              <p className="mt-1 text-2xl font-bold text-[#2D3047]">
                 {totalInvitadosCount}{" "}
-                <span className="text-xs font-normal text-gray-400">
+                <span className="text-xs font-normal text-[#8E94A9]">
                   ({totalPasesLista} pases)
                 </span>
               </p>
             </div>
 
-            <div className="rounded-2xl border border-emerald-500/30 bg-[#0b0d14] p-4">
-              <span className="text-[11px] text-emerald-400">
+            <div className="rounded-2xl border border-emerald-500/30 bg-white border border-[#E6E9F4] shadow-xs p-4">
+              <span className="text-[11px] text-[#18A97E]">
                 🟢 Confirmados
               </span>
-              <p className="mt-1 text-2xl font-bold text-emerald-400">
+              <p className="mt-1 text-2xl font-bold text-[#18A97E]">
                 {confirmadosList.length}{" "}
-                <span className="text-xs font-normal text-emerald-300/70">
+                <span className="text-xs font-normal text-[#18A97E]/70">
                   ({pasesConfirmadosCount} pases)
                 </span>
               </p>
             </div>
 
-            <div className="rounded-2xl border border-rose-500/30 bg-[#0b0d14] p-4">
-              <span className="text-[11px] text-rose-400">🔴 Rechazados</span>
-              <p className="mt-1 text-2xl font-bold text-rose-400">
+            <div className="rounded-2xl border border-rose-500/30 bg-white border border-[#E6E9F4] shadow-xs p-4">
+              <span className="text-[11px] text-[#F26B61]">🔴 Rechazados</span>
+              <p className="mt-1 text-2xl font-bold text-[#F26B61]">
                 {rechazadosList.length}{" "}
-                <span className="text-xs font-normal text-rose-300/70">
+                <span className="text-xs font-normal text-[#F26B61]/70">
                   (🟡 {pendientesList.length} pend.)
                 </span>
               </p>
             </div>
 
-            <div className="rounded-2xl border border-[#00f0ff]/30 bg-[#0b0d14] p-4">
-              <span className="text-[11px] text-[#00f0ff]">
+            <div className="rounded-2xl border border-[#6C7EE1]/30 bg-white border border-[#E6E9F4] shadow-xs p-4">
+              <span className="text-[11px] text-[#6C7EE1]">
                 👨‍👩‍👧 Adultos / Niños
               </span>
-              <p className="mt-1 text-xl font-bold text-white">
+              <p className="mt-1 text-xl font-bold text-[#2D3047]">
                 {totalAdultos} Adultos{" "}
-                <span className="text-sm text-[#00f0ff]">
+                <span className="text-sm text-[#6C7EE1]">
                   • {totalNinos} Niños
                 </span>
               </p>
             </div>
 
-            <div className="col-span-2 rounded-2xl border border-amber-500/30 bg-[#0b0d14] p-4 lg:col-span-1">
-              <span className="text-[11px] text-amber-300">
+            <div className="col-span-2 rounded-2xl border border-amber-500/30 bg-white border border-[#E6E9F4] shadow-xs p-4 lg:col-span-1">
+              <span className="text-[11px] text-[#D97706]">
                 🍽️ Menús Especiales
               </span>
-              <p className="mt-1 text-2xl font-bold text-amber-300">
+              <p className="mt-1 text-2xl font-bold text-[#D97706]">
                 {menusEspecialesCount}{" "}
-                <span className="text-xs font-normal text-gray-400">
+                <span className="text-xs font-normal text-[#8E94A9]">
                   solicitados
                 </span>
               </p>
@@ -1753,20 +2054,15 @@ function GestorEvento({
           </div>
 
           {/* Selector de Modalidad de Asistencia (Notificado en la Tarjeta de Invitación) */}
-          <div className="rounded-2xl border border-[#00f0ff]/30 bg-[#0b0d14] p-5 shadow-[0_0_25px_rgba(0,240,255,0.08)]">
+          <div className="rounded-2xl border border-[#6C7EE1]/30 bg-white border border-[#E6E9F4] shadow-xs p-5 shadow-[0_0_25px_rgba(21,178,245,0.08)]">
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
-                  🔔 NOTIFICACIÓN EN LA TARJETA DE INVITACIÓN
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
+                  🔔 SE NOTIFICARÁ EN LA TARJETA DE INVITACIÓN
                 </span>
-                <h4 className="font-display mt-0.5 text-xl font-bold uppercase tracking-wide text-white">
+                <h4 className="font-display mt-0.5 text-xl font-bold uppercase tracking-wide text-[#2D3047]">
                   🎟️ Modalidad de Invitados Permitida
                 </h4>
-                <p className="text-xs text-gray-400">
-                  Selecciona el tipo de asistencia para el evento; la opción
-                  elegida se muestra notificada automáticamente en la tarjeta de
-                  invitación virtual.
-                </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
@@ -1775,7 +2071,7 @@ function GestorEvento({
                   onChange={(e) =>
                     handleChangeModalidadInvitados(e.target.value)
                   }
-                  className="rounded-xl border border-[#00f0ff]/50 bg-[#07080d] px-4 py-2.5 text-xs font-bold text-[#00f0ff] outline-none focus:border-[#ff1e38]"
+                  className="rounded-xl border border-[#6C7EE1]/50 bg-[#F7F8FC] px-4 py-2.5 text-xs font-bold text-[#6C7EE1] outline-none focus:border-[#6C7EE1]"
                 >
                   {MODALIDADES_INVITADOS.map((mod) => (
                     <option key={mod} value={mod}>
@@ -1787,7 +2083,7 @@ function GestorEvento({
                 <button
                   type="button"
                   onClick={() => onChangeSubTab("invitation")}
-                  className="rounded-xl border border-white/15 bg-white/5 px-3.5 py-2.5 text-xs font-semibold text-gray-200 transition hover:border-[#00f0ff] hover:text-white"
+                  className="rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-3.5 py-2.5 text-xs font-semibold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
                 >
                   📇 Ver en Tarjeta de Invitación
                 </button>
@@ -1805,8 +2101,8 @@ function GestorEvento({
                     onClick={() => handleChangeModalidadInvitados(mod)}
                     className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
                       isSelected
-                        ? "border-[#ff1e38] bg-[#ff1e38] text-white shadow-[0_0_15px_rgba(255,30,56,0.35)]"
-                        : "border-white/10 bg-[#07080d] text-gray-400 hover:border-white/30 hover:text-white"
+                        ? "border-[#6C7EE1] bg-[#6C7EE1] text-white shadow-[0_0_15px_rgba(21,178,245,0.35)]"
+                        : "border-[#E6E9F4] bg-[#F7F8FC] text-[#8E94A9] hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
                     }`}
                   >
                     {isSelected ? `✓ ${mod}` : mod}
@@ -1817,25 +2113,25 @@ function GestorEvento({
           </div>
 
           {/* Panel de Alta: Individual o Importación Masiva Excel/CSV */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b0d14] p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E9F4] pb-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                   TAB B • /events/{evento.idevento}/guests
                 </span>
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-white">
+                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                   ➕ Agregar Invitados
                 </h3>
               </div>
 
-              <div className="flex rounded-xl border border-white/15 bg-[#07080d] p-1">
+              <div className="flex rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1">
                 <button
                   type="button"
                   onClick={() => setAddMode("individual")}
                   className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
                     addMode === "individual"
-                      ? "bg-[#ff1e38] text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? "bg-[#6C7EE1] text-white"
+                      : "text-[#8E94A9] hover:text-[#6C7EE1]"
                   }`}
                 >
                   👤 Registro Individual
@@ -1845,8 +2141,8 @@ function GestorEvento({
                   onClick={() => setAddMode("csv")}
                   className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
                     addMode === "csv"
-                      ? "bg-[#ff1e38] text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? "bg-[#6C7EE1] text-white"
+                      : "text-[#8E94A9] hover:text-[#6C7EE1]"
                   }`}
                 >
                   📊 Importar desde Excel / CSV
@@ -1860,13 +2156,13 @@ function GestorEvento({
                 <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-12">
                   {/* Campo 1: Nombre Completo */}
                   <div className="group relative lg:col-span-4">
-                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#5B617A]">
                       <span>Nombre del Invitado *</span>
-                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-[#ECEFFA] text-[10px] font-bold text-[#6C7EE1]">
                         ?
                       </span>
                     </label>
-                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-60 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-60 rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
                       Nombre y apellido del invitado principal tal como
                       aparecerá en su invitación y pase digital.
                     </div>
@@ -1879,19 +2175,19 @@ function GestorEvento({
                       }
                       placeholder="Ej. Sofía Hernández *"
                       title="Nombre y apellido del invitado principal tal como aparecerá en su invitación y pase digital."
-                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                     />
                   </div>
 
                   {/* Campo 2: Teléfono / WhatsApp */}
                   <div className="group relative lg:col-span-3">
-                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#5B617A]">
                       <span>Teléfono / WhatsApp</span>
-                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-[#ECEFFA] text-[10px] font-bold text-[#6C7EE1]">
                         ?
                       </span>
                     </label>
-                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-60 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-60 rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
                       Número celular (con código de país opcional) para enviarle
                       su pase directo o recordatorios por WhatsApp.
                     </div>
@@ -1906,19 +2202,19 @@ function GestorEvento({
                       }
                       placeholder="Ej. +52 55 1234 5678"
                       title="Número celular para enviarle su pase directo o recordatorios por WhatsApp."
-                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                     />
                   </div>
 
                   {/* Campo 3: Correo electrónico */}
                   <div className="group relative lg:col-span-3">
-                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#5B617A]">
                       <span>Correo Electrónico</span>
-                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-[#ECEFFA] text-[10px] font-bold text-[#6C7EE1]">
                         ?
                       </span>
                     </label>
-                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-60 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-60 rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
                       Dirección de correo del invitado para el envío de
                       invitaciones con diseño HTML.
                     </div>
@@ -1930,19 +2226,19 @@ function GestorEvento({
                       }
                       placeholder="ejemplo@correo.com"
                       title="Dirección de correo del invitado para el envío de invitaciones con diseño HTML."
-                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                     />
                   </div>
 
                   {/* Campo 4: Grupo */}
                   <div className="group relative lg:col-span-2">
-                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#5B617A]">
                       <span>Grupo / Categoría</span>
-                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-[#ECEFFA] text-[10px] font-bold text-[#6C7EE1]">
                         ?
                       </span>
                     </label>
-                    <div className="pointer-events-none invisible absolute bottom-full right-0 z-30 mb-1.5 w-60 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                    <div className="pointer-events-none invisible absolute bottom-full right-0 z-30 mb-1.5 w-60 rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
                       Clasifica al invitado (Familia, Amigos, VIP o Trabajo)
                       para organizar y filtrar tu lista fácilmente.
                     </div>
@@ -1952,7 +2248,7 @@ function GestorEvento({
                         setGuestForm((p) => ({ ...p, grupo: e.target.value }))
                       }
                       title="Clasifica al invitado (Familia, Amigos, VIP o Trabajo) para organizar y filtrar tu lista fácilmente."
-                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                     >
                       <option value="Familia">Grupo: Familia</option>
                       <option value="Amigos">Grupo: Amigos</option>
@@ -1966,13 +2262,13 @@ function GestorEvento({
                 <div className="grid grid-cols-1 items-end gap-3.5 sm:grid-cols-2 lg:grid-cols-12">
                   {/* Campo 5: Modalidad de Pase */}
                   <div className="group relative lg:col-span-3">
-                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#5B617A]">
                       <span>Modalidad de Asistencia</span>
-                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-[#ECEFFA] text-[10px] font-bold text-[#6C7EE1]">
                         ?
                       </span>
                     </label>
-                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-64 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-64 rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
                       Tipo de invitación asignada (Solo adultos, Adultos y
                       niños, etc.). También actualiza el aviso en la tarjeta de
                       invitación.
@@ -1989,7 +2285,7 @@ function GestorEvento({
                         handleChangeModalidadInvitados(val);
                       }}
                       title="Tipo de invitación asignada (Solo adultos, Adultos y niños, etc.). También actualiza el aviso en la tarjeta de invitación."
-                      className="w-full rounded-xl border border-[#00f0ff]/40 bg-[#07080d] px-3 py-2.5 text-xs font-semibold text-[#00f0ff] outline-none focus:border-[#ff1e38]"
+                      className="w-full rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] px-3 py-2.5 text-xs font-semibold text-[#6C7EE1] outline-none focus:border-[#6C7EE1]"
                     >
                       {MODALIDADES_INVITADOS.map((mod) => (
                         <option key={mod} value={mod}>
@@ -2001,22 +2297,22 @@ function GestorEvento({
 
                   {/* Campo 6: Pases (Adultos y Niños) */}
                   <div className="group relative lg:col-span-3">
-                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#5B617A]">
                       <span>Cantidad de Pases</span>
-                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-[#ECEFFA] text-[10px] font-bold text-[#6C7EE1]">
                         ?
                       </span>
                     </label>
-                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-64 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-64 rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
                       Indica el número de adultos y de niños incluidos en el
                       pase de este invitado para calcular el aforo total.
                     </div>
                     <div
                       title="Indica el número de adultos y de niños incluidos en el pase de este invitado."
-                      className="grid grid-cols-2 gap-2 rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs"
+                      className="grid grid-cols-2 gap-2 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs"
                     >
-                      <div className="flex items-center justify-between gap-1 border-r border-white/10 pr-2">
-                        <span className="text-[11px] text-gray-400">
+                      <div className="flex items-center justify-between gap-1 border-r border-[#E6E9F4] pr-2">
+                        <span className="text-[11px] text-[#8E94A9]">
                           Adultos:
                         </span>
                         <input
@@ -2030,11 +2326,11 @@ function GestorEvento({
                               adultos: e.target.value,
                             }))
                           }
-                          className="w-12 bg-transparent text-center font-bold text-white outline-none"
+                          className="w-12 bg-transparent text-center font-bold text-[#2D3047] outline-none"
                         />
                       </div>
                       <div className="flex items-center justify-between gap-1 pl-1">
-                        <span className="text-[11px] text-gray-400">
+                        <span className="text-[11px] text-[#8E94A9]">
                           Niños:
                         </span>
                         <input
@@ -2048,7 +2344,7 @@ function GestorEvento({
                               ninos: e.target.value,
                             }))
                           }
-                          className="w-12 bg-transparent text-center font-bold text-[#00f0ff] outline-none"
+                          className="w-12 bg-transparent text-center font-bold text-[#6C7EE1] outline-none"
                         />
                       </div>
                     </div>
@@ -2056,13 +2352,13 @@ function GestorEvento({
 
                   {/* Campo 7: Menú / Alergias */}
                   <div className="group relative lg:col-span-4">
-                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-300">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#5B617A]">
                       <span>Menú Especial / Alergias</span>
-                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-[#00f0ff]">
+                      <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-[#ECEFFA] text-[10px] font-bold text-[#6C7EE1]">
                         ?
                       </span>
                     </label>
-                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-64 rounded-xl border border-[#00f0ff]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                    <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-64 rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
                       Anota si el invitado requiere menú especial, tiene alguna
                       alergia alimentaria o preferencia (ej. Vegano, Sin gluten,
                       Menú infantil).
@@ -2078,20 +2374,20 @@ function GestorEvento({
                       }
                       placeholder="Ej. Vegano, Sin gluten, Menú infantil..."
                       title="Anota si el invitado requiere menú especial o tiene alguna alergia alimentaria."
-                      className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#ff1e38]"
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                     />
                   </div>
 
                   {/* Botón + Agregar */}
                   <div className="group relative lg:col-span-2">
-                    <div className="pointer-events-none invisible absolute bottom-full right-0 z-30 mb-1.5 w-56 rounded-xl border border-[#ff1e38]/40 bg-[#050508] p-2.5 text-[11px] leading-snug text-gray-200 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
+                    <div className="pointer-events-none invisible absolute bottom-full right-0 z-30 mb-1.5 w-56 rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
                       Registra al invitado en el evento y genera su enlace único
                       de confirmación RSVP.
                     </div>
                     <button
                       type="submit"
                       title="Registra al invitado en el evento y genera su enlace único de confirmación RSVP."
-                      className="btn-glow-red w-full cursor-pointer rounded-xl bg-[#ff1e38] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#ff334b]"
+                      className="btn-glow-red w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#5A6CD0]"
                     >
                       + Agregar
                     </button>
@@ -2101,11 +2397,11 @@ function GestorEvento({
             ) : (
               /* Importación Masiva Excel / CSV */
               <div className="mt-4 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#8E94A9]">
                   <p>
                     Sube un archivo <code>.csv</code> o pega tus filas de Excel
                     en formato:{" "}
-                    <span className="font-mono text-[#00f0ff]">
+                    <span className="font-mono text-[#6C7EE1]">
                       Nombre, Telefono, Email, Grupo, Adultos, Ninos,
                       Requerimientos
                     </span>
@@ -2114,11 +2410,11 @@ function GestorEvento({
                     <button
                       type="button"
                       onClick={handleDownloadCsvTemplate}
-                      className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-gray-200 hover:border-[#00f0ff] hover:text-white"
+                      className="rounded-lg border border-[#DCE0F0] bg-[#F0F2F8] px-3 py-1.5 text-[11px] font-semibold text-[#2D3047] hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
                     >
                       ⬇️ Descargar Plantilla CSV
                     </button>
-                    <label className="cursor-pointer rounded-lg border border-[#00f0ff]/40 bg-[#00f0ff]/15 px-3 py-1.5 text-[11px] font-bold text-[#00f0ff] hover:bg-[#00f0ff]/25">
+                    <label className="cursor-pointer rounded-lg border border-[#6C7EE1]/40 bg-[#6C7EE1]/15 px-3 py-1.5 text-[11px] font-bold text-[#6C7EE1] hover:bg-[#6C7EE1]/25">
                       📂 Seleccionar Archivo .CSV
                       <input
                         type="file"
@@ -2135,20 +2431,20 @@ function GestorEvento({
                   value={csvText}
                   onChange={(e) => setCsvText(e.target.value)}
                   placeholder={`Ejemplo:\nAna Torres, +525511223344, ana@correo.com, Familia, 2, 1, Sin lactosa\nLuis Vega, +525599887766, luis@correo.com, VIP, 2, 0, Menú vegano`}
-                  className="w-full rounded-xl border border-white/15 bg-[#07080d] p-3 font-mono text-xs text-white outline-none focus:border-[#00f0ff]"
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-3 font-mono text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-[#8E94A9]">
                     Filas listas para importar:{" "}
-                    <strong className="text-[#00f0ff]">
+                    <strong className="text-[#6C7EE1]">
                       {csvPreviewRows.length}
                     </strong>
                   </span>
                   <button
                     type="button"
                     onClick={handleImportCsv}
-                    className="btn-glow-red rounded-xl bg-[#ff1e38] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#ff334b]"
+                    className="btn-glow-red rounded-xl bg-[#6C7EE1] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#5A6CD0]"
                   >
                     📥 Importar {csvPreviewRows.length} Invitados Ahora
                   </button>
@@ -2157,72 +2453,111 @@ function GestorEvento({
             )}
           </div>
 
-          {/* Buscador, Filtros por Estado y Grupo + Tabla Interactiva */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b0d14] p-6">
-            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-              {/* Filtro por Estado */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                {["Todos", "Confirmados", "Rechazados", "Pendientes"].map(
-                  (st) => (
-                    <button
-                      key={st}
-                      type="button"
-                      onClick={() => setRsvpFilter(st)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                        rsvpFilter === st
-                          ? "bg-[#ff1e38] text-white"
-                          : "bg-white/5 text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      {st}
-                    </button>
-                  )
-                )}
-              </div>
+          {/* Buscador, Filtros por Estado y Grupo + Tabla Interactiva (Estilo Tarjetas Flotantes de Referencia) */}
+          <div className="rounded-3xl border border-[#CFD8E6] bg-[#E3E9F2] p-4 shadow-inner sm:p-6">
+            {/* Bloque Superior Blanco Elevado: Filtros de Colores + Buscador */}
+            <div className="rounded-2xl border-b-4 border-[#CDD6E4] bg-white p-4 shadow-[0_6px_16px_rgba(45,62,80,0.08)] sm:p-5">
+              <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                {/* Filtro por Estado con los 4 colores vibrantes de la imagen de referencia */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    {
+                      id: "Todos",
+                      colorClass:
+                        "bg-[#3167FF] border-b-[3px] border-[#1D4ED8] text-white shadow-[#3167FF]/30",
+                    },
+                    {
+                      id: "Confirmados",
+                      colorClass:
+                        "bg-[#7A22EA] border-b-[3px] border-[#5812B3] text-white shadow-[#7A22EA]/30",
+                    },
+                    {
+                      id: "Rechazados",
+                      colorClass:
+                        "bg-[#EC1A8B] border-b-[3px] border-[#B80F6A] text-white shadow-[#EC1A8B]/30",
+                    },
+                    {
+                      id: "Pendientes",
+                      colorClass:
+                        "bg-[#FFAF36] border-b-[3px] border-[#D98814] text-white shadow-[#FFAF36]/30",
+                    },
+                  ].map((st) => {
+                    const isActive = rsvpFilter === st.id;
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => setRsvpFilter(st.id)}
+                        className={`rounded-xl px-4 py-2 text-xs font-extrabold uppercase tracking-wider shadow-md transition-all ${
+                          st.colorClass
+                        } ${
+                          isActive
+                            ? "-translate-y-0.5 ring-2 ring-[#37475A]/35 brightness-105"
+                            : "opacity-80 hover:-translate-y-0.5 hover:opacity-100"
+                        }`}
+                      >
+                        {st.id}
+                      </button>
+                    );
+                  })}
+                </div>
 
-              {/* Filtro por Grupo y Buscador */}
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={groupFilter}
-                  onChange={(e) => setGroupFilter(e.target.value)}
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs text-white outline-none focus:border-[#00f0ff]"
-                >
-                  <option value="Todos">Todos los Grupos</option>
-                  <option value="Familia">👨‍👩‍👧 Familia</option>
-                  <option value="Amigos">🍻 Amigos</option>
-                  <option value="VIP">⭐ VIP</option>
-                  <option value="Trabajo">💼 Trabajo</option>
-                </select>
+                {/* Filtro por Grupo y Buscador */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <select
+                    value={groupFilter}
+                    onChange={(e) => setGroupFilter(e.target.value)}
+                    className="rounded-xl border border-[#CFD8E6] bg-[#F4F7FB] px-3.5 py-2 text-xs font-bold text-[#37475A] outline-none transition focus:border-[#3167FF] focus:bg-white"
+                  >
+                    <option value="Todos">Todos los Grupos</option>
+                    <option value="Familia">👨‍👩‍👧 Familia</option>
+                    <option value="Amigos">🍻 Amigos</option>
+                    <option value="VIP">⭐ VIP</option>
+                    <option value="Trabajo">💼 Trabajo</option>
+                  </select>
 
-                <input
-                  type="text"
-                  value={guestSearch}
-                  onChange={(e) => setGuestSearch(e.target.value)}
-                  placeholder="🔍 Buscar por nombre, teléfono, email o alergia..."
-                  className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2 text-xs text-white outline-none focus:border-[#00f0ff] sm:w-72"
-                />
+                  <input
+                    type="text"
+                    value={guestSearch}
+                    onChange={(e) => setGuestSearch(e.target.value)}
+                    placeholder="🔍 Buscar por nombre, teléfono, email o alergia..."
+                    className="w-full rounded-xl border border-[#CFD8E6] bg-[#F4F7FB] px-3.5 py-2 text-xs font-medium text-[#37475A] placeholder-[#7B8B9E] outline-none transition focus:border-[#3167FF] focus:bg-white sm:w-72"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Tabla Interactiva de Invitados */}
-            <div className="mt-5 overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            {/* Tabla Interactiva de Invitados con Filas en Tarjetas Blancas Flotantes */}
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full border-separate border-spacing-y-3 text-left text-xs">
                 <thead>
-                  <tr className="border-b border-white/10 text-[11px] uppercase tracking-wider text-gray-400">
-                    <th className="pb-3 pr-3">Nombre / Grupo</th>
-                    <th className="pb-3 pr-3">Teléfono / Email</th>
-                    <th className="pb-3 pr-3">Estado (🟢/🔴/🟡)</th>
-                    <th className="pb-3 pr-3">Acompañantes / Modalidad</th>
-                    <th className="pb-3 pr-3">Requerimientos (Menú/Alergias)</th>
-                    <th className="pb-3 text-right">Enlace Personalizado</th>
+                  <tr className="rounded-2xl bg-white shadow-[0_4px_12px_rgba(45,62,80,0.06)]">
+                    <th className="rounded-l-2xl border-b-[3px] border-[#D0D9E6] py-3.5 pl-5 pr-3 text-[11px] font-extrabold uppercase tracking-wider text-[#37475A]">
+                      Nombre / Grupo
+                    </th>
+                    <th className="border-b-[3px] border-[#D0D9E6] py-3.5 pr-3 text-[11px] font-extrabold uppercase tracking-wider text-[#37475A]">
+                      Teléfono / Email
+                    </th>
+                    <th className="border-b-[3px] border-[#D0D9E6] py-3.5 pr-3 text-[11px] font-extrabold uppercase tracking-wider text-[#37475A]">
+                      Estado (🟢/🔴/🟡)
+                    </th>
+                    <th className="border-b-[3px] border-[#D0D9E6] py-3.5 pr-3 text-[11px] font-extrabold uppercase tracking-wider text-[#37475A]">
+                      Acompañantes / Modalidad
+                    </th>
+                    <th className="border-b-[3px] border-[#D0D9E6] py-3.5 pr-3 text-[11px] font-extrabold uppercase tracking-wider text-[#37475A]">
+                      Requerimientos (Menú/Alergias)
+                    </th>
+                    <th className="rounded-r-2xl border-b-[3px] border-[#D0D9E6] py-3.5 pr-5 text-right text-[11px] font-extrabold uppercase tracking-wider text-[#37475A]">
+                      Enlace Personalizado
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody>
                   {filteredGuests.length === 0 ? (
-                    <tr>
+                    <tr className="rounded-2xl bg-white shadow-[0_5px_14px_rgba(45,62,80,0.07)]">
                       <td
                         colSpan={6}
-                        className="py-8 text-center text-gray-500"
+                        className="rounded-2xl border-b-[3px] border-[#D0D9E6] py-9 text-center text-xs font-semibold text-[#64748B]"
                       >
                         No hay invitados que coincidan con los filtros actuales.
                       </td>
@@ -2239,11 +2574,13 @@ function GestorEvento({
                       return (
                         <tr
                           key={g.idinvitado}
-                          className="transition hover:bg-white/[0.02]"
+                          className="group rounded-2xl bg-white shadow-[0_5px_14px_rgba(45,62,80,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(45,62,80,0.12)]"
                         >
                           {/* Nombre y Grupo */}
-                          <td className="py-3.5 pr-3">
-                            <p className="font-bold text-white">{g.nombre}</p>
+                          <td className="rounded-l-2xl border-b-[3px] border-[#D0D9E6] py-3.5 pl-5 pr-3">
+                            <p className="font-extrabold text-[#37475A]">
+                              {g.nombre}
+                            </p>
                             <div className="mt-1 flex items-center gap-1.5">
                               <select
                                 value={g.grupo || "Amigos"}
@@ -2252,31 +2589,31 @@ function GestorEvento({
                                     grupo: e.target.value,
                                   })
                                 }
-                                className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-[#00f0ff] outline-none"
+                                className="rounded-md bg-[#7A22EA]/12 px-2 py-0.5 text-[10px] font-extrabold text-[#7A22EA] outline-none"
                               >
                                 <option value="Familia">Familia</option>
                                 <option value="Amigos">Amigos</option>
                                 <option value="VIP">VIP</option>
                                 <option value="Trabajo">Trabajo</option>
                               </select>
-                              <span className="text-[10px] text-gray-500">
+                              <span className="text-[10px] font-semibold text-[#64748B]">
                                 🪑 {g.mesa_asignada || "Sin asignar"}
                               </span>
                             </div>
                           </td>
 
                           {/* Teléfono / Email */}
-                          <td className="py-3.5 pr-3 text-gray-300">
-                            <span className="block">
+                          <td className="border-b-[3px] border-[#D0D9E6] py-3.5 pr-3 text-[#475569]">
+                            <span className="block font-semibold text-[#37475A]">
                               {g.telefono || "Sin teléfono"}
                             </span>
-                            <span className="block text-[11px] text-gray-500">
+                            <span className="block text-[11px] text-[#64748B]">
                               {g.correo || "Sin email"}
                             </span>
                           </td>
 
                           {/* Estado (🟢/🔴/🟡) */}
-                          <td className="py-3.5 pr-3">
+                          <td className="border-b-[3px] border-[#D0D9E6] py-3.5 pr-3">
                             <select
                               value={
                                 isRejected(g.estado_rsvp)
@@ -2288,23 +2625,38 @@ function GestorEvento({
                                   estado_rsvp: e.target.value,
                                 })
                               }
-                              className={`rounded-lg border px-2.5 py-1 text-xs font-bold outline-none ${
+                              className={`rounded-xl border-b-[3px] px-3 py-1.5 text-xs font-extrabold text-white shadow-xs outline-none ${
                                 g.estado_rsvp === "Confirmado"
-                                  ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                                  ? "border-[#159E6B] bg-[#22C55E]"
                                   : isRejected(g.estado_rsvp)
-                                  ? "border-rose-500/40 bg-rose-500/15 text-rose-300"
-                                  : "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                                  ? "border-[#B80F6A] bg-[#EC1A8B]"
+                                  : "border-[#D98814] bg-[#FFAF36]"
                               }`}
                             >
-                              <option value="Confirmado">🟢 Confirmado</option>
-                              <option value="Pendiente">🟡 Pendiente</option>
-                              <option value="Rechazado">🔴 Rechazado</option>
+                              <option
+                                value="Confirmado"
+                                className="bg-white text-[#37475A]"
+                              >
+                                ✔ Confirmado
+                              </option>
+                              <option
+                                value="Pendiente"
+                                className="bg-white text-[#37475A]"
+                              >
+                                ⏳ Pendiente
+                              </option>
+                              <option
+                                value="Rechazado"
+                                className="bg-white text-[#37475A]"
+                              >
+                                ✖ Rechazado
+                              </option>
                             </select>
                             <span className="sr-only">{statusBadge}</span>
                           </td>
 
                           {/* Acompañantes (Adultos / Niños) y Modalidad */}
-                          <td className="py-3.5 pr-3">
+                          <td className="border-b-[3px] border-[#D0D9E6] py-3.5 pr-3">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <select
                                 value={
@@ -2319,7 +2671,7 @@ function GestorEvento({
                                   });
                                   handleChangeModalidadInvitados(val);
                                 }}
-                                className="rounded border border-[#00f0ff]/30 bg-[#00f0ff]/10 px-2 py-0.5 text-[10px] font-bold text-[#00f0ff] outline-none"
+                                className="rounded-lg border border-[#3167FF]/30 bg-[#3167FF]/10 px-2 py-0.5 text-[10px] font-extrabold text-[#3167FF] outline-none"
                               >
                                 {MODALIDADES_INVITADOS.map((mod) => (
                                   <option key={mod} value={mod}>
@@ -2327,20 +2679,20 @@ function GestorEvento({
                                   </option>
                                 ))}
                               </select>
-                              <span className="rounded bg-white/5 px-2 py-0.5 text-[11px] text-white">
+                              <span className="rounded-lg bg-[#E3E9F2] px-2 py-0.5 text-[11px] font-bold text-[#37475A]">
                                 🧑 {g.adultos ?? g.pases ?? 1} Ad.
                               </span>
-                              <span className="rounded bg-[#00f0ff]/10 px-2 py-0.5 text-[11px] text-[#00f0ff]">
+                              <span className="rounded-lg bg-[#7A22EA]/12 px-2 py-0.5 text-[11px] font-bold text-[#7A22EA]">
                                 🧒 {g.ninos ?? 0} Niños
                               </span>
-                              <span className="text-[10px] font-bold text-gray-400">
+                              <span className="text-[10px] font-extrabold text-[#64748B]">
                                 ({g.pases} total)
                               </span>
                             </div>
                           </td>
 
                           {/* Requerimientos (Menú/Alergias) */}
-                          <td className="py-3.5 pr-3">
+                          <td className="border-b-[3px] border-[#D0D9E6] py-3.5 pr-3">
                             <input
                               type="text"
                               defaultValue={g.nota_alimentacion || ""}
@@ -2354,12 +2706,12 @@ function GestorEvento({
                                 }
                               }}
                               placeholder="Normal / Sin alergias"
-                              className="w-40 rounded-lg border border-white/10 bg-[#07080d] px-2.5 py-1 text-[11px] text-amber-200 outline-none focus:border-amber-400"
+                              className="w-40 rounded-xl border border-[#CFD8E6] bg-[#F4F7FB] px-2.5 py-1.5 text-[11px] font-semibold text-[#37475A] placeholder-[#94A3B8] outline-none transition focus:border-[#3167FF] focus:bg-white"
                             />
                           </td>
 
                           {/* Enlace Personalizado y Acciones */}
-                          <td className="py-3.5 text-right">
+                          <td className="rounded-r-2xl border-b-[3px] border-[#D0D9E6] py-3.5 pr-5 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 type="button"
@@ -2371,14 +2723,14 @@ function GestorEvento({
                                     `✓ Enlace único de ${g.nombre} copiado.`
                                   );
                                 }}
-                                className="rounded-lg border border-[#00f0ff]/40 bg-[#00f0ff]/10 px-2.5 py-1 text-[11px] font-semibold text-[#00f0ff] transition hover:bg-[#00f0ff]/25"
+                                className="rounded-xl border-b-[3px] border-[#1D4ED8] bg-[#3167FF] px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-sm shadow-[#3167FF]/25 transition hover:brightness-110"
                               >
                                 🔗 Copiar Pase
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteGuest(g.idinvitado)}
-                                className="rounded-lg border border-white/10 px-2 py-1 text-gray-400 transition hover:border-rose-500/40 hover:text-rose-400"
+                                className="flex h-7 w-7 items-center justify-center rounded-xl border-b-[2px] border-[#B80F6A] bg-[#EC1A8B] text-xs font-extrabold text-white shadow-xs transition hover:brightness-110"
                                 title="Eliminar invitado"
                               >
                                 ✕
@@ -2402,25 +2754,25 @@ function GestorEvento({
       {currentTab === "broadcast" && (
         <div className="space-y-6">
           {/* 1. Generador de Enlaces (General vs Individuales) */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b0d14] p-6">
+          <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                   TAB C • /events/{evento.idevento}/broadcast
                 </span>
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-white">
+                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                   🔗 Generador de Enlaces de Invitación
                 </h3>
               </div>
 
-              <div className="flex rounded-xl border border-white/15 bg-[#07080d] p-1">
+              <div className="flex rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1">
                 <button
                   type="button"
                   onClick={() => setLinkMode("general")}
                   className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
                     linkMode === "general"
-                      ? "bg-[#ff1e38] text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? "bg-[#6C7EE1] text-white"
+                      : "text-[#8E94A9] hover:text-[#6C7EE1]"
                   }`}
                 >
                   🌐 Enlace General
@@ -2430,8 +2782,8 @@ function GestorEvento({
                   onClick={() => setLinkMode("individual")}
                   className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
                     linkMode === "individual"
-                      ? "bg-[#ff1e38] text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? "bg-[#6C7EE1] text-white"
+                      : "text-[#8E94A9] hover:text-[#6C7EE1]"
                   }`}
                 >
                   🎟️ Enlaces Individuales ({invitados.length})
@@ -2445,7 +2797,7 @@ function GestorEvento({
                   type="text"
                   readOnly
                   value={baseShareUrl}
-                  className="flex-1 rounded-xl border border-white/15 bg-[#07080d] px-4 py-3 font-mono text-xs text-[#00f0ff]"
+                  className="flex-1 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-4 py-3 font-mono text-xs text-[#6C7EE1]"
                 />
                 <button
                   type="button"
@@ -2453,27 +2805,27 @@ function GestorEvento({
                     navigator.clipboard.writeText(baseShareUrl);
                     showNotice("✓ Enlace general copiado al portapapeles.");
                   }}
-                  className="btn-glow-red rounded-xl bg-[#ff1e38] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white"
+                  className="btn-glow-red rounded-xl bg-[#6C7EE1] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white"
                 >
                   📋 Copiar Enlace General
                 </button>
               </div>
             ) : (
-              <div className="mt-4 max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-[#07080d] p-3">
+              <div className="mt-4 max-h-48 overflow-y-auto rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-3">
                 <div className="space-y-2">
                   {invitados.map((g) => (
                     <div
                       key={g.idinvitado}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/5 bg-[#0b0d14] px-3 py-2 text-xs"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#ECEFFA] bg-white border border-[#E6E9F4] px-3 py-2 text-xs"
                     >
-                      <span className="font-bold text-white">
+                      <span className="font-bold text-[#2D3047]">
                         {g.nombre}{" "}
-                        <span className="text-[10px] font-normal text-gray-400">
+                        <span className="text-[10px] font-normal text-[#8E94A9]">
                           ({g.pases} pases)
                         </span>
                       </span>
                       <div className="flex items-center gap-2">
-                        <code className="text-[11px] text-[#00f0ff]">
+                        <code className="text-[11px] text-[#6C7EE1]">
                           {getGuestPersonalLink(g)}
                         </code>
                         <button
@@ -2484,7 +2836,7 @@ function GestorEvento({
                             );
                             showNotice(`✓ Enlace de ${g.nombre} copiado.`);
                           }}
-                          className="rounded bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#ff1e38]"
+                          className="rounded border border-[#6C7EE1] bg-white px-2.5 py-1 text-[10px] font-bold text-[#6C7EE1] hover:bg-[#6C7EE1]"
                         >
                           Copiar
                         </button>
@@ -2498,16 +2850,16 @@ function GestorEvento({
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* 2. Módulo WhatsApp */}
-            <div className="rounded-2xl border border-emerald-500/30 bg-[#0b0d14] p-6">
+            <div className="rounded-2xl border border-emerald-500/30 bg-white border border-[#E6E9F4] shadow-xs p-6">
               <div className="flex items-center justify-between">
-                <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-emerald-400">
+                <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-[#18A97E]">
                   📲 Módulo WhatsApp Directo
                 </h4>
-                <span className="rounded-full bg-emerald-500/15 px-3 py-0.5 text-[10px] font-bold text-emerald-300">
+                <span className="rounded-full bg-emerald-500/15 px-3 py-0.5 text-[10px] font-bold text-[#18A97E]">
                   Web / Móvil
                 </span>
               </div>
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-[#8E94A9]">
                 Personaliza el mensaje con variables automáticas y abre WhatsApp
                 con el enlace único de cada invitado.
               </p>
@@ -2516,18 +2868,18 @@ function GestorEvento({
                 rows={3}
                 value={whatsappMsg}
                 onChange={(e) => setWhatsappMsg(e.target.value)}
-                className="mt-3 w-full rounded-xl border border-white/15 bg-[#07080d] p-3 text-xs text-white outline-none focus:border-emerald-400"
+                className="mt-3 w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-3 text-xs text-[#2D3047] outline-none focus:border-emerald-400"
               />
 
               <div className="mt-4 max-h-64 space-y-2 overflow-y-auto pr-1">
                 {invitados.map((g) => (
                   <div
                     key={g.idinvitado}
-                    className="flex items-center justify-between rounded-xl border border-white/10 bg-[#07080d] px-3.5 py-2.5 text-xs"
+                    className="flex items-center justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] px-3.5 py-2.5 text-xs"
                   >
                     <div>
-                      <p className="font-bold text-white">{g.nombre}</p>
-                      <p className="text-[10px] text-gray-400">
+                      <p className="font-bold text-[#2D3047]">{g.nombre}</p>
+                      <p className="text-[10px] text-[#8E94A9]">
                         {g.telefono || "Sin número"} •{" "}
                         {g.invitacion_enviada
                           ? `✓ Enviado (${g.canal_ultimo_envio || "Digital"})`
@@ -2547,15 +2899,15 @@ function GestorEvento({
             </div>
 
             {/* 3. Módulo Email / SMS Masivo con Plantillas HTML */}
-            <div className="rounded-2xl border border-[#00f0ff]/30 bg-[#0b0d14] p-6">
+            <div className="rounded-2xl border border-[#6C7EE1]/30 bg-white border border-[#E6E9F4] shadow-xs p-6">
               <div className="flex items-center justify-between">
-                <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-[#00f0ff]">
+                <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-[#6C7EE1]">
                   ✉️ Módulo Email HTML / SMS Masivo
                 </h4>
                 <select
                   value={broadcastChannel}
                   onChange={(e) => setBroadcastChannel(e.target.value)}
-                  className="rounded-lg border border-white/15 bg-[#07080d] px-2.5 py-1 text-xs font-bold text-[#00f0ff] outline-none"
+                  className="rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-1 text-xs font-bold text-[#6C7EE1] outline-none"
                 >
                   <option value="Email HTML">Canal: Email HTML</option>
                   <option value="SMS Directo">Canal: SMS Directo</option>
@@ -2570,8 +2922,8 @@ function GestorEvento({
                     onClick={() => setSelectedHtmlTemplate(t.id)}
                     className={`rounded-xl border p-2.5 text-left text-[11px] transition ${
                       selectedHtmlTemplate === t.id
-                        ? "border-[#00f0ff] bg-[#00f0ff]/15 text-white"
-                        : "border-white/10 bg-[#07080d] text-gray-400 hover:text-white"
+                        ? "border-[#6C7EE1] bg-[#6C7EE1]/15 text-white"
+                        : "border-[#E6E9F4] bg-[#F7F8FC] text-[#8E94A9] hover:text-[#6C7EE1]"
                     }`}
                   >
                     <span className="block font-bold">{t.name}</span>
@@ -2580,8 +2932,8 @@ function GestorEvento({
               </div>
 
               {/* Vista previa de la Plantilla HTML de Correo */}
-              <div className="mt-4 rounded-xl border border-white/15 bg-[#050508] p-4">
-                <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2 text-[11px] text-gray-400">
+              <div className="mt-4 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-4">
+                <div className="flex items-center justify-between gap-2 border-b border-[#E6E9F4] pb-2 text-[11px] text-[#8E94A9]">
                   <span className="truncate">
                     <strong>Asunto:</strong>{" "}
                     {formatGuestMessage(activeEmailTemplate.subject, null)}
@@ -2592,7 +2944,7 @@ function GestorEvento({
                       setHtmlPreviewTab("visual");
                       setShowHtmlPreviewModal(true);
                     }}
-                    className="shrink-0 cursor-pointer rounded-lg border border-[#ff1e38]/40 bg-[#ff1e38]/20 px-2.5 py-1 text-[10px] font-bold text-[#ff4d63] transition hover:bg-[#ff1e38] hover:text-white"
+                    className="shrink-0 cursor-pointer rounded-lg border border-[#6C7EE1]/40 bg-[#6C7EE1]/20 px-2.5 py-1 text-[10px] font-bold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
                     title="Abrir vista previa completa del correo HTML y ver código fuente"
                   >
                     👁️ HTML PREVIEW
@@ -2612,10 +2964,10 @@ function GestorEvento({
                   >
                     {activeEmailTemplate.badge}
                   </p>
-                  <p className="font-display mt-1 text-2xl font-bold uppercase text-white">
+                  <p className="font-display mt-1 text-2xl font-bold uppercase text-[#2D3047]">
                     {evento.nombre}
                   </p>
-                  <p className="mt-1 text-xs text-gray-300">
+                  <p className="mt-1 text-xs text-[#5B617A]">
                     📅 {formatDateInput(evento.fecha_evento)} • ⏰{" "}
                     {evento.hora_evento} hrs • 📍 {evento.lugar || "Salón VIP"}
                   </p>
@@ -2636,7 +2988,7 @@ function GestorEvento({
                       canal: broadcastChannel,
                     })
                   }
-                  className="btn-glow-red flex-1 rounded-xl bg-[#ff1e38] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white"
+                  className="btn-glow-red flex-1 rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white"
                 >
                   📤 Enviar a No Enviados
                 </button>
@@ -2648,7 +3000,7 @@ function GestorEvento({
                       canal: broadcastChannel,
                     })
                   }
-                  className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:text-white"
+                  className="rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-4 py-2.5 text-xs font-semibold text-[#2D3047] hover:text-[#6C7EE1]"
                 >
                   🔄 Reenviar a Todos ({invitados.length})
                 </button>
@@ -2662,23 +3014,23 @@ function GestorEvento({
                 onClick={() => setShowHtmlPreviewModal(false)}
               >
                 <div
-                  className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/15 bg-[#0b0d14] p-6 shadow-2xl"
+                  className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6 shadow-2xl"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E9F4] pb-4">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                         VISTA PREVIA DE PLANTILLA DE CORREO •{" "}
                         {activeEmailTemplate.name}
                       </span>
-                      <h4 className="font-display text-2xl font-bold uppercase text-white">
+                      <h4 className="font-display text-2xl font-bold uppercase text-[#2D3047]">
                         ✉️ Previsualizador HTML de Invitación
                       </h4>
                     </div>
                     <button
                       type="button"
                       onClick={() => setShowHtmlPreviewModal(false)}
-                      className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-gray-300 hover:border-[#ff1e38] hover:text-white"
+                      className="rounded-lg border border-[#DCE0F0] bg-[#F0F2F8] px-3 py-1.5 text-xs font-bold text-[#5B617A] hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
                     >
                       ✕ Cerrar
                     </button>
@@ -2687,13 +3039,13 @@ function GestorEvento({
                   {/* Controles superiores: Selector de Invitado de Prueba y Pestaña Visual vs Código */}
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <label className="text-xs font-semibold text-gray-400">
+                      <label className="text-xs font-semibold text-[#8E94A9]">
                         Previsualizar como:
                       </label>
                       <select
                         value={previewGuestId}
                         onChange={(e) => setPreviewGuestId(e.target.value)}
-                        className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-1.5 text-xs font-semibold text-white outline-none focus:border-[#00f0ff]"
+                        className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-1.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                       >
                         <option value="">Invitado General (Demo)</option>
                         {invitados.map((g) => (
@@ -2704,14 +3056,14 @@ function GestorEvento({
                       </select>
                     </div>
 
-                    <div className="flex rounded-xl border border-white/15 bg-[#07080d] p-1">
+                    <div className="flex rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1">
                       <button
                         type="button"
                         onClick={() => setHtmlPreviewTab("visual")}
                         className={`rounded-lg px-3 py-1 text-xs font-bold transition ${
                           htmlPreviewTab === "visual"
-                            ? "bg-[#ff1e38] text-white"
-                            : "text-gray-400 hover:text-white"
+                            ? "bg-[#6C7EE1] text-white"
+                            : "text-[#8E94A9] hover:text-[#6C7EE1]"
                         }`}
                       >
                         👁️ Vista Visual
@@ -2721,8 +3073,8 @@ function GestorEvento({
                         onClick={() => setHtmlPreviewTab("code")}
                         className={`rounded-lg px-3 py-1 text-xs font-bold transition ${
                           htmlPreviewTab === "code"
-                            ? "bg-[#ff1e38] text-white"
-                            : "text-gray-400 hover:text-white"
+                            ? "bg-[#6C7EE1] text-white"
+                            : "text-[#8E94A9] hover:text-[#6C7EE1]"
                         }`}
                       >
                         💻 Código HTML
@@ -2731,9 +3083,9 @@ function GestorEvento({
                   </div>
 
                   {htmlPreviewTab === "visual" ? (
-                    <div className="mt-4 overflow-hidden rounded-2xl border border-white/15 bg-[#050508]">
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC]">
                       {/* Cabecera simulada del cliente de correo */}
-                      <div className="space-y-1 border-b border-white/10 bg-[#07080d] px-4 py-3 text-xs text-gray-300">
+                      <div className="space-y-1 border-b border-[#E6E9F4] bg-[#F7F8FC] px-4 py-3 text-xs text-[#5B617A]">
                         <p>
                           <span className="font-semibold text-gray-500">
                             De:
@@ -2754,7 +3106,7 @@ function GestorEvento({
                           <span className="font-semibold text-gray-500">
                             Asunto:
                           </span>{" "}
-                          <strong className="text-white">
+                          <strong className="text-[#2D3047]">
                             {formatGuestMessage(
                               activeEmailTemplate.subject,
                               previewGuestObj
@@ -2838,7 +3190,7 @@ function GestorEvento({
                             </div>
 
                             {/* Notificación de Modalidad de Asistencia */}
-                            <div className="mt-3 rounded-xl border border-[#00f0ff]/35 bg-[#00f0ff]/10 px-3.5 py-2 text-xs text-[#00f0ff]">
+                            <div className="mt-3 rounded-xl border border-[#15b2f5]/35 bg-[#15b2f5]/10 px-3.5 py-2 text-xs text-[#15b2f5]">
                               🔔 <strong>Modalidad de Asistencia:</strong>{" "}
                               {previewGuestObj?.modalidad_pase ||
                                 invForm.modalidad_invitados ||
@@ -2875,7 +3227,7 @@ function GestorEvento({
                   ) : (
                     <div className="mt-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-[#8E94A9]">
                           Código HTML con estilos en línea listo para clientes
                           de correo (Gmail, Outlook, Apple Mail):
                         </p>
@@ -2889,12 +3241,12 @@ function GestorEvento({
                               "✓ Código HTML de la invitación copiado al portapapeles."
                             );
                           }}
-                          className="rounded-xl bg-[#00f0ff]/20 px-3.5 py-1.5 text-xs font-bold text-[#00f0ff] hover:bg-[#00f0ff]/30"
+                          className="rounded-xl bg-[#6C7EE1]/20 px-3.5 py-1.5 text-xs font-bold text-[#6C7EE1] hover:bg-[#6C7EE1]/30"
                         >
                           📋 Copiar Código HTML
                         </button>
                       </div>
-                      <pre className="max-h-80 overflow-auto rounded-xl border border-white/15 bg-[#050508] p-4 font-mono text-[11px] leading-relaxed text-emerald-300">
+                      <pre className="max-h-80 overflow-auto rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-4 font-mono text-[11px] leading-relaxed text-[#18A97E]">
                         {buildEmailHtmlCode(previewGuestObj)}
                       </pre>
                     </div>
@@ -2905,25 +3257,25 @@ function GestorEvento({
           </div>
 
           {/* 4. Sección de Recordatorios Automatizados */}
-          <div className="rounded-2xl border border-amber-500/30 bg-[#0b0d14] p-6">
+          <div className="rounded-2xl border border-amber-500/30 bg-white border border-[#E6E9F4] shadow-xs p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#D97706]">
                   AUTOMATIZACIÓN INTELIGENTE
                 </span>
-                <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-white">
+                <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                   ⏰ Recordatorios Automatizados para &ldquo;Pendientes&rdquo;
                 </h4>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-[#8E94A9]">
                   Dispara automáticamente un mensaje a los{" "}
-                  <strong className="text-amber-300">
+                  <strong className="text-[#D97706]">
                     {pendientesList.length} invitados en estado Pendiente
                   </strong>{" "}
                   cuando falten X días para la fiesta.
                 </p>
               </div>
 
-              <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-amber-300">
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-[#D97706]">
                 <input
                   type="checkbox"
                   checked={Boolean(invForm.recordatorio_activo)}
@@ -2941,7 +3293,7 @@ function GestorEvento({
 
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-300">
+                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
                   Disparar cuando falten (días)
                 </label>
                 <input
@@ -2955,12 +3307,12 @@ function GestorEvento({
                       recordatorio_dias: e.target.value,
                     }))
                   }
-                  className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-sm font-bold text-amber-300 outline-none focus:border-amber-400"
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-sm font-bold text-[#D97706] outline-none focus:border-amber-400"
                 />
               </div>
 
               <div className="md:col-span-3">
-                <label className="mb-1 block text-xs font-semibold text-gray-300">
+                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
                   Mensaje del Recordatorio Automático
                 </label>
                 <input
@@ -2972,25 +3324,25 @@ function GestorEvento({
                       recordatorio_mensaje: e.target.value,
                     }))
                   }
-                  className="w-full rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-amber-400"
                 />
               </div>
             </div>
 
             {pendientesList.length > 0 && (
-              <div className="mt-4 rounded-xl border border-amber-500/20 bg-[#07080d] p-3">
-                <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-amber-300">
+              <div className="mt-4 rounded-xl border border-amber-500/20 bg-[#F7F8FC] p-3">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[#D97706]">
                   🟡 Invitados en estado &ldquo;Pendiente&rdquo; ({pendientesList.length}) — Envío directo por WhatsApp:
                 </p>
                 <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
                   {pendientesList.map((g) => (
                     <div
                       key={g.idinvitado}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-[#0b0d14] px-3 py-2 text-xs"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#E6E9F4] bg-white shadow-xs px-3 py-2 text-xs"
                     >
                       <div>
-                        <span className="font-bold text-white">{g.nombre}</span>{" "}
-                        <span className="text-[10px] text-gray-400">
+                        <span className="font-bold text-[#2D3047]">{g.nombre}</span>{" "}
+                        <span className="text-[10px] text-[#8E94A9]">
                           ({g.telefono || "Sin teléfono"} •{" "}
                           {g.correo || "Sin correo"})
                         </span>
@@ -3031,7 +3383,7 @@ function GestorEvento({
               <button
                 type="button"
                 onClick={(e) => handleSaveEvento(e)}
-                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:text-white"
+                className="rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-4 py-2.5 text-xs font-semibold text-[#2D3047] hover:text-[#6C7EE1]"
               >
                 💾 Guardar Regla de Recordatorio
               </button>
@@ -3081,16 +3433,16 @@ function GestorEvento({
       {currentTab === "logistics" && (
         <div className="space-y-8">
           {/* 1. DISTRIBUCIÓN DE MESAS / SEATING CHART (DRAG & DROP) */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b0d14] p-6">
-            <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-4 lg:flex-row lg:items-center">
+          <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
+            <div className="flex flex-col justify-between gap-4 border-b border-[#E6E9F4] pb-4 lg:flex-row lg:items-center">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                   TAB D • /events/{evento.idevento}/logistics
                 </span>
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-white">
+                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                   🪑 Distribución de Mesas / Seating Chart (Drag & Drop)
                 </h3>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-[#8E94A9]">
                   Arrastra y suelta invitados desde la columna izquierda hacia
                   cualquier mesa numerada, o cámbialos con el selector rápido.
                 </p>
@@ -3108,7 +3460,7 @@ function GestorEvento({
                     setNewMesaForm((p) => ({ ...p, titulo: e.target.value }))
                   }
                   placeholder="Ej. Mesa 4 - Terraza"
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs text-white outline-none focus:border-[#ff1e38]"
+                  className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
                 <input
                   type="number"
@@ -3121,12 +3473,12 @@ function GestorEvento({
                       capacidad_mesa: e.target.value,
                     }))
                   }
-                  className="w-20 rounded-xl border border-white/15 bg-[#07080d] px-2.5 py-2 text-xs text-white outline-none"
+                  className="w-20 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-2 text-xs text-[#2D3047] outline-none"
                   title="Capacidad de asientos"
                 />
                 <button
                   type="submit"
-                  className="btn-glow-red rounded-xl bg-[#ff1e38] px-4 py-2 text-xs font-bold text-white"
+                  className="btn-glow-red rounded-xl bg-[#6C7EE1] px-4 py-2 text-xs font-bold text-white"
                 >
                   + Crear Mesa
                 </button>
@@ -3144,15 +3496,15 @@ function GestorEvento({
                 onDrop={() => handleDropGuestOnMesa("Sin asignar")}
                 className={`rounded-2xl border p-4 transition lg:col-span-4 ${
                   dragOverMesa === "Sin asignar"
-                    ? "border-[#00f0ff] bg-[#00f0ff]/10"
-                    : "border-white/10 bg-[#07080d]"
+                    ? "border-[#6C7EE1] bg-[#6C7EE1]/10"
+                    : "border-[#E6E9F4] bg-[#F7F8FC]"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#5B617A]">
                     🚶 Invitados Sin Mesa Asignada
                   </h4>
-                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-[#00f0ff]">
+                  <span className="rounded-full bg-[#ECEFFA] px-2.5 py-0.5 text-[10px] font-bold text-[#6C7EE1]">
                     {
                       invitados.filter(
                         (g) =>
@@ -3173,18 +3525,18 @@ function GestorEvento({
                         key={g.idinvitado}
                         draggable
                         onDragStart={() => setDraggedGuestId(g.idinvitado)}
-                        className="cursor-grab rounded-xl border border-white/10 bg-[#0b0d14] p-3 text-xs transition hover:border-[#00f0ff]/60 active:cursor-grabbing"
+                        className="cursor-grab rounded-xl border border-[#E6E9F4] bg-white shadow-xs p-3 text-xs transition hover:border-[#6C7EE1]/60 active:cursor-grabbing"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-white">
+                          <span className="font-bold text-[#2D3047]">
                             ⠿ {g.nombre}
                           </span>
-                          <span className="rounded bg-[#ff1e38]/20 px-2 py-0.5 text-[10px] font-bold text-[#ff4d63]">
+                          <span className="rounded bg-[#6C7EE1]/20 px-2 py-0.5 text-[10px] font-bold text-[#6C7EE1]">
                             {g.pases} pases
                           </span>
                         </div>
                         <div className="mt-2 flex items-center justify-between gap-2">
-                          <span className="text-[10px] text-gray-400">
+                          <span className="text-[10px] text-[#8E94A9]">
                             {g.grupo || "Amigos"}
                           </span>
                           <select
@@ -3194,7 +3546,7 @@ function GestorEvento({
                                 mesa_asignada: e.target.value,
                               })
                             }
-                            className="rounded border border-white/15 bg-[#07080d] px-2 py-0.5 text-[10px] text-gray-300 outline-none"
+                            className="rounded border border-[#DCE0F0] bg-[#F7F8FC] px-2 py-0.5 text-[10px] text-[#5B617A] outline-none"
                           >
                             <option value="Sin asignar">Mover a mesa...</option>
                             {mesasItems.map((m) => (
@@ -3233,17 +3585,17 @@ function GestorEvento({
                       onDrop={() => handleDropGuestOnMesa(mesa.titulo)}
                       className={`flex flex-col justify-between rounded-2xl border p-4 transition ${
                         dragOverMesa === mesa.titulo
-                          ? "border-[#00f0ff] bg-[#00f0ff]/10 shadow-[0_0_20px_rgba(0,240,255,0.2)]"
-                          : "border-white/10 bg-[#07080d]"
+                          ? "border-[#6C7EE1] bg-[#6C7EE1]/10 shadow-[0_0_20px_rgba(21,178,245,0.2)]"
+                          : "border-[#E6E9F4] bg-[#F7F8FC]"
                       }`}
                     >
                       <div>
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <h5 className="font-bold text-white">
+                            <h5 className="font-bold text-[#2D3047]">
                               🪑 {mesa.titulo}
                             </h5>
-                            <p className="text-[10px] text-gray-400">
+                            <p className="text-[10px] text-[#8E94A9]">
                               {mesa.detalle || "Zona General"}
                             </p>
                           </div>
@@ -3251,8 +3603,8 @@ function GestorEvento({
                             <span
                               className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                                 ocupados > cap
-                                  ? "bg-rose-500/20 text-rose-300"
-                                  : "bg-emerald-500/15 text-emerald-300"
+                                  ? "bg-rose-500/20 text-[#F26B61]"
+                                  : "bg-emerald-500/15 text-[#18A97E]"
                               }`}
                             >
                               {ocupados} / {cap} asientos
@@ -3260,7 +3612,7 @@ function GestorEvento({
                             <button
                               type="button"
                               onClick={() => handleDeleteLogistica(mesa.iditem)}
-                              className="text-xs text-gray-500 hover:text-rose-400"
+                              className="text-xs text-gray-500 hover:text-[#F26B61]"
                             >
                               ✕
                             </button>
@@ -3268,10 +3620,10 @@ function GestorEvento({
                         </div>
 
                         {/* Barra de capacidad de la mesa */}
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#ECEFFA]">
                           <div
                             className={`h-full transition-all ${
-                              ocupados > cap ? "bg-rose-500" : "bg-[#00f0ff]"
+                              ocupados > cap ? "bg-rose-500" : "bg-[#6C7EE1]"
                             }`}
                             style={{ width: `${pct}%` }}
                           />
@@ -3280,7 +3632,7 @@ function GestorEvento({
                         {/* Invitados sentados en la mesa */}
                         <div className="mt-3 space-y-1.5">
                           {seatedGuests.length === 0 ? (
-                            <p className="rounded-lg border border-dashed border-white/10 py-4 text-center text-[11px] text-gray-500">
+                            <p className="rounded-lg border border-dashed border-[#E6E9F4] py-4 text-center text-[11px] text-gray-500">
                               Arrastra invitados aquí
                             </p>
                           ) : (
@@ -3291,11 +3643,11 @@ function GestorEvento({
                                 onDragStart={() =>
                                   setDraggedGuestId(sg.idinvitado)
                                 }
-                                className="flex cursor-grab items-center justify-between rounded-lg border border-white/10 bg-[#0b0d14] px-2.5 py-1.5 text-xs"
+                                className="flex cursor-grab items-center justify-between rounded-lg border border-[#E6E9F4] bg-white shadow-xs px-2.5 py-1.5 text-xs"
                               >
-                                <span className="truncate font-semibold text-white">
+                                <span className="truncate font-semibold text-[#2D3047]">
                                   ⠿ {sg.nombre}{" "}
-                                  <span className="text-[10px] text-[#00f0ff]">
+                                  <span className="text-[10px] text-[#6C7EE1]">
                                     ({sg.pases}p)
                                   </span>
                                 </span>
@@ -3306,7 +3658,7 @@ function GestorEvento({
                                       mesa_asignada: "Sin asignar",
                                     })
                                   }
-                                  className="text-[10px] text-gray-400 hover:text-rose-400"
+                                  className="text-[10px] text-[#8E94A9] hover:text-[#F26B61]"
                                   title="Quitar de la mesa"
                                 >
                                   Quitar
@@ -3326,11 +3678,11 @@ function GestorEvento({
           {/* 2. CHECKLIST / TAREAS Y 3. CRONOGRAMA DEL DÍA (ITINERARIO) */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Checklist / Tareas con Fecha Límite */}
-            <div className="rounded-2xl border border-white/10 bg-[#0b0d14] p-6">
-              <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-white">
+            <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
+              <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                 ✅ Checklist / Tareas con Fecha Límite
               </h4>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[#8E94A9]">
                 Pendientes previos a la fiesta (ej. Contratar sonido, comprar
                 bebidas, confirmar pastel).
               </p>
@@ -3347,7 +3699,7 @@ function GestorEvento({
                     setNewTaskForm((p) => ({ ...p, titulo: e.target.value }))
                   }
                   placeholder="Tarea pendiente *"
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs text-white outline-none focus:border-[#ff1e38] sm:col-span-2"
+                  className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1] sm:col-span-2"
                 />
                 <input
                   type="date"
@@ -3358,7 +3710,7 @@ function GestorEvento({
                       fecha_limite: e.target.value,
                     }))
                   }
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs text-white outline-none focus:border-[#ff1e38]"
+                  className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
                 <input
                   type="text"
@@ -3367,11 +3719,11 @@ function GestorEvento({
                     setNewTaskForm((p) => ({ ...p, detalle: e.target.value }))
                   }
                   placeholder="Responsable / Proveedor"
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs text-white outline-none sm:col-span-2"
+                  className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none sm:col-span-2"
                 />
                 <button
                   type="submit"
-                  className="btn-glow-red rounded-xl bg-[#ff1e38] px-4 py-2 text-xs font-bold text-white"
+                  className="btn-glow-red rounded-xl bg-[#6C7EE1] px-4 py-2 text-xs font-bold text-white"
                 >
                   + Agregar Tarea
                 </button>
@@ -3383,7 +3735,7 @@ function GestorEvento({
                   return (
                     <div
                       key={item.iditem}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#07080d] p-3 text-xs"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-3 text-xs"
                     >
                       <label className="flex cursor-pointer items-start gap-2.5">
                         <input
@@ -3394,19 +3746,19 @@ function GestorEvento({
                               estado: done ? "Pendiente" : "Completado",
                             })
                           }
-                          className="mt-0.5 h-4 w-4 accent-[#00f0ff]"
+                          className="mt-0.5 h-4 w-4 accent-[#6C7EE1]"
                         />
                         <div>
                           <p
                             className={`font-bold ${
                               done
                                 ? "line-through text-gray-500"
-                                : "text-white"
+                                : "text-[#2D3047]"
                             }`}
                           >
                             {item.titulo}
                           </p>
-                          <p className="text-[10px] text-gray-400">
+                          <p className="text-[10px] text-[#8E94A9]">
                             {item.detalle || "General"}
                             {item.fecha_limite
                               ? ` • 📅 Límite: ${item.fecha_limite}`
@@ -3417,7 +3769,7 @@ function GestorEvento({
                       <button
                         type="button"
                         onClick={() => handleDeleteLogistica(item.iditem)}
-                        className="text-gray-500 hover:text-rose-400"
+                        className="text-gray-500 hover:text-[#F26B61]"
                       >
                         ✕
                       </button>
@@ -3428,11 +3780,11 @@ function GestorEvento({
             </div>
 
             {/* Cronograma del Día (Itinerario) */}
-            <div className="rounded-2xl border border-white/10 bg-[#0b0d14] p-6">
-              <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-white">
+            <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
+              <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                 ⏱️ Cronograma del Día (Itinerario)
               </h4>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[#8E94A9]">
                 Horarios minuto a minuto (ej. 20:00 Recepción, 21:30 Cena, 23:00
                 Apertura de pista).
               </p>
@@ -3450,7 +3802,7 @@ function GestorEvento({
                       hora_itinerario: e.target.value,
                     }))
                   }
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs font-bold text-[#00f0ff] outline-none"
+                  className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs font-bold text-[#6C7EE1] outline-none"
                 />
                 <input
                   type="text"
@@ -3460,30 +3812,30 @@ function GestorEvento({
                     setNewCronoForm((p) => ({ ...p, titulo: e.target.value }))
                   }
                   placeholder="Actividad (ej. Apertura de pista)"
-                  className="rounded-xl border border-white/15 bg-[#07080d] px-3 py-2 text-xs text-white outline-none sm:col-span-2"
+                  className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none sm:col-span-2"
                 />
                 <button
                   type="submit"
-                  className="btn-glow-red rounded-xl bg-[#ff1e38] px-3 py-2 text-xs font-bold text-white"
+                  className="btn-glow-red rounded-xl bg-[#6C7EE1] px-3 py-2 text-xs font-bold text-white"
                 >
                   + Añadir Hora
                 </button>
               </form>
 
-              <div className="mt-4 space-y-2.5 border-l-2 border-[#ff1e38]/40 pl-4 ml-2">
+              <div className="mt-4 space-y-2.5 border-l-2 border-[#6C7EE1]/40 pl-4 ml-2">
                 {cronogramaItems.map((item) => (
                   <div
                     key={item.iditem}
-                    className="flex items-center justify-between rounded-xl border border-white/10 bg-[#07080d] p-3 text-xs"
+                    className="flex items-center justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-3 text-xs"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="rounded-lg bg-[#ff1e38]/20 px-2.5 py-1 font-mono text-xs font-bold text-[#ff4d63]">
+                      <span className="rounded-lg bg-[#6C7EE1]/20 px-2.5 py-1 font-mono text-xs font-bold text-[#6C7EE1]">
                         {item.hora_itinerario || "20:00"}
                       </span>
                       <div>
-                        <p className="font-bold text-white">{item.titulo}</p>
+                        <p className="font-bold text-[#2D3047]">{item.titulo}</p>
                         {item.detalle && (
-                          <p className="text-[10px] text-gray-400">
+                          <p className="text-[10px] text-[#8E94A9]">
                             {item.detalle}
                           </p>
                         )}
@@ -3492,7 +3844,7 @@ function GestorEvento({
                     <button
                       type="button"
                       onClick={() => handleDeleteLogistica(item.iditem)}
-                      className="text-gray-500 hover:text-rose-400"
+                      className="text-gray-500 hover:text-[#F26B61]"
                     >
                       ✕
                     </button>
@@ -3511,9 +3863,9 @@ function GestorEvento({
         <div className="space-y-6">
           <form
             onSubmit={handleAddBudget}
-            className="rounded-2xl border border-white/10 bg-[#0b0d14] p-6"
+            className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6"
           >
-            <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-white">
+            <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
               💰 Control de Presupuesto y Proveedores
             </h3>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -3525,7 +3877,7 @@ function GestorEvento({
                   setBudgetForm((p) => ({ ...p, concepto: e.target.value }))
                 }
                 placeholder="Concepto / Proveedor *"
-                className="rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none lg:col-span-2"
+                className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none lg:col-span-2"
               />
               <input
                 type="number"
@@ -3538,7 +3890,7 @@ function GestorEvento({
                   }))
                 }
                 placeholder="Costo Estimado ($)"
-                className="rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none"
+                className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none"
               />
               <input
                 type="number"
@@ -3548,22 +3900,22 @@ function GestorEvento({
                   setBudgetForm((p) => ({ ...p, monto_pagado: e.target.value }))
                 }
                 placeholder="Monto Pagado ($)"
-                className="rounded-xl border border-white/15 bg-[#07080d] px-3.5 py-2.5 text-xs text-white outline-none"
+                className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none"
               />
               <button
                 type="submit"
-                className="btn-glow-red rounded-xl bg-[#ff1e38] px-4 py-2.5 text-xs font-bold uppercase text-white"
+                className="btn-glow-red rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-bold uppercase text-white"
               >
                 + Registrar Gasto
               </button>
             </div>
           </form>
 
-          <div className="rounded-2xl border border-white/10 bg-[#0b0d14] p-6">
+          <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-white/10 text-gray-400">
+                  <tr className="border-b border-[#E6E9F4] text-[#8E94A9]">
                     <th className="pb-3">Concepto</th>
                     <th className="pb-3">Estimado</th>
                     <th className="pb-3">Pagado</th>
@@ -3571,16 +3923,16 @@ function GestorEvento({
                     <th className="pb-3 text-right">Acción</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-[#ECEFFA]">
                   {presupuesto.map((b) => (
                     <tr key={b.idgasto}>
-                      <td className="py-3 font-semibold text-white">
+                      <td className="py-3 font-semibold text-[#2D3047]">
                         {b.concepto}
                       </td>
-                      <td className="py-3 text-gray-300">
+                      <td className="py-3 text-[#5B617A]">
                         ${Number(b.monto_estimado || 0).toLocaleString()}
                       </td>
-                      <td className="py-3 text-emerald-400 font-bold">
+                      <td className="py-3 text-[#18A97E] font-bold">
                         ${Number(b.monto_pagado || 0).toLocaleString()}
                       </td>
                       <td className="py-3">
@@ -3591,7 +3943,7 @@ function GestorEvento({
                               estado_pago: e.target.value,
                             })
                           }
-                          className="rounded bg-white/10 px-2 py-1 text-[11px] text-white outline-none"
+                          className="rounded bg-[#ECEFFA] px-2 py-1 text-[11px] text-[#2D3047] outline-none"
                         >
                           <option value="Pendiente">Pendiente</option>
                           <option value="Anticipo">Anticipo</option>
@@ -3602,7 +3954,7 @@ function GestorEvento({
                         <button
                           type="button"
                           onClick={() => handleDeleteBudget(b.idgasto)}
-                          className="text-gray-400 hover:text-rose-400"
+                          className="text-[#8E94A9] hover:text-[#F26B61]"
                         >
                           Eliminar
                         </button>
@@ -3623,24 +3975,24 @@ function GestorEvento({
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* Columna Izquierda (7 cols): Duplicar, Pausar RSVP, Cambiar Propietario, Eliminar */}
           <div className="space-y-6 lg:col-span-7">
-            <div className="rounded-2xl border border-white/10 bg-[#0b0d14] p-6">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+            <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                 TAB E • /events/{evento.idevento}/settings
               </span>
-              <h3 className="font-display mt-1 text-2xl font-bold uppercase tracking-wide text-white">
+              <h3 className="font-display mt-1 text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                 ⚙️ Acciones de Control del Evento
               </h3>
 
               <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* 1. Pausar / Reanudar respuestas RSVP */}
-                <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-[#07080d] p-4">
+                <div className="flex flex-col justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4">
                   <div>
-                    <h4 className="text-sm font-bold text-white">
+                    <h4 className="text-sm font-bold text-[#2D3047]">
                       {invForm.rsvp_habilitado
                         ? "⏸️ Pausar Respuestas del RSVP"
                         : "▶️ Reanudar Respuestas del RSVP"}
                     </h4>
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-1 text-xs text-[#8E94A9]">
                       Congela temporalmente el formulario de confirmación para
                       que nadie más modifique su asistencia.
                     </p>
@@ -3650,23 +4002,23 @@ function GestorEvento({
                     onClick={handleTogglePauseRsvp}
                     className={`mt-4 w-full rounded-xl py-2.5 text-xs font-bold uppercase tracking-wider transition ${
                       invForm.rsvp_habilitado
-                        ? "border border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500 hover:text-black"
+                        ? "border border-amber-500/40 bg-amber-500/15 text-[#D97706] hover:bg-amber-500 hover:text-black"
                         : "bg-emerald-600 text-white hover:bg-emerald-500"
                     }`}
                   >
                     {invForm.rsvp_habilitado
-                      ? "Pausar RSVP Ahora"
+                      ? "Pausar Evento"
                       : "Reactivar RSVP"}
                   </button>
                 </div>
 
                 {/* 2. Duplicar Evento */}
-                <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-[#07080d] p-4">
+                <div className="flex flex-col justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4">
                   <div>
-                    <h4 className="text-sm font-bold text-white">
+                    <h4 className="text-sm font-bold text-[#2D3047]">
                       📑 Duplicar Evento
                     </h4>
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-1 text-xs text-[#8E94A9]">
                       Crea una copia exacta del diseño de invitación, mesas,
                       cronograma y presupuesto para otra fecha.
                     </p>
@@ -3674,7 +4026,7 @@ function GestorEvento({
                   <button
                     type="button"
                     onClick={handleDuplicateEvento}
-                    className="mt-4 w-full rounded-xl border border-[#00f0ff]/40 bg-[#00f0ff]/15 py-2.5 text-xs font-bold uppercase tracking-wider text-[#00f0ff] transition hover:bg-[#00f0ff] hover:text-black"
+                    className="mt-4 w-full rounded-xl border border-[#6C7EE1]/40 bg-[#6C7EE1]/15 py-2.5 text-xs font-bold uppercase tracking-wider text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
                   >
                     📑 Duplicar Este Evento
                   </button>
@@ -3684,12 +4036,12 @@ function GestorEvento({
               {/* 3. Cambiar Propietario / Organizador */}
               <form
                 onSubmit={handleCambiarPropietario}
-                className="mt-6 rounded-xl border border-white/10 bg-[#07080d] p-4"
+                className="mt-6 rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4"
               >
-                <h4 className="text-sm font-bold text-white">
+                <h4 className="text-sm font-bold text-[#2D3047]">
                   👤 Cambiar Propietario / Organizador Responsable
                 </h4>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-[#8E94A9]">
                   Asigna el correo del organizador titular o transfiere el
                   evento a otra cuenta registrada en la plataforma.
                 </p>
@@ -3701,22 +4053,22 @@ function GestorEvento({
                     value={nuevoPropietarioEmail}
                     onChange={(e) => setNuevoPropietarioEmail(e.target.value)}
                     placeholder="correo@nuevo-organizador.com"
-                    className="flex-1 rounded-xl border border-white/15 bg-[#0b0d14] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#00f0ff]"
+                    className="flex-1 rounded-xl border border-[#E6E9F4] bg-white shadow-xs px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                   />
                   <button
                     type="submit"
-                    className="rounded-xl bg-white/10 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#00f0ff] hover:text-black"
+                    className="rounded-xl border border-[#6C7EE1] bg-white px-4 py-2.5 text-xs font-bold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
                   >
                     Actualizar Propietario
                   </button>
                 </div>
 
-                <label className="mt-2.5 flex items-center gap-2 text-[11px] text-gray-400">
+                <label className="mt-2.5 flex items-center gap-2 text-[11px] text-[#8E94A9]">
                   <input
                     type="checkbox"
                     checked={transferirCuenta}
                     onChange={(e) => setTransferirCuenta(e.target.checked)}
-                    className="h-3.5 w-3.5 accent-[#ff1e38]"
+                    className="h-3.5 w-3.5 accent-[#6C7EE1]"
                   />
                   <span>
                     Transferir propiedad completa si el correo ya tiene cuenta
@@ -3727,18 +4079,18 @@ function GestorEvento({
             </div>
 
             {/* 4. Eliminar Evento */}
-            <div className="rounded-2xl border border-rose-500/30 bg-rose-950/15 p-6">
-              <h4 className="text-sm font-bold uppercase tracking-wider text-rose-400">
+            <div className="rounded-2xl border border-rose-500/30 bg-[#FFF5F7] p-6">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-[#F26B61]">
                 ⚠️ Zona de Peligro: Eliminar Evento
               </h4>
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-[#8E94A9]">
                 Esta acción eliminará permanentemente el evento, su lista de
                 invitados, mesas y registros asociados.
               </p>
               <button
                 type="button"
                 onClick={handleDeleteEvento}
-                className="mt-4 rounded-xl border border-rose-500/50 bg-rose-600/20 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-rose-300 transition hover:bg-rose-600 hover:text-white"
+                className="mt-4 rounded-xl border border-rose-500/50 bg-rose-600/20 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#F26B61] transition hover:bg-rose-600 hover:text-white"
               >
                 🗑️ Eliminar Evento Definitivamente
               </button>
@@ -3746,13 +4098,13 @@ function GestorEvento({
           </div>
 
           {/* Columna Derecha (5 cols): Generador de Código QR de Control de Acceso */}
-          <div className="rounded-2xl border border-[#00f0ff]/30 bg-[#0b0d14] p-6 lg:col-span-5">
+          <div className="rounded-2xl border border-[#6C7EE1]/30 bg-white border border-[#E6E9F4] shadow-xs p-6 lg:col-span-5">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f0ff]">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                   CHECK-IN EN PUERTA
                 </span>
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-white">
+                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                   📲 Código QR de Control de Acceso
                 </h3>
               </div>
@@ -3766,32 +4118,32 @@ function GestorEvento({
                   setInvForm((p) => ({ ...p, codigo_acceso_qr: newCode }));
                   handleSaveEvento(null, { codigo_acceso_qr: newCode });
                 }}
-                className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-gray-300 hover:text-white"
+                className="rounded-lg border border-[#DCE0F0] bg-[#F0F2F8] px-2.5 py-1 text-[10px] font-semibold text-[#5B617A] hover:text-[#6C7EE1]"
               >
                 🔄 Regenerar Llave
               </button>
             </div>
 
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-[#8E94A9]">
               Escanea este código en la entrada el día de la fiesta para validar
               pases y registrar el ingreso en tiempo real.
             </p>
 
             {/* Credencial / Pase con QR SVG */}
-            <div className="mt-5 flex flex-col items-center rounded-2xl border border-white/15 bg-[#050508] p-6 text-center shadow-xl">
-              <span className="rounded-full bg-[#ff1e38]/20 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#ff4d63]">
+            <div className="mt-5 flex flex-col items-center rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-6 text-center shadow-xl">
+              <span className="rounded-full bg-[#6C7EE1]/20 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                 PASE DE CONTROL DE ACCESO
               </span>
-              <h4 className="font-display mt-2 text-2xl font-bold uppercase text-white">
+              <h4 className="font-display mt-2 text-2xl font-bold uppercase text-[#2D3047]">
                 {evento.nombre}
               </h4>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-[#8E94A9]">
                 {formatDateInput(evento.fecha_evento)} • {evento.hora_evento}{" "}
                 hrs
               </p>
 
               {/* Lienzo QR SVG */}
-              <div className="mt-4 rounded-2xl bg-white p-4 shadow-[0_0_30px_rgba(0,240,255,0.2)]">
+              <div className="mt-4 rounded-2xl bg-white p-4 shadow-[0_0_30px_rgba(21,178,245,0.2)]">
                 <svg
                   viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
                   className="h-44 w-44"
@@ -3806,7 +4158,7 @@ function GestorEvento({
                           y={rIdx}
                           width={1}
                           height={1}
-                          fill="#050508"
+                          fill="#0F1A45"
                         />
                       ) : null
                     )
@@ -3814,7 +4166,7 @@ function GestorEvento({
                 </svg>
               </div>
 
-              <p className="mt-3 font-mono text-xs font-bold tracking-widest text-[#00f0ff]">
+              <p className="mt-3 font-mono text-xs font-bold tracking-widest text-[#6C7EE1]">
                 {invForm.codigo_acceso_qr || "QR-GATE-ACTIVO"}
               </p>
               <p className="mt-1 text-[10px] text-gray-500">
@@ -3826,14 +4178,14 @@ function GestorEvento({
                 <button
                   type="button"
                   onClick={handleDownloadQrSvg}
-                  className="btn-glow-red flex-1 rounded-xl bg-[#ff1e38] py-2.5 text-xs font-bold uppercase tracking-wider text-white"
+                  className="btn-glow-red flex-1 rounded-xl bg-[#6C7EE1] py-2.5 text-xs font-bold uppercase tracking-wider text-white"
                 >
                   ⬇️ Descargar QR (SVG)
                 </button>
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:text-white"
+                  className="rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-4 py-2.5 text-xs font-semibold text-[#2D3047] hover:text-[#6C7EE1]"
                 >
                   🖨️ Imprimir
                 </button>
