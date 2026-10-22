@@ -1166,7 +1166,7 @@ function GestorEvento({
             </div>
             <p className="mt-1.5 text-xs text-white/90">
               ⏳ Faltan <strong>{diasParaEvento}</strong> días •{" "}
-              {invForm.rsvp_habilitado ? "RSVP Activo" : "RSVP Pausado"}
+              {invForm.rsvp_habilitado ? "Evento Activo" : "Evento Pausado"}
             </p>
             <div className="mt-2 h-1.5 w-[115px] overflow-hidden rounded-full bg-white/25">
               <div className="h-full w-4/5 rounded-full bg-[#4CE0B3]" />
@@ -3989,8 +3989,8 @@ function GestorEvento({
                   <div>
                     <h4 className="text-sm font-bold text-[#2D3047]">
                       {invForm.rsvp_habilitado
-                        ? "⏸️ Pausar Respuestas del RSVP"
-                        : "▶️ Reanudar Respuestas del RSVP"}
+                        ? "⏸️ Pausar Respuestas del Evento"
+                        : "▶️ Reanudar Respuestas del Evento"}
                     </h4>
                     <p className="mt-1 text-xs text-[#8E94A9]">
                       Congela temporalmente el formulario de confirmación para
@@ -4008,7 +4008,7 @@ function GestorEvento({
                   >
                     {invForm.rsvp_habilitado
                       ? "Pausar Evento"
-                      : "Reactivar RSVP"}
+                      : "Reactivar Evento"}
                   </button>
                 </div>
 

@@ -453,7 +453,7 @@ function LandingPage() {
                     </strong>
                   </div>
                   <span className="rounded-lg bg-[#6C7EE1]/25 px-2.5 py-1 text-[10px] font-bold text-[#9BA9FF]">
-                    RSVP Activo
+                    Evento Activo
                   </span>
                 </div>
 

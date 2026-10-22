@@ -604,8 +604,8 @@ function HomePage() {
                                     }`}
                                   >
                                     {ev.rsvp_habilitado !== false
-                                      ? "RSVP Activo"
-                                      : "Pausado"}
+                                      ? "Evento Activo"
+                                      : "Evento Pausado"}
                                   </span>
                                 </div>
 
