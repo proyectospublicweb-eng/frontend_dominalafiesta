@@ -25,24 +25,53 @@ jobs:
           npm ci
           npm run build
 
-      - name: 4. Subir dist/ únicamente a la carpeta aislada de recuerdalo.com.mx vía FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: 4. Subir dist/ a recuerdalo.com.mx vía FTPS
         env:
-          NODE_TLS_REJECT_UNAUTHORIZED: "0"
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          timeout: 120000
-          security: loose
-          local-dir: ./dist/
-          server-dir: ./
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            apiproyectoeventos/**
-            cgi-bin/**
-            .well-known/**
-            .user.ini
-            php.ini
+          FTP_USER: ${{ secrets.FTP_USERNAME }}
+          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          python3 - << 'EOF'
+          import os, ssl, ftplib, pathlib
+
+          host = "34.125.57.24"
+          user = os.environ.get("FTP_USER", "").strip()
+          passwd = os.environ.get("FTP_PASS", "").strip()
+
+          print(f"Conectando a {host}:21 con usuario '{user}'...")
+          ctx = ssl._create_unverified_context()
+          ftps = ftplib.FTP_TLS(context=ctx)
+          ftps.debugging = 1
+          ftps.connect(host, 21, timeout=90)
+          print("Saludo 220 recibido. Activando TLS...")
+          ftps.auth()
+          ftps.login(user, passwd)
+          ftps.prot_p()
+          print("Autenticación exitosa. Directorio actual:", ftps.pwd())
+
+          dist_dir = pathlib.Path("dist")
+
+          def ensure_remote_dir(remote_dir):
+              if not remote_dir or remote_dir == ".":
+                  return
+              parts = remote_dir.replace("\\", "/").split("/")
+              cur = ""
+              for p in parts:
+                  cur = f"{cur}/{p}" if cur else p
+                  try:
+                      ftps.mkd(cur)
+                  except Exception:
+                      pass
+
+          for item in dist_dir.rglob("*"):
+              rel = item.relative_to(dist_dir).as_posix()
+              if item.is_dir():
+                  ensure_remote_dir(rel)
+              else:
+                  ensure_remote_dir(os.path.dirname(rel))
+                  print(f"Subiendo: {rel}")
+                  with open(item, "rb") as f:
+                      ftps.storbinary(f"STOR {rel}", f)
+
+          ftps.quit()
+          print("¡Despliegue completado con éxito!")
+          EOF
