@@ -27,6 +27,8 @@ jobs:
 
       - name: 4. Subir dist/ únicamente a la carpeta aislada de recuerdalo.com.mx vía FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        env:
+          NODE_TLS_REJECT_UNAUTHORIZED: "0"
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
