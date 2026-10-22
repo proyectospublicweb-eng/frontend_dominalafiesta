@@ -1129,16 +1129,16 @@ function GestorEvento({
       )}
 
       {/* =====================================================================
-          3 TARJETAS SUPERIORES CON DEGRADADO ESTILO UIUX EN TODAS LAS VISTAS DEL GESTOR (REDUCIDAS AL 50%)
+          3 TARJETAS SUPERIORES CON DEGRADADO ESTILO UIUX EN TODAS LAS VISTAS DEL GESTOR (+20% TAMAÑO)
          ===================================================================== */}
-      <div className="grid max-w-3xl grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="grid max-w-[922px] grid-cols-1 gap-3.5 md:grid-cols-3">
         {/* Tarjeta 1: Periwinkle Indigo (#6C7EE1) con barra Mint Aqua (#4CE0B3) */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#7587EB] to-[#6475DC] p-3 text-white shadow-[0_8px_18px_rgba(108,126,225,0.22)]">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#7587EB] to-[#6475DC] p-[15px] text-white shadow-[0_8px_18px_rgba(108,126,225,0.22)]">
           <div className="relative z-10">
-            <span className="inline-block rounded-full bg-white/20 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
+            <span className="inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
               Evento Seleccionado
             </span>
-            <div className="mt-1">
+            <div className="mt-1.5">
               <select
                 value={evento.idevento || "draft"}
                 onChange={(e) => {
@@ -1146,7 +1146,7 @@ function GestorEvento({
                     onSelectEvento(Number(e.target.value));
                   }
                 }}
-                className="w-full max-w-[185px] rounded-lg border border-white/40 bg-white/15 px-2 py-1 text-[11px] font-extrabold text-white outline-none backdrop-blur-xs"
+                className="w-full max-w-[222px] rounded-lg border border-white/40 bg-white/15 px-2.5 py-1.5 text-[13px] font-extrabold text-white outline-none backdrop-blur-xs"
               >
                 {!evento.idevento && (
                   <option value="draft" className="text-[#2D3047]">
@@ -1164,39 +1164,39 @@ function GestorEvento({
                 ))}
               </select>
             </div>
-            <p className="mt-1 text-[10px] text-white/90">
+            <p className="mt-1.5 text-xs text-white/90">
               ⏳ Faltan <strong>{diasParaEvento}</strong> días •{" "}
               {invForm.rsvp_habilitado ? "RSVP Activo" : "RSVP Pausado"}
             </p>
-            <div className="mt-1.5 h-1 w-24 overflow-hidden rounded-full bg-white/25">
+            <div className="mt-2 h-1.5 w-[115px] overflow-hidden rounded-full bg-white/25">
               <div className="h-full w-4/5 rounded-full bg-[#4CE0B3]" />
             </div>
           </div>
         </div>
 
         {/* Tarjeta 2: Coral Salmón (#F98880) con diana circular */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FA938B] to-[#F77D75] p-3 text-white shadow-[0_8px_18px_rgba(249,136,128,0.22)]">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FA938B] to-[#F77D75] p-[15px] text-white shadow-[0_8px_18px_rgba(249,136,128,0.22)]">
           <div className="relative z-10 max-w-[76%]">
-            <span className="text-sm font-extrabold tracking-tight">
+            <span className="text-[17px] font-extrabold tracking-tight">
               {pasesConfirmadosCount} / {evento.capacidad}
             </span>
-            <h3 className="text-[11px] font-bold tracking-tight">
+            <h3 className="text-[13px] font-bold tracking-tight">
               Asistencia RSVP
             </h3>
-            <p className="mt-0.5 text-[9px] leading-tight text-white/90">
+            <p className="mt-1 text-[11px] leading-tight text-white/90">
               {pendientesList.length} invitaciones pendientes por confirmar
             </p>
             <button
               type="button"
               onClick={() => onChangeSubTab("guests")}
-              className="mt-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-[9px] font-bold text-white transition hover:bg-white hover:text-[#F77D75]"
+              className="mt-2 rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-white hover:text-[#F77D75]"
             >
               Ver Invitados
             </button>
           </div>
           <svg
             viewBox="0 0 100 100"
-            className="pointer-events-none absolute -bottom-1 -right-1 h-14 w-14 opacity-85"
+            className="pointer-events-none absolute -bottom-1 -right-1 h-[68px] w-[68px] opacity-85"
           >
             <circle cx="52" cy="52" r="34" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="4" />
             <circle cx="52" cy="52" r="20" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="4" />
@@ -1206,50 +1206,50 @@ function GestorEvento({
         </div>
 
         {/* Tarjeta 3: Deep Twilight Navy (#2D3047) con tarjeta flotante blanca y anillo neón */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#323650] to-[#26293E] p-3 text-white shadow-[0_8px_18px_rgba(45,48,71,0.2)]">
-          <div className="relative z-10 flex items-start justify-between gap-2">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#323650] to-[#26293E] p-[15px] text-white shadow-[0_8px_18px_rgba(45,48,71,0.2)]">
+          <div className="relative z-10 flex items-start justify-between gap-2.5">
             <div className="max-w-[65%]">
               <div className="flex items-center gap-1.5">
-                <h3 className="text-[11px] font-extrabold tracking-tight">
+                <h3 className="text-[13px] font-extrabold tracking-tight">
                   Invitación y QR
                 </h3>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#4CE0B3]" />
+                <span className="h-2 w-2 rounded-full bg-[#4CE0B3]" />
               </div>
-              <p className="mt-0.5 text-[9px] leading-tight text-[#9DA3C0]">
+              <p className="mt-1 text-[11px] leading-tight text-[#9DA3C0]">
                 Enlace activo y código QR listo para recepción
               </p>
-              <div className="mt-1.5 h-1 w-16 overflow-hidden rounded-full bg-white/15">
+              <div className="mt-2 h-1.5 w-20 overflow-hidden rounded-full bg-white/15">
                 <div className="h-full w-full rounded-full bg-[#4CE0B3]" />
               </div>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => onChangeSubTab("broadcast")}
-                  className="rounded-full bg-[#6C7EE1] px-2.5 py-0.5 text-[9px] font-bold text-white transition hover:bg-[#5A6CD0]"
+                  className="rounded-full bg-[#6C7EE1] px-3 py-1 text-[11px] font-bold text-white transition hover:bg-[#5A6CD0]"
                 >
                   Compartir
                 </button>
                 <button
                   type="button"
                   onClick={onGoToWizard}
-                  className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-bold text-white transition hover:bg-white hover:text-[#2D3047]"
+                  className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-white hover:text-[#2D3047]"
                 >
                   ＋ Nuevo
                 </button>
               </div>
             </div>
-            <div className="rounded-xl bg-white p-1.5 text-center text-[#2D3047] shadow-md">
-              <div className="mx-auto flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#4CE0B3] text-[8px] font-bold text-white">
+            <div className="rounded-xl bg-white p-2 text-center text-[#2D3047] shadow-md">
+              <div className="mx-auto flex h-4 w-4 items-center justify-center rounded-full bg-[#4CE0B3] text-[10px] font-bold text-white">
                 ✓
               </div>
-              <p className="mt-0.5 text-[8px] font-bold leading-tight text-[#2D3047]">
+              <p className="mt-0.5 text-[10px] font-bold leading-tight text-[#2D3047]">
                 ¡Enlace
                 <br />
                 Activo!
               </p>
             </div>
           </div>
-          <div className="pointer-events-none absolute bottom-1.5 right-3 h-4 w-4 rounded-full border-2 border-[#6C7EE1] shadow-[0_0_8px_#6C7EE1]" />
+          <div className="pointer-events-none absolute bottom-2 right-3.5 h-5 w-5 rounded-full border-2 border-[#6C7EE1] shadow-[0_0_8px_#6C7EE1]" />
         </div>
       </div>
 
@@ -1590,7 +1590,7 @@ function GestorEvento({
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                  <label className="mb-1 block text-[11px] font-extrabold text-[#D9483B]">
                     Dirección Exacta, Coordenadas o Enlace de Google Maps
                   </label>
                   <input
@@ -1603,7 +1603,7 @@ function GestorEvento({
                       }))
                     }
                     placeholder="Ej. Av. Paseo de la Reforma 500, CDMX o pega el link de Google Maps"
-                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-semibold text-[#0F172A] placeholder:font-normal placeholder:text-[#64748B] outline-none focus:border-[#6C7EE1]"
                   />
                 </div>
               </div>
