@@ -1,0 +1,44 @@
+name: Deploy Frontend to cPanel (recuerdalo.com.mx)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    name: Build & Upload to recuerdalo.com.mx
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Obtener código del repositorio
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 3. Instalar dependencias y compilar producción (dist/)
+        run: |
+          npm ci
+          npm run build
+
+      - name: 4. Subir dist/ únicamente a la carpeta aislada de recuerdalo.com.mx vía FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: ./
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            apiproyectoeventos/**
+            cgi-bin/**
+            .well-known/**
+            .user.ini
+            php.ini
