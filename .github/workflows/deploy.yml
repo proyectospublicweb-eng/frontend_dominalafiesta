@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
-    name: Build & Upload to recuerdalo.com.mx
+    name: Build & Upload to recuerdalo.com.mx (HTTPS 443)
     runs-on: ubuntu-latest
 
     steps:
@@ -25,53 +25,42 @@ jobs:
           npm ci
           npm run build
 
-      - name: 4. Subir dist/ a recuerdalo.com.mx vía FTPS
+      - name: 4. Enviar dist/ a recuerdalo.com.mx por HTTPS (Puerto 443)
         env:
-          FTP_USER: ${{ secrets.FTP_USERNAME }}
-          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+          DEPLOY_TOKEN: ${{ secrets.FTP_PASSWORD }}
         run: |
-          python3 - << 'EOF'
-          import os, ssl, ftplib, pathlib
+          node - << 'EOF'
+          const fs = require("fs");
+          const path = require("path");
 
-          host = "34.125.57.24"
-          user = os.environ.get("FTP_USER", "").strip()
-          passwd = os.environ.get("FTP_PASS", "").strip()
+          const distDir = path.resolve("dist");
+          const files = {};
 
-          print(f"Conectando a {host}:21 con usuario '{user}'...")
-          ctx = ssl._create_unverified_context()
-          ftps = ftplib.FTP_TLS(context=ctx)
-          ftps.debugging = 1
-          ftps.connect(host, 21, timeout=90)
-          print("Saludo 220 recibido. Activando TLS...")
-          ftps.auth()
-          ftps.login(user, passwd)
-          ftps.prot_p()
-          print("Autenticación exitosa. Directorio actual:", ftps.pwd())
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                walk(full);
+              } else {
+                const rel = path.relative(distDir, full).replace(/\\/g, "/");
+                files[rel] = fs.readFileSync(full).toString("base64");
+              }
+            }
+          }
+          walk(distDir);
 
-          dist_dir = pathlib.Path("dist")
-
-          def ensure_remote_dir(remote_dir):
-              if not remote_dir or remote_dir == ".":
-                  return
-              parts = remote_dir.replace("\\", "/").split("/")
-              cur = ""
-              for p in parts:
-                  cur = f"{cur}/{p}" if cur else p
-                  try:
-                      ftps.mkd(cur)
-                  except Exception:
-                      pass
-
-          for item in dist_dir.rglob("*"):
-              rel = item.relative_to(dist_dir).as_posix()
-              if item.is_dir():
-                  ensure_remote_dir(rel)
-              else:
-                  ensure_remote_dir(os.path.dirname(rel))
-                  print(f"Subiendo: {rel}")
-                  with open(item, "rb") as f:
-                      ftps.storbinary(f"STOR {rel}", f)
-
-          ftps.quit()
-          print("¡Despliegue completado con éxito!")
+          (async () => {
+            console.log(`Enviando ${Object.keys(files).length} archivos compilados a https://recuerdalo.com.mx/deploy-hook.php ...`);
+            const res = await fetch("https://recuerdalo.com.mx/deploy-hook.php", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Deploy-Token": (process.env.DEPLOY_TOKEN || "").trim(),
+              },
+              body: JSON.stringify({ target: "frontend", files }),
+            });
+            const text = await res.text();
+            console.log("Respuesta HTTP:", res.status, text);
+            if (!res.ok) process.exit(1);
+          })();
           EOF
