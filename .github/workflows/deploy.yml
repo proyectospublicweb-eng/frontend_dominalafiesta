@@ -33,6 +33,8 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          timeout: 120000
+          security: loose
           local-dir: ./dist/
           server-dir: ./
           exclude: |
