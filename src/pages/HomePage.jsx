@@ -373,17 +373,17 @@ function HomePage() {
             >
               ☰
             </button>
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-[#2D3047] sm:text-3xl">
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-extrabold tracking-tight text-[#2D3047] sm:text-3xl">
                 ¡Hola! {user?.username || "Organizador"}
               </h1>
-              <p className="text-xs text-[#8E94A9]">
+              <p className="text-[11px] text-[#8E94A9] sm:text-xs">
                 Administra tus invitaciones, confirmaciones y accesos en tiempo real ✨
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => openEventManager(selectedEventoId, "settings")}
@@ -393,13 +393,13 @@ function HomePage() {
               ⚙️
             </button>
 
-            <div className="flex items-center gap-2.5 rounded-full bg-white py-1 pl-1.5 pr-3.5 shadow-xs">
+            <div className="flex items-center gap-2 rounded-full bg-white p-1 shadow-xs sm:gap-2.5 sm:py-1 sm:pl-1.5 sm:pr-3.5">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#2D3047] text-xs font-bold text-[#4CE0B3]">
                 {String(user?.username || "U")
                   .slice(0, 1)
                   .toUpperCase()}
               </div>
-              <span className="text-xs font-bold text-[#2D3047]">
+              <span className="hidden text-xs font-bold text-[#2D3047] sm:inline">
                 {user?.username || "Organizador"}
               </span>
             </div>
@@ -416,7 +416,7 @@ function HomePage() {
               {/* PESTAÑAS TIPO CARPETA + CONTENEDOR BLANCO DE EVENTOS */}
               <div>
                 {/* Pestañas Superiores Estilo Carpeta con la Paleta (#6C7EE1, #F98880, #2D3047) */}
-                <div className="flex flex-wrap items-end gap-2">
+                <div className="grid grid-cols-1 gap-1.5 sm:flex sm:flex-wrap sm:items-end sm:gap-2">
                   {[
                     {
                       id: "all",
@@ -440,9 +440,9 @@ function HomePage() {
                         key={tab.id}
                         type="button"
                         onClick={() => setFolderTab(tab.id)}
-                        className={`rounded-t-2xl px-6 py-3 text-xs font-extrabold transition ${tab.colorClass} ${
+                        className={`rounded-xl px-4 py-2.5 text-xs font-extrabold transition sm:rounded-t-2xl sm:rounded-b-none sm:px-6 sm:py-3 ${tab.colorClass} ${
                           isTabActive
-                            ? "-translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
+                            ? "sm:-translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
                             : "opacity-85 hover:opacity-100"
                         }`}
                       >
@@ -453,11 +453,11 @@ function HomePage() {
                 </div>
 
                 {/* Panel Blanco Principal */}
-                <div className="rounded-b-3xl rounded-tr-3xl bg-white p-6 shadow-[0_10px_30px_rgba(108,126,225,0.06)] sm:p-8">
+                <div className="mt-2 rounded-2xl bg-white p-4 shadow-[0_10px_30px_rgba(108,126,225,0.06)] sm:mt-0 sm:rounded-b-3xl sm:rounded-tr-3xl sm:rounded-tl-none sm:p-8">
                   {/* Barra de Búsqueda, Filtro y Botón "+ Crear Evento" */}
                   <div className="flex flex-col justify-between gap-4 border-b border-[#ECEFFA] pb-6 lg:flex-row lg:items-center">
-                    <div className="flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-2.5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
                         <label className="text-xs font-bold text-[#2D3047]">
                           Nombre del Evento
                         </label>
@@ -466,18 +466,18 @@ function HomePage() {
                           value={searchKeyword}
                           onChange={(e) => setSearchKeyword(e.target.value)}
                           placeholder="Buscar por nombre o lugar..."
-                          className="w-52 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-xs text-[#2D3047] outline-none transition focus:border-[#6C7EE1]"
+                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-xs text-[#2D3047] outline-none transition focus:border-[#6C7EE1] sm:w-52"
                         />
                       </div>
 
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
                         <label className="text-xs font-bold text-[#2D3047]">
                           Categoría
                         </label>
                         <select
                           value={typeFilter}
                           onChange={(e) => setTypeFilter(e.target.value)}
-                          className="w-44 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none transition focus:border-[#6C7EE1]"
+                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none transition focus:border-[#6C7EE1] sm:w-44"
                         >
                           {eventTypes.map((t) => (
                             <option key={t} value={t}>
@@ -494,7 +494,7 @@ function HomePage() {
                           setTypeFilter("Todos");
                           setFolderTab("all");
                         }}
-                        className="rounded-full border border-[#6C7EE1] px-5 py-2 text-xs font-bold text-[#6C7EE1] transition hover:bg-[#ECEFFA]"
+                        className="w-full rounded-full border border-[#6C7EE1] px-5 py-2 text-xs font-bold text-[#6C7EE1] transition hover:bg-[#ECEFFA] sm:w-auto"
                       >
                         Ver Todos
                       </button>
@@ -503,7 +503,7 @@ function HomePage() {
                     <button
                       type="button"
                       onClick={() => setActiveSection("wizard")}
-                      className="self-start rounded-full bg-[#6C7EE1] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-[#6C7EE1]/30 transition hover:bg-[#5A6CD0] lg:self-auto"
+                      className="w-full rounded-full bg-[#6C7EE1] px-6 py-2.5 text-center text-xs font-bold text-white shadow-md shadow-[#6C7EE1]/30 transition hover:bg-[#5A6CD0] sm:w-auto sm:self-start lg:self-auto"
                     >
                       ＋ Crear Evento
                     </button>
@@ -619,14 +619,14 @@ function HomePage() {
                             </div>
 
                             {/* Derecha: Botones de Acción Estilo Tarjeta con Insignia Izquierda y Flecha (Reducidos un 30%) */}
-                            <div className="flex flex-wrap items-center gap-2.5">
+                            <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5">
                               {/* 1. Editar / Invitación - Deep Royal Indigo (#4E54A3) */}
                               <button
                                 type="button"
                                 onClick={() =>
                                   openEventManager(ev.idevento, "invitation")
                                 }
-                                className="group flex items-center gap-2.5 rounded-xl bg-[#4E54A3] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(78,84,163,0.25)] transition hover:-translate-y-0.5 hover:bg-[#434994]"
+                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#4E54A3] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(78,84,163,0.25)] transition hover:-translate-y-0.5 hover:bg-[#434994] sm:justify-start"
                               >
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
                                   <svg
@@ -642,7 +642,7 @@ function HomePage() {
                                     <path d="m15 5 4 4" />
                                   </svg>
                                 </span>
-                                <div className="pr-1">
+                                <div className="flex-1 pr-1 sm:flex-initial">
                                   <span className="block text-[9px] font-medium leading-tight text-white/75">
                                     Diseño Digital
                                   </span>
@@ -661,7 +661,7 @@ function HomePage() {
                                 onClick={() =>
                                   openEventManager(ev.idevento, "guests")
                                 }
-                                className="group flex items-center gap-2.5 rounded-xl bg-[#9599D6] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(149,153,214,0.25)] transition hover:-translate-y-0.5 hover:bg-[#8489CA]"
+                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#9599D6] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(149,153,214,0.25)] transition hover:-translate-y-0.5 hover:bg-[#8489CA] sm:justify-start"
                               >
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white">
                                   <svg
@@ -679,7 +679,7 @@ function HomePage() {
                                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                   </svg>
                                 </span>
-                                <div className="pr-1">
+                                <div className="flex-1 pr-1 sm:flex-initial">
                                   <span className="block text-[9px] font-medium leading-tight text-white/80">
                                     Control de Asistencia
                                   </span>
@@ -698,7 +698,7 @@ function HomePage() {
                                 onClick={() =>
                                   openEventManager(ev.idevento, "broadcast")
                                 }
-                                className="group flex items-center gap-2.5 rounded-xl bg-[#6C7EE1] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(108,126,225,0.25)] transition hover:-translate-y-0.5 hover:bg-[#5B6DD0]"
+                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#6C7EE1] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(108,126,225,0.25)] transition hover:-translate-y-0.5 hover:bg-[#5B6DD0] sm:justify-start"
                               >
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
                                   <svg
@@ -714,7 +714,7 @@ function HomePage() {
                                     <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
                                   </svg>
                                 </span>
-                                <div className="pr-1">
+                                <div className="flex-1 pr-1 sm:flex-initial">
                                   <span className="block text-[9px] font-medium leading-tight text-white/75">
                                     WhatsApp y Email
                                   </span>
@@ -733,7 +733,7 @@ function HomePage() {
                                 onClick={() =>
                                   openEventManager(ev.idevento, "settings")
                                 }
-                                className="group flex items-center gap-2.5 rounded-xl bg-[#2D3047] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(45,48,71,0.22)] transition hover:-translate-y-0.5 hover:bg-[#23263A]"
+                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#2D3047] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(45,48,71,0.22)] transition hover:-translate-y-0.5 hover:bg-[#23263A] sm:justify-start"
                               >
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
                                   <svg
@@ -759,7 +759,7 @@ function HomePage() {
                                     <path d="M12 21v-1" />
                                   </svg>
                                 </span>
-                                <div className="pr-1">
+                                <div className="flex-1 pr-1 sm:flex-initial">
                                   <span className="block text-[9px] font-medium leading-tight text-white/70">
                                     Acceso y Control
                                   </span>
@@ -779,7 +779,7 @@ function HomePage() {
                                   setDeleteError("");
                                   setEventoToDelete(ev);
                                 }}
-                                className="group flex items-center gap-2.5 rounded-xl bg-[#FF8086] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(255,128,134,0.28)] transition hover:-translate-y-0.5 hover:bg-[#F56E74]"
+                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#FF8086] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(255,128,134,0.28)] transition hover:-translate-y-0.5 hover:bg-[#F56E74] sm:justify-start"
                               >
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white">
                                   <svg
@@ -798,7 +798,7 @@ function HomePage() {
                                     <line x1="14" x2="14" y1="11" y2="17" />
                                   </svg>
                                 </span>
-                                <div className="pr-1">
+                                <div className="flex-1 pr-1 sm:flex-initial">
                                   <span className="block text-[9px] font-medium leading-tight text-white/80">
                                     Acción del Evento
                                   </span>
@@ -888,7 +888,7 @@ function HomePage() {
           <form
             onSubmit={handleConfirmDeleteFromModal}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-[#DCE0F0] bg-white p-7 shadow-[0_24px_60px_rgba(45,48,71,0.32)]"
+            className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-[#DCE0F0] bg-white p-5 shadow-[0_24px_60px_rgba(45,48,71,0.32)] sm:p-7"
           >
             {/* Franja superior Coral-Salmón */}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-[#FA938B] to-[#F77D75]" />

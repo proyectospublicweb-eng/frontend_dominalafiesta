@@ -151,7 +151,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
           <span className="inline-block rounded-md bg-[#6C7EE1] px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white">
             Asistente Paso a Paso
           </span>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-[#2D3047] sm:text-4xl">
+          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-[#2D3047] sm:text-4xl">
             ➕ Crear Nuevo Evento
           </h1>
         </div>
@@ -167,7 +167,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
       </div>
 
       {/* Barra de progreso de pasos con colores e insignias estilo imagen de referencia */}
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
         {stepsInfo.map((s) => {
           const isActive = step === s.num;
           const isDone = step > s.num;
@@ -178,13 +178,13 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
               onClick={() => {
                 if (s.num < step) setStep(s.num);
               }}
-              className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-white transition ${s.colorClass} ${
+              className={`group flex items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-white transition sm:gap-3 sm:px-4 sm:py-3 ${s.colorClass} ${
                 isActive
                   ? "-translate-y-0.5 ring-2 ring-white brightness-105"
                   : "opacity-85 hover:opacity-100"
               }`}
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/20 text-xs font-extrabold text-white">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white/20 text-xs font-extrabold text-white sm:h-8 sm:w-8">
                 {isDone ? "✓" : s.num}
               </span>
               <div className="min-w-0 flex-1">
@@ -195,7 +195,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                   {s.title}
                 </p>
               </div>
-              <span className="text-xs font-bold text-white/90 transition-transform group-hover:translate-x-0.5">
+              <span className="hidden text-xs font-bold text-white/90 transition-transform group-hover:translate-x-0.5 sm:inline">
                 →
               </span>
             </button>
@@ -206,7 +206,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
       {/* Contenedor del paso actual */}
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-[#E2E5F1] bg-white p-6 shadow-sm sm:p-8"
+        className="rounded-2xl border border-[#E2E5F1] bg-white p-4 shadow-sm sm:p-8"
       >
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
@@ -443,7 +443,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
             </div>
 
             <div
-              className={`rounded-2xl border-2 ${selectedTemplate.border} bg-gradient-to-br ${selectedTemplate.previewBg} p-6 text-white sm:p-8`}
+              className={`rounded-2xl border-2 ${selectedTemplate.border} bg-gradient-to-br ${selectedTemplate.previewBg} p-4 text-white sm:p-8`}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span
@@ -457,7 +457,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                 </span>
               </div>
 
-              <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-white">
+              <h3 className="mt-4 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
                 {form.nombre}
               </h3>
 
@@ -493,12 +493,12 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
         )}
 
         {/* Botones de navegación del Wizard */}
-        <div className="mt-8 flex items-center justify-between border-t border-[#E2E5F1] pt-6">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[#E2E5F1] pt-6">
           {step > 1 ? (
             <button
               type="button"
               onClick={handleBack}
-              className="rounded-xl border border-[#E2E5F1] bg-[#F7F8FC] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#2D3047] transition hover:bg-gray-200"
+              className="rounded-xl border border-[#E2E5F1] bg-[#F7F8FC] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[#2D3047] transition hover:bg-gray-200 sm:px-5"
             >
               ← Anterior
             </button>
@@ -510,7 +510,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
             <button
               type="button"
               onClick={handleNext}
-              className="rounded-xl bg-[#6C7EE1] px-6 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0]"
+              className="rounded-xl bg-[#6C7EE1] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0] sm:px-6"
             >
               Siguiente Paso →
             </button>
@@ -518,7 +518,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-xl bg-[#6C7EE1] px-7 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0] disabled:opacity-60"
+              className="rounded-xl bg-[#6C7EE1] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0] disabled:opacity-60 sm:px-7"
             >
               {submitting
                 ? "Creando Evento..."

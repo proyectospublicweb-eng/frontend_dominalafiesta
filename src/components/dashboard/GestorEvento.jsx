@@ -1552,7 +1552,7 @@ function GestorEvento({
     <div className="space-y-6">
       {/* Notificación flotante */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-xl border border-[#6C7EE1]/50 bg-[#142257]/95 px-5 py-3 text-xs font-semibold text-[#6C7EE1] shadow-[0_0_25px_rgba(21,178,245,0.25)] backdrop-blur-md">
+        <div className="fixed bottom-4 left-4 right-4 z-50 rounded-xl border border-[#6C7EE1]/50 bg-[#142257]/95 px-4 py-3 text-center text-xs font-semibold text-[#6C7EE1] shadow-[0_0_25px_rgba(21,178,245,0.25)] backdrop-blur-md sm:bottom-6 sm:left-auto sm:right-6 sm:px-5 sm:text-left">
           {toast}
         </div>
       )}
@@ -1560,7 +1560,7 @@ function GestorEvento({
       {/* =====================================================================
           3 TARJETAS SUPERIORES CON DEGRADADO ESTILO UIUX EN TODAS LAS VISTAS DEL GESTOR (+20% TAMAÑO)
          ===================================================================== */}
-      <div className="grid max-w-[922px] grid-cols-1 gap-3.5 md:grid-cols-3">
+      <div className="grid max-w-[922px] grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {/* Tarjeta 1: Periwinkle Indigo (#6C7EE1) con barra Mint Aqua (#4CE0B3) */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#7587EB] to-[#6475DC] p-[15px] text-white shadow-[0_8px_18px_rgba(108,126,225,0.22)]">
           <div className="relative z-10">
@@ -1575,7 +1575,7 @@ function GestorEvento({
                     onSelectEvento(Number(e.target.value));
                   }
                 }}
-                className="w-full max-w-[222px] rounded-lg border border-white/40 bg-white/15 px-2.5 py-1.5 text-[13px] font-extrabold text-white outline-none backdrop-blur-xs"
+                className="w-full rounded-lg border border-white/40 bg-white/15 px-2.5 py-1.5 text-[13px] font-extrabold text-white outline-none backdrop-blur-xs sm:max-w-[222px]"
               >
                 {!evento.idevento && (
                   <option value="draft" className="text-[#2D3047]">
@@ -1635,9 +1635,9 @@ function GestorEvento({
         </div>
 
         {/* Tarjeta 3: Deep Twilight Navy (#2D3047) con tarjeta flotante blanca y anillo neón */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#323650] to-[#26293E] p-[15px] text-white shadow-[0_8px_18px_rgba(45,48,71,0.2)]">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#323650] to-[#26293E] p-[15px] text-white shadow-[0_8px_18px_rgba(45,48,71,0.2)] sm:col-span-2 lg:col-span-1">
           <div className="relative z-10 flex items-start justify-between gap-2.5">
-            <div className="max-w-[65%]">
+            <div className="max-w-[68%]">
               <div className="flex items-center gap-1.5">
                 <h3 className="text-[13px] font-extrabold tracking-tight">
                   Invitación y QR
@@ -1683,7 +1683,7 @@ function GestorEvento({
       </div>
 
       {/* Pestañas Superiores Estilo Carpeta con la Paleta de Colores (#6C7EE1, #F98880, #2D3047) */}
-      <div className="flex flex-wrap items-end gap-2 border-b border-[#DCE0F0] pb-0">
+      <div className="grid grid-cols-2 gap-1.5 border-b border-[#DCE0F0] pb-2 sm:flex sm:flex-wrap sm:items-end sm:gap-2 sm:pb-0">
         {GESTOR_TABS.filter((t) => !t.hidden).map((t, idx) => {
           const active = currentTab === t.id;
           const tabPalette = [
@@ -1697,9 +1697,9 @@ function GestorEvento({
               key={t.id}
               type="button"
               onClick={() => onChangeSubTab(t.id)}
-              className={`whitespace-nowrap rounded-t-2xl px-6 py-3.5 text-xs font-extrabold transition ${colorClass} ${
+              className={`truncate rounded-xl px-3 py-2.5 text-center text-[11px] font-extrabold transition sm:whitespace-nowrap sm:rounded-t-2xl sm:rounded-b-none sm:px-6 sm:py-3.5 sm:text-xs ${colorClass} ${
                 active
-                  ? " -translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
+                  ? "sm:-translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
                   : "opacity-85 hover:opacity-100"
               }`}
             >
@@ -1713,15 +1713,15 @@ function GestorEvento({
           TAB A: 📇 DISEÑO E INVITACIÓN VIRTUAL (/events/[id]/invitation)
          ===================================================================== */}
       {currentTab === "invitation" && (
-        <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 xl:grid-cols-12">
           {/* Editor Rápido (Columna Izquierda: 5 cols) */}
           <form
             onSubmit={handleSaveEvento}
-            className="space-y-5 rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6 xl:col-span-5"
+            className="space-y-5 rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6 xl:col-span-5"
           >
             <div className="flex items-center justify-between border-b border-[#E6E9F4] pb-3">
               <div>
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
+                <h3 className="font-display text-xl font-bold uppercase tracking-wide text-[#2D3047] sm:text-2xl">
                   📇 Editor Rápido de Invitación
                 </h3>
               </div>
@@ -1790,7 +1790,7 @@ function GestorEvento({
                 ))}
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="flex items-center justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] px-3 py-2">
                   <span className="text-[11px] text-[#8E94A9]">
                     Color Principal
@@ -1852,7 +1852,7 @@ function GestorEvento({
                   </button>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   type="text"
                   value={invForm.imagen_portada || ""}
@@ -1865,7 +1865,7 @@ function GestorEvento({
                   placeholder="Pega la URL de tu póster o sube una imagen..."
                   className="flex-1 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
-                <label className="cursor-pointer rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-3 py-2 text-xs font-semibold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]">
+                <label className="cursor-pointer rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-3 py-2 text-center text-xs font-semibold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]">
                   📷 Subir
                   <input
                     type="file"
@@ -2092,7 +2092,7 @@ function GestorEvento({
           </form>
 
           {/* Vista Previa en Vivo: Móvil y Escritorio (Columna Derecha: 7 cols) */}
-          <div className="flex flex-col rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6 xl:col-span-7">
+          <div className="flex flex-col rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6 xl:col-span-7">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E9F4] pb-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6C7EE1]">
@@ -2272,23 +2272,25 @@ function GestorEvento({
                 /* SIMULADOR DE PANTALLA DE ESCRITORIO */
                 <div className="w-full overflow-hidden rounded-2xl border border-white/15 bg-[#0F1A45] shadow-2xl">
                   {/* Barra de navegador simulada */}
-                  <div className="flex items-center justify-between border-b border-white/10 bg-[#142257] px-4 py-2">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-[#142257] px-3 py-2 sm:px-4">
+                    <div className="flex shrink-0 items-center gap-1.5">
                       <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
                       <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
                       <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
                     </div>
-                    <span className="rounded bg-black/50 px-3 py-0.5 font-mono text-[10px] text-gray-400">
+                    <span className="max-w-[160px] truncate rounded bg-black/50 px-2.5 py-0.5 font-mono text-[10px] text-gray-400 sm:max-w-xs sm:px-3">
                       {baseShareUrl}
                     </span>
-                    <span className="text-[10px] text-[#15b2f5]">100% HD</span>
+                    <span className="shrink-0 text-[10px] text-[#15b2f5]">
+                      100% HD
+                    </span>
                   </div>
 
                   <div
                     className={`grid grid-cols-1 md:grid-cols-12 bg-gradient-to-br ${tpl.bg}`}
                   >
                     {/* Póster Izquierdo en Escritorio */}
-                    <div className="relative min-h-[320px] md:col-span-5">
+                    <div className="relative min-h-[240px] sm:min-h-[320px] md:col-span-5">
                       {invForm.imagen_portada ? (
                         <img
                           src={invForm.imagen_portada}
@@ -2317,9 +2319,9 @@ function GestorEvento({
                     </div>
 
                     {/* Contenido Derecho en Escritorio */}
-                    <div className="flex flex-col justify-between p-8 md:col-span-7">
+                    <div className="flex flex-col justify-between p-4 sm:p-8 md:col-span-7">
                       <div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <span
                             className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"
                             style={{
@@ -2334,15 +2336,15 @@ function GestorEvento({
                           </span>
                         </div>
 
-                        <h2 className="font-display mt-4 text-4xl font-bold uppercase tracking-wide text-white">
+                        <h2 className="font-display mt-4 text-2xl font-bold uppercase tracking-wide text-white sm:text-4xl">
                           {invForm.nombre}
                         </h2>
 
-                        <p className="mt-3 text-sm leading-relaxed text-gray-300">
+                        <p className="mt-3 text-xs leading-relaxed text-gray-300 sm:text-sm">
                           {invForm.mensaje_invitacion}
                         </p>
 
-                        <div className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-white/10 bg-black/40 p-4 text-xs">
+                        <div className="mt-5 grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-black/40 p-3.5 text-xs sm:mt-6 sm:grid-cols-2 sm:p-4">
                           <div>
                             <span className="block text-[10px] uppercase text-gray-400">
                               Fecha y Hora
@@ -2369,7 +2371,7 @@ function GestorEvento({
                           </div>
                           <div>
                             <span className="block text-[10px] uppercase text-gray-400">
-                              Dress Code
+                              Código de Vestimenta
                             </span>
                             <strong className="text-[#15b2f5]">
                               {invForm.codigo_vestimenta}
@@ -2378,7 +2380,7 @@ function GestorEvento({
                         </div>
 
                         {/* Notificación de Modalidad de Invitados en la Tarjeta de Escritorio */}
-                        <div className="mt-4 flex items-center justify-between rounded-xl border border-[#15b2f5]/40 bg-[#15b2f5]/10 px-4 py-2.5 shadow-[0_0_15px_rgba(21,178,245,0.15)]">
+                        <div className="mt-4 flex flex-col items-center justify-between gap-1 rounded-xl border border-[#15b2f5]/40 bg-[#15b2f5]/10 px-4 py-2.5 text-center shadow-[0_0_15px_rgba(21,178,245,0.15)] sm:flex-row sm:text-left">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[#15b2f5]">
                             🔔 Modalidad de Asistencia Notificada:
                           </span>
@@ -2399,7 +2401,7 @@ function GestorEvento({
                         </div>
                       </div>
 
-                      <div className="mt-6 flex items-center gap-3">
+                      <div className="mt-6 flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:gap-3">
                         <button
                           type="button"
                           onClick={() =>
@@ -2418,7 +2420,7 @@ function GestorEvento({
                           href={mapLocation.externalUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-xs font-bold text-gray-200 transition hover:border-[#15b2f5] hover:text-[#15b2f5]"
+                          className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-center text-xs font-bold text-gray-200 transition hover:border-[#15b2f5] hover:text-[#15b2f5]"
                         >
                           🗺️ Ver Mapa ↗
                         </a>
@@ -2430,12 +2432,12 @@ function GestorEvento({
             </div>
 
             {/* Barra inferior para probar la Invitación Pública en Local */}
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#15b2f5]/30 bg-[#0F1A45] px-4 py-3 text-xs">
-              <div className="text-gray-300">
+            <div className="mt-5 flex flex-col items-stretch justify-between gap-3 rounded-xl border border-[#15b2f5]/30 bg-[#0F1A45] px-4 py-3 text-xs sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="min-w-0 text-gray-300">
                 <span className="font-bold text-[#15b2f5]">
                   🔗 Enlace Público Activo:
                 </span>{" "}
-                <code className="font-mono text-[11px] text-white">
+                <code className="break-all font-mono text-[11px] text-white">
                   {baseShareUrl}
                 </code>
               </div>
@@ -2443,7 +2445,7 @@ function GestorEvento({
                 href={baseShareUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-xl bg-[#15b2f5]/20 px-4 py-2 text-xs font-bold text-[#15b2f5] transition hover:bg-[#15b2f5] hover:text-black"
+                className="rounded-xl bg-[#15b2f5]/20 px-4 py-2 text-center text-xs font-bold text-[#15b2f5] transition hover:bg-[#15b2f5] hover:text-black"
               >
                 🚀 Abrir Invitación Pública en Vivo ↗
               </a>
@@ -2453,7 +2455,7 @@ function GestorEvento({
           {/* =================================================================
               ZONA INFERIOR: GENERADOR DE LINKS ADICIONALES POR MODALIDAD Y PASES
              ================================================================= */}
-          <div className="xl:col-span-12 rounded-2xl border border-[#E6E9F4] bg-white p-6 shadow-xs">
+          <div className="xl:col-span-12 rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#E6E9F4] pb-4">
               <div>
                 <h2
@@ -3075,19 +3077,19 @@ function GestorEvento({
           </div>
 
           {/* Panel de Alta: Individual o Importación Masiva Excel/CSV */}
-          <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E9F4] pb-4">
+          <div className="rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6">
+            <div className="flex flex-col gap-3 border-b border-[#E6E9F4] pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div>
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
+                <h3 className="font-display text-xl font-bold uppercase tracking-wide text-[#2D3047] sm:text-2xl">
                   ➕ Agregar Invitados
                 </h3>
               </div>
 
-              <div className="flex rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1">
+              <div className="grid w-full grid-cols-2 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1 sm:flex sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setAddMode("individual")}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
+                  className={`rounded-lg px-2.5 py-1.5 text-center text-[11px] font-bold transition sm:px-3.5 sm:text-xs ${
                     addMode === "individual"
                       ? "bg-[#6C7EE1] text-white"
                       : "text-[#8E94A9] hover:text-[#6C7EE1]"
@@ -3098,7 +3100,7 @@ function GestorEvento({
                 <button
                   type="button"
                   onClick={() => setAddMode("csv")}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
+                  className={`rounded-lg px-2.5 py-1.5 text-center text-[11px] font-bold transition sm:px-3.5 sm:text-xs ${
                     addMode === "csv"
                       ? "bg-[#6C7EE1] text-white"
                       : "text-[#8E94A9] hover:text-[#6C7EE1]"
@@ -3392,7 +3394,7 @@ function GestorEvento({
                   className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-3 font-mono text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
                   <span className="text-xs text-[#8E94A9]">
                     Filas listas para importar:{" "}
                     <strong className="text-[#6C7EE1]">
@@ -3402,7 +3404,7 @@ function GestorEvento({
                   <button
                     type="button"
                     onClick={handleImportCsv}
-                    className="btn-glow-red rounded-xl bg-[#6C7EE1] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#5A6CD0]"
+                    className="btn-glow-red w-full rounded-xl bg-[#6C7EE1] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#5A6CD0] sm:w-auto"
                   >
                     📥 Importar {csvPreviewRows.length} Invitados Ahora
                   </button>
@@ -3412,12 +3414,12 @@ function GestorEvento({
           </div>
 
           {/* Buscador, Filtros por Estado y Grupo + Tabla Interactiva (Estilo Tarjetas Flotantes de Referencia) */}
-          <div className="rounded-3xl border border-[#CFD8E6] bg-[#E3E9F2] p-4 shadow-inner sm:p-6">
+          <div className="rounded-3xl border border-[#CFD8E6] bg-[#E3E9F2] p-3.5 shadow-inner sm:p-6">
             {/* Bloque Superior Blanco Elevado: Filtros de Colores + Buscador */}
-            <div className="rounded-2xl border-b-4 border-[#CDD6E4] bg-white p-4 shadow-[0_6px_16px_rgba(45,62,80,0.08)] sm:p-5">
+            <div className="rounded-2xl border-b-4 border-[#CDD6E4] bg-white p-3.5 shadow-[0_6px_16px_rgba(45,62,80,0.08)] sm:p-5">
               <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                 {/* Filtro por Estado con los 4 colores vibrantes de la imagen de referencia */}
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                   {[
                     {
                       id: "Todos",
@@ -3446,7 +3448,7 @@ function GestorEvento({
                         key={st.id}
                         type="button"
                         onClick={() => setRsvpFilter(st.id)}
-                        className={`rounded-xl px-4 py-2 text-xs font-extrabold uppercase tracking-wider shadow-md transition-all ${
+                        className={`rounded-xl px-3 py-2 text-center text-[11px] font-extrabold uppercase tracking-wider shadow-md transition-all sm:px-4 sm:text-xs ${
                           st.colorClass
                         } ${
                           isActive
@@ -3461,11 +3463,11 @@ function GestorEvento({
                 </div>
 
                 {/* Filtro por Grupo y Buscador */}
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
                   <select
                     value={groupFilter}
                     onChange={(e) => setGroupFilter(e.target.value)}
-                    className="rounded-xl border border-[#CFD8E6] bg-[#F4F7FB] px-3.5 py-2 text-xs font-bold text-[#37475A] outline-none transition focus:border-[#3167FF] focus:bg-white"
+                    className="w-full rounded-xl border border-[#CFD8E6] bg-[#F4F7FB] px-3.5 py-2 text-xs font-bold text-[#37475A] outline-none transition focus:border-[#3167FF] focus:bg-white sm:w-auto"
                   >
                     <option value="Todos">Todos los Grupos</option>
                     <option value="Familia">👨‍👩‍👧 Familia</option>
@@ -3487,7 +3489,7 @@ function GestorEvento({
 
             {/* Tabla Interactiva de Invitados con Filas en Tarjetas Blancas Flotantes */}
             <div className="mt-3 overflow-x-auto">
-              <table className="w-full border-separate border-spacing-y-3 text-left text-xs">
+              <table className="min-w-[820px] w-full border-separate border-spacing-y-3 text-left text-xs">
                 <thead>
                   <tr className="rounded-2xl bg-white shadow-[0_4px_12px_rgba(45,62,80,0.06)]">
                     <th className="rounded-l-2xl border-b-[3px] border-[#D0D9E6] py-3.5 pl-5 pr-3 text-[11px] font-extrabold uppercase tracking-wider text-[#37475A]">
@@ -4078,6 +4080,63 @@ function GestorEvento({
                 className="hidden mt-3 w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-3 text-xs text-[#2D3047] outline-none focus:border-emerald-400"
               />
 
+              {/* Vista Previa de la Miniatura (Open Graph) que se envía por WhatsApp */}
+              <div className="mt-3 rounded-xl border border-emerald-500/30 bg-[#E7F8F0]/55 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-1.5">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">
+                    🖼️ Vista Previa de Miniatura en WhatsApp
+                  </span>
+                  <span className="rounded-md bg-emerald-600/15 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                    {invForm.imagen_portada
+                      ? "✓ Póster del evento activo"
+                      : "Tarjeta automática del evento"}
+                  </span>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-emerald-600/20 bg-white shadow-xs">
+                  {invForm.imagen_portada ? (
+                    <div className="relative h-32 w-full overflow-hidden bg-[#142257] sm:h-36">
+                      <img
+                        src={invForm.imagen_portada}
+                        alt={evento.nombre}
+                        className="h-full w-full object-cover object-[center_25%]"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-28 w-full flex-col justify-center bg-gradient-to-r from-[#142257] via-[#1B2D6E] to-[#171F39] px-4 py-3 text-white">
+                      <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#15B2F5]">
+                        {evento.tipo_evento || "INVITACIÓN DIGITAL"}
+                      </span>
+                      <p className="mt-0.5 truncate text-sm font-extrabold text-white">
+                        {evento.nombre}
+                      </p>
+                      <p className="mt-0.5 truncate text-[10px] text-gray-300">
+                        📅 {formatDateInput(evento.fecha_evento)} • ⏰{" "}
+                        {evento.hora_evento || "20:00"} hrs • 📍{" "}
+                        {evento.lugar || "Salón VIP"}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="border-t border-[#E6E9F4] bg-[#F7F8FC] px-3 py-2">
+                    <p className="truncate text-xs font-extrabold text-[#2D3047]">
+                      ✨ {evento.nombre} —{" "}
+                      {evento.tipo_evento || "Invitación Digital"}
+                    </p>
+                    <p className="mt-0.5 line-clamp-2 text-[11px] text-[#5B617A]">
+                      📅 {formatDateInput(evento.fecha_evento)} • ⏰{" "}
+                      {evento.hora_evento || "20:00"} hrs • 📍{" "}
+                      {evento.lugar || "Salón Principal"} —{" "}
+                      {invForm.mensaje_invitacion ||
+                        "Confirma tu asistencia en la invitación digital."}
+                    </p>
+                    <p className="mt-1 truncate font-mono text-[10px] text-emerald-700">
+                      {selectedWhatsappLinkObj?.url || baseShareUrl}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-4 max-h-64 space-y-2 overflow-y-auto pr-1">
                 {invitados.map((g) => (
                   <div
@@ -4507,11 +4566,11 @@ function GestorEvento({
             {/* Modal Interactivo de Vista Previa Completa de Plantilla HTML */}
             {showHtmlPreviewModal && (
               <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-4"
                 onClick={() => setShowHtmlPreviewModal(false)}
               >
                 <div
-                  className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6 shadow-2xl"
+                  className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-2xl sm:p-6"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E9F4] pb-4">
@@ -4520,7 +4579,7 @@ function GestorEvento({
                         VISTA PREVIA DE PLANTILLA DE CORREO •{" "}
                         {activeEmailTemplate.name}
                       </span>
-                      <h4 className="font-display text-2xl font-bold uppercase text-[#2D3047]">
+                      <h4 className="font-display text-xl font-bold uppercase text-[#2D3047] sm:text-2xl">
                         ✉️ Previsualizador HTML de Invitación
                       </h4>
                     </div>
@@ -4534,15 +4593,15 @@ function GestorEvento({
                   </div>
 
                   {/* Controles superiores: Selector de Invitado de Prueba y Pestaña Visual vs Código */}
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
                       <label className="text-xs font-semibold text-[#8E94A9]">
                         Previsualizar como:
                       </label>
                       <select
                         value={previewGuestId}
                         onChange={(e) => setPreviewGuestId(e.target.value)}
-                        className="rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-1.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                        className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-1.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1] sm:w-auto"
                       >
                         <option value="">Invitado General (Demo)</option>
                         {invitados.map((g) => (
@@ -4553,7 +4612,7 @@ function GestorEvento({
                       </select>
                     </div>
 
-                    <div className="flex rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1">
+                    <div className="grid grid-cols-2 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1 sm:flex">
                       <button
                         type="button"
                         onClick={() => setHtmlPreviewTab("visual")}
@@ -4760,13 +4819,13 @@ function GestorEvento({
           </div>
 
           {/* 4. Sección de Recordatorios Automatizados */}
-          <div className="rounded-2xl border border-amber-500/30 bg-white border border-[#E6E9F4] shadow-xs p-6">
+          <div className="rounded-2xl border border-amber-500/30 bg-white border border-[#E6E9F4] p-4 shadow-xs sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#D97706]">
                   AUTOMATIZACIÓN INTELIGENTE
                 </span>
-                <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
+                <h4 className="font-display text-xl font-bold uppercase tracking-wide text-[#2D3047] sm:text-2xl">
                   ⏰ Recordatorios Automatizados para &ldquo;Pendientes&rdquo;
                 </h4>
                 <p className="text-xs text-[#8E94A9]">
@@ -4882,11 +4941,11 @@ function GestorEvento({
               </div>
             )}
 
-            <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+            <div className="mt-4 flex flex-col items-stretch justify-end gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
               <button
                 type="button"
                 onClick={(e) => handleSaveEvento(e)}
-                className="rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-4 py-2.5 text-xs font-semibold text-[#2D3047] hover:text-[#6C7EE1]"
+                className="w-full rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-4 py-2.5 text-xs font-semibold text-[#2D3047] hover:text-[#6C7EE1] sm:w-auto"
               >
                 💾 Guardar Regla de Recordatorio
               </button>
@@ -4921,7 +4980,7 @@ function GestorEvento({
                     estadoFiltro: "Pendiente",
                   });
                 }}
-                className="cursor-pointer rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-amber-400"
+                className="w-full cursor-pointer rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-amber-400 sm:w-auto"
               >
                 ⚡ Disparar Ahora a {pendientesList.length} Pendientes
               </button>
@@ -5472,11 +5531,11 @@ function GestorEvento({
           TAB E: ⚙️ AJUSTES DEL EVENTO Y QR DE ACCESO (/events/[id]/settings)
          ===================================================================== */}
       {currentTab === "settings" && (
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-12">
           {/* Columna Izquierda (7 cols): Duplicar, Pausar RSVP, Cambiar Propietario, Eliminar */}
           <div className="space-y-6 lg:col-span-7">
-            <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
-              <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
+            <div className="rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6">
+              <h3 className="font-display text-xl font-bold uppercase tracking-wide text-[#2D3047] sm:text-2xl">
                 ⚙️ Acciones de Control del Evento
               </h3>
 
@@ -5576,7 +5635,7 @@ function GestorEvento({
             </div>
 
             {/* 4. Eliminar Evento */}
-            <div className="rounded-2xl border border-rose-500/30 bg-[#FFF5F7] p-6">
+            <div className="rounded-2xl border border-rose-500/30 bg-[#FFF5F7] p-4 sm:p-6">
               <h4 className="text-sm font-bold uppercase tracking-wider text-[#F26B61]">
                 ⚠️ Zona de Peligro: Eliminar Evento
               </h4>
@@ -5587,7 +5646,7 @@ function GestorEvento({
               <button
                 type="button"
                 onClick={handleDeleteEvento}
-                className="mt-4 rounded-xl border border-rose-500/50 bg-rose-600/20 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#F26B61] transition hover:bg-rose-600 hover:text-white"
+                className="mt-4 w-full rounded-xl border border-rose-500/50 bg-rose-600/20 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#F26B61] transition hover:bg-rose-600 hover:text-white sm:w-auto"
               >
                 🗑️ Eliminar Evento Definitivamente
               </button>
@@ -5595,13 +5654,13 @@ function GestorEvento({
           </div>
 
           {/* Columna Derecha (5 cols): Generador de Código QR de Control de Acceso */}
-          <div className="rounded-2xl border border-[#6C7EE1]/30 bg-white border border-[#E6E9F4] shadow-xs p-6 lg:col-span-5">
-            <div className="flex items-center justify-between">
+          <div className="rounded-2xl border border-[#6C7EE1]/30 bg-white border border-[#E6E9F4] p-4 shadow-xs sm:p-6 lg:col-span-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                   CHECK-IN EN PUERTA
                 </span>
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
+                <h3 className="font-display text-xl font-bold uppercase tracking-wide text-[#2D3047] sm:text-2xl">
                   📲 Código QR de Control de Acceso
                 </h3>
               </div>
@@ -5627,7 +5686,7 @@ function GestorEvento({
             </p>
 
             {/* Credencial / Pase con QR SVG */}
-            <div className="mt-5 flex flex-col items-center rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-6 text-center shadow-xl">
+            <div className="mt-5 flex flex-col items-center rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-4 text-center shadow-xl sm:p-6">
               <span className="rounded-full bg-[#6C7EE1]/20 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
                 PASE DE CONTROL DE ACCESO
               </span>
@@ -5643,7 +5702,7 @@ function GestorEvento({
               <div className="mt-4 rounded-2xl bg-white p-4 shadow-[0_0_30px_rgba(21,178,245,0.2)]">
                 <svg
                   viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
-                  className="h-44 w-44"
+                  className="h-40 w-40 sm:h-44 sm:w-44"
                   shapeRendering="crispEdges"
                 >
                   {qrMatrix.map((row, rIdx) =>
@@ -5671,7 +5730,7 @@ function GestorEvento({
                 pases
               </p>
 
-              <div className="mt-5 flex w-full gap-2.5">
+              <div className="mt-5 flex w-full flex-col gap-2.5 sm:flex-row">
                 <button
                   type="button"
                   onClick={handleDownloadQrSvg}

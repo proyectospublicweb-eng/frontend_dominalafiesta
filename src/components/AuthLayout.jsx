@@ -74,7 +74,7 @@ function AuthLayout({ children }) {
         </div>
 
         {/* Contenido (formulario) sobre fondo blanco limpio */}
-        <div className="flex w-full items-center justify-center bg-white p-8 sm:p-12 lg:w-1/2">
+        <div className="flex w-full items-center justify-center bg-white p-5 sm:p-10 lg:w-1/2 lg:p-12">
           {children}
         </div>
       </div>

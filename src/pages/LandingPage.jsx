@@ -187,7 +187,7 @@ function LandingPage() {
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/60 bg-white/40 text-sm font-black text-[#17162E] shadow-sm backdrop-blur-md sm:h-9 sm:w-9 sm:text-base">
                 ✦
               </div>
-              <span className="truncate text-base font-extrabold tracking-tight text-[#17162E] sm:text-lg">
+              <span className="truncate text-sm font-extrabold tracking-tight text-[#17162E] sm:text-lg">
                 Recuerdalo<span className="text-[#5C4EE5]">.com.mx</span>
               </span>
             </div>

@@ -167,6 +167,13 @@ function InvitacionPublicaPage() {
         if (!active) return;
         setEvento(data.evento);
         setInvitado(data.invitado);
+        if (data.evento?.nombre) {
+          document.title = data.invitado?.nombre
+            ? `✨ Invitación para ${data.invitado.nombre} — ${data.evento.nombre}`
+            : `✨ ${data.evento.nombre} — ${
+                data.evento.tipo_evento || "Invitación Digital"
+              }`;
+        }
 
         const modalidad =
           urlMod ||
@@ -322,11 +329,11 @@ function InvitacionPublicaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F6FA] px-4 py-10 text-white">
+    <div className="min-h-screen bg-[#F3F6FA] px-3 py-6 text-white sm:px-4 sm:py-10">
       <div className="mx-auto max-w-md">
         {/* Tarjeta Principal de Invitación Virtual */}
         <div
-          className={`overflow-hidden rounded-[2.2rem] border-2 bg-gradient-to-b shadow-[0_24px_60px_rgba(0,0,0,0.22)] ${tpl.bg} ${tpl.border}`}
+          className={`overflow-hidden rounded-[1.8rem] border-2 bg-gradient-to-b shadow-[0_24px_60px_rgba(0,0,0,0.22)] sm:rounded-[2.2rem] ${tpl.bg} ${tpl.border}`}
         >
           {evento.imagen_portada && (
             <div className="relative h-56 w-full overflow-hidden">
@@ -339,7 +346,7 @@ function InvitacionPublicaPage() {
             </div>
           )}
 
-          <div className="p-6 text-center">
+          <div className="p-4 text-center sm:p-6">
             <span
               className="inline-block rounded-lg px-3.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-[#171F39] shadow"
               style={{
@@ -424,7 +431,7 @@ function InvitacionPublicaPage() {
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               />
-              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
+              <div className="flex flex-col gap-1.5 px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-4">
                 <span className="truncate font-semibold text-gray-200">
                   📍 {evento.lugar || "Ubicación del Evento"}
                 </span>

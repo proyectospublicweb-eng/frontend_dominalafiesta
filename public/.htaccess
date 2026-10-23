@@ -2,15 +2,22 @@
   RewriteEngine On
   RewriteBase /
 
-  # No redirigir las peticiones dirigidas a la API de Node.js (Phusion Passenger)
+  # 1. No redirigir las peticiones dirigidas a la API de Node.js (Phusion Passenger)
   RewriteRule ^apiproyectoeventos(/.*)?$ - [L]
 
-  # Si el archivo o directorio existe físicamente (assets, imágenes, css, js), servirlo directo
+  # 2. Si el archivo o directorio existe físicamente (assets, imágenes, css, js, php), servirlo directo
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # Cualquier otra ruta (/home, /events/:id, /rsvp/:id, /invitacion/:id) la maneja React Router
+  # 3. Rutas del panel y autenticación van directo a la SPA
+  RewriteRule ^(home|login|register|events)(/.*)?$ index.html [L]
+
+  # 4. Rutas públicas de invitación (/rsvp/:id, /invitacion/:id y /:eventoSlug/e:id):
+  #    Inyecta etiquetas Open Graph (miniatura para WhatsApp, título y descripción) y entrega la SPA
+  RewriteRule ^(rsvp|invitacion)/([eE]?[0-9]+)/?$ og-invitacion.php?id=$2 [QSA,L]
+  RewriteRule ^([a-zA-Z0-9_-]+)/([eE]?[0-9]+)/?$ og-invitacion.php?slug=$1&id=$2 [QSA,L]
+
+  # 5. Cualquier otra ruta la maneja React Router
   RewriteRule ^ index.html [L]
 </IfModule>
-

@@ -69,7 +69,7 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md overflow-hidden rounded-3xl border border-[#DCE0F0] bg-white p-8 shadow-[0_24px_60px_rgba(45,48,71,0.28)]"
+        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-[#DCE0F0] bg-white p-5 shadow-[0_24px_60px_rgba(45,48,71,0.28)] sm:p-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Franja superior Periwinkle Indigo + Mint Aqua */}
@@ -102,7 +102,7 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
             <span className="inline-block rounded-full bg-[#ECEFFA] px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-widest text-[#6C7EE1]">
               Recuerdalo.com.mx
             </span>
-            <h2 className="mt-3 text-3xl font-extrabold text-[#2D3047]">
+            <h2 className="mt-3 text-2xl font-extrabold text-[#2D3047] sm:text-3xl">
               {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
             </h2>
             <p className="mt-1.5 text-sm text-[#6E748A]">
