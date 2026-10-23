@@ -4457,13 +4457,17 @@ function GestorEvento({
                 {invitados.map((g) => (
                   <div
                     key={g.idinvitado}
-                    className="flex flex-col gap-2 rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
+                    style={{ backgroundColor: "#e7c0ed" }}
+                    className="flex flex-col gap-2 rounded-xl border border-[#E6E9F4] bg-[#e7c0ed] px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
                       <p className="truncate font-bold text-[#2D3047]">
                         {g.nombre}
                       </p>
-                      <p className="truncate text-[10px] text-[#8E94A9]">
+                      <p
+                        style={{ color: "#000000" }}
+                        className="truncate text-[10px] text-black"
+                      >
                         {g.correo || "Sin correo"} •{" "}
                         {g.invitacion_enviada
                           ? `✓ Enviado (${g.canal_ultimo_envio || "Digital"})`
