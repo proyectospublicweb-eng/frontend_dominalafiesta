@@ -33,6 +33,16 @@ export const updateInvitadoRequest = (idEvento, idInvitado, payload) =>
 export const deleteInvitadoRequest = (idEvento, idInvitado) =>
   instanceAxios.delete(`/eventos/${idEvento}/invitados/${idInvitado}`);
 
+export const enviarCorreoIndividualRequest = (
+  idEvento,
+  idInvitado,
+  payload = {}
+) =>
+  instanceAxios.post(
+    `/eventos/${idEvento}/invitados/${idInvitado}/enviar-correo`,
+    payload
+  );
+
 export const enviarDifusionRequest = (idEvento, payload = {}) =>
   instanceAxios.post(`/eventos/${idEvento}/difusion`, payload);
 

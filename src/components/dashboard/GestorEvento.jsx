@@ -10,6 +10,7 @@ import {
   importarInvitadosRequest,
   updateInvitadoRequest,
   deleteInvitadoRequest,
+  enviarCorreoIndividualRequest,
   enviarDifusionRequest,
   addLogisticaRequest,
   updateLogisticaRequest,
@@ -1005,6 +1006,14 @@ function GestorEvento({
   };
 
   const handleSendDirectEmail = async (guest) => {
+    const emailDestino = String(guest.correo || "").trim();
+    if (!emailDestino || !emailDestino.includes("@")) {
+      showNotice(
+        `⚠️ El invitado "${guest.nombre}" no tiene un correo electrónico válido registrado.`
+      );
+      return;
+    }
+
     const link = selectedEmailLinkObj?.url || baseShareUrl;
     const subject = formatGuestMessage(
       activeEmailTemplate.subject,
@@ -1012,16 +1021,40 @@ function GestorEvento({
       link
     );
     const bodyText = formatGuestMessage(whatsappMsg, guest, link);
-    const mailtoUrl = `mailto:${encodeURIComponent(
-      guest.correo || ""
-    )}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-      bodyText
-    )}`;
-    window.open(mailtoUrl, "_self");
-    await handleUpdateGuest(guest.idinvitado, {
-      invitacion_enviada: true,
-      canal_ultimo_envio: broadcastChannel || "Email HTML",
-    });
+    const htmlCode = buildEmailHtmlCode(guest);
+
+    try {
+      showNotice(`⏳ Enviando correo HTML a ${emailDestino}...`);
+      const { data } = await enviarCorreoIndividualRequest(
+        evento.idevento,
+        guest.idinvitado,
+        {
+          subject,
+          html: htmlCode,
+          text: bodyText,
+          linkUrl: link,
+          templateId: selectedHtmlTemplate,
+          canal: broadcastChannel || "Email HTML",
+        }
+      );
+      if (data?.invitado) {
+        setDetalle((prev) => ({
+          ...prev,
+          invitados: prev.invitados.map((g) =>
+            g.idinvitado === guest.idinvitado ? data.invitado : g
+          ),
+        }));
+      }
+      onEventoUpdated();
+      showNotice(
+        `✓ Correo HTML enviado exitosamente a ${emailDestino} desde notificaciones@recuerdalo.com.mx`
+      );
+    } catch (err) {
+      showNotice(
+        err.response?.data?.message ||
+          `Error al enviar correo a ${emailDestino}`
+      );
+    }
   };
 
   const handleSendWhatsApp = async (guest) => {
@@ -1047,19 +1080,54 @@ function GestorEvento({
     estadoFiltro = null,
   }) => {
     try {
+      showNotice(`⏳ Procesando envío masivo de correos por ${canal}...`);
+      const link = selectedEmailLinkObj?.url || baseShareUrl;
+      const modalidadOverride =
+        selectedEmailLinkObj && !selectedEmailLinkObj.isPrincipal
+          ? selectedEmailLinkObj.modalidad
+          : "";
+      const pasesOverride =
+        selectedEmailLinkObj &&
+        !selectedEmailLinkObj.isPrincipal &&
+        selectedEmailLinkObj.adultos + selectedEmailLinkObj.ninos > 0
+          ? selectedEmailLinkObj.adultos + selectedEmailLinkObj.ninos
+          : 0;
+
       const { data } = await enviarDifusionRequest(evento.idevento, {
         soloPendientes,
         canal,
         estadoFiltro,
+        linkUrl: link,
+        templateId: selectedHtmlTemplate,
+        modalidadOverride,
+        pasesOverride,
       });
-      setDetalle((prev) => ({ ...prev, invitados: data }));
+
+      const updatedInvitados = Array.isArray(data)
+        ? data
+        : data?.invitados || [];
+      setDetalle((prev) => ({ ...prev, invitados: updatedInvitados }));
+      onEventoUpdated();
+
+      if (data && typeof data.enviadosCount === "number") {
+        showNotice(
+          `✓ Se enviaron ${data.enviadosCount} correo(s) HTML exitosamente desde notificaciones@recuerdalo.com.mx${
+            data.sinCorreoCount > 0
+              ? ` (${data.sinCorreoCount} sin correo registrado)`
+              : ""
+          }.`
+        );
+      } else {
+        showNotice(
+          estadoFiltro === "Pendiente"
+            ? `✓ Recordatorio disparado por ${canal} a todos los invitados Pendientes.`
+            : `✓ Campaña masiva enviada por ${canal}.`
+        );
+      }
+    } catch (err) {
       showNotice(
-        estadoFiltro === "Pendiente"
-          ? `✓ Recordatorio disparado por ${canal} a todos los invitados Pendientes.`
-          : `✓ Campaña masiva enviada por ${canal}.`
+        err.response?.data?.message || "Error al procesar el envío masivo"
       );
-    } catch {
-      showNotice("Error al procesar el envío masivo");
     }
   };
 
@@ -1579,13 +1647,13 @@ function GestorEvento({
       )}
 
       {/* =====================================================================
-          3 TARJETAS SUPERIORES CON DEGRADADO ESTILO UIUX EN TODAS LAS VISTAS DEL GESTOR (+20% TAMAÑO)
+          TARJETA SUPERIOR UNIFICADA CON FONDO BLANCO
          ===================================================================== */}
-      <div className="grid max-w-[922px] grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Tarjeta 1: Periwinkle Indigo (#6C7EE1) con barra Mint Aqua (#4CE0B3) */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#7587EB] to-[#6475DC] p-[15px] text-white shadow-[0_8px_18px_rgba(108,126,225,0.22)]">
-          <div className="relative z-10">
-            <span className="inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+      <div className="w-full rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 lg:gap-8">
+          {/* Bloque Izquierdo: Evento Seleccionado, Cuenta Regresiva y Estado */}
+          <div className="min-w-0 flex-1">
+            <span className="inline-block rounded-full bg-[#6C7EE1]/12 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
               Evento Seleccionado
             </span>
             <div className="mt-1.5">
@@ -1596,7 +1664,7 @@ function GestorEvento({
                     onSelectEvento(Number(e.target.value));
                   }
                 }}
-                className="w-full rounded-lg border border-white/40 bg-white/15 px-2.5 py-1.5 text-[13px] font-extrabold text-white outline-none backdrop-blur-xs sm:max-w-[222px]"
+                className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs font-extrabold text-[#2D3047] outline-none transition focus:border-[#6C7EE1] sm:max-w-[360px] sm:text-[13px]"
               >
                 {!evento.idevento && (
                   <option value="draft" className="text-[#2D3047]">
@@ -1614,49 +1682,63 @@ function GestorEvento({
                 ))}
               </select>
             </div>
-            <p className="mt-1.5 text-xs text-white/90">
-              ⏳ Faltan <strong>{diasParaEvento}</strong> días •{" "}
-              {invForm.rsvp_habilitado ? "Evento Activo" : "Evento Pausado"}
-            </p>
-            <div className="mt-2 h-1.5 w-[115px] overflow-hidden rounded-full bg-white/25">
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#5B617A]">
+              <span>
+                ⏳ Faltan <strong className="text-[#2D3047]">{diasParaEvento}</strong> días
+              </span>
+              <span>•</span>
+              <span
+                className={`inline-flex items-center gap-1 font-bold ${
+                  invForm.rsvp_habilitado
+                    ? "text-emerald-600"
+                    : "text-amber-600"
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    invForm.rsvp_habilitado
+                      ? "bg-emerald-500"
+                      : "bg-amber-500"
+                  }`}
+                />
+                {invForm.rsvp_habilitado ? "Evento Activo" : "Evento Pausado"}
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 w-32 overflow-hidden rounded-full bg-[#E6E9F4]">
               <div className="h-full w-4/5 rounded-full bg-[#4CE0B3]" />
+            </div>
+          </div>
+
+          {/* Bloque Derecho: Confirmación de Asistencia y Botón Ver Invitados */}
+          <div className="flex min-w-0 flex-1 flex-col justify-between gap-2.5 border-t border-[#E6E9F4] pt-3.5 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0 lg:pl-8">
+            <div>
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-xl font-extrabold tracking-tight text-[#2D3047]">
+                  {pasesConfirmadosCount} / {evento.capacidad}
+                </span>
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#6C7EE1]">
+                  Confirmación de Asistencia
+                </h3>
+              </div>
+              <p className="mt-1 text-xs text-[#5B617A]">
+                <strong className="text-[#2D3047]">{pendientesList.length}</strong>{" "}
+                invitaciones pendientes por confirmar
+              </p>
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => onChangeSubTab("guests")}
+                className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2 text-center text-xs font-bold text-white shadow-xs transition hover:bg-[#5A6CD0] sm:w-auto sm:py-1.5"
+              >
+                Ver Invitados
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Tarjeta 2: Coral Salmón (#F98880) con diana circular */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FA938B] to-[#F77D75] p-[15px] text-white shadow-[0_8px_18px_rgba(249,136,128,0.22)]">
-          <div className="relative z-10 max-w-[76%]">
-            <span className="text-[17px] font-extrabold tracking-tight">
-              {pasesConfirmadosCount} / {evento.capacidad}
-            </span>
-            <h3 className="text-[13px] font-bold tracking-tight">
-              Confirmación de Asistencia
-            </h3>
-            <p className="mt-1 text-[11px] leading-tight text-white/90">
-              {pendientesList.length} invitaciones pendientes por confirmar
-            </p>
-            <button
-              type="button"
-              onClick={() => onChangeSubTab("guests")}
-              className="mt-2 rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-white hover:text-[#F77D75]"
-            >
-              Ver Invitados
-            </button>
-          </div>
-          <svg
-            viewBox="0 0 100 100"
-            className="pointer-events-none absolute -bottom-1 -right-1 h-[68px] w-[68px] opacity-85"
-          >
-            <circle cx="52" cy="52" r="34" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="4" />
-            <circle cx="52" cy="52" r="20" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="4" />
-            <circle cx="52" cy="52" r="6" fill="#FFFFFF" />
-            <path d="M52 52 L82 22" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-          </svg>
-        </div>
-
-        {/* Tarjeta 3: Deep Twilight Navy (#2D3047) con tarjeta flotante blanca y anillo neón */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#323650] to-[#26293E] p-[15px] text-white shadow-[0_8px_18px_rgba(45,48,71,0.2)] sm:col-span-2 lg:col-span-1">
+        {/* Tarjeta 3: Deep Twilight Navy (#2D3047) con tarjeta flotante blanca y anillo neón (Oculta temporalmente) */}
+        <div className="hidden relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#323650] to-[#26293E] p-[15px] text-white shadow-[0_8px_18px_rgba(45,48,71,0.2)] sm:col-span-2 lg:col-span-1">
           <div className="relative z-10 flex items-start justify-between gap-2.5">
             <div className="max-w-[68%]">
               <div className="flex items-center gap-1.5">
