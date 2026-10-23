@@ -371,10 +371,10 @@ function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Gráfica / Estado RSVP en vivo estilo app */}
+                  {/* Gráfica / Estado de Asistencia en vivo estilo app */}
                   <div className="mt-3.5 space-y-2 rounded-2xl border border-white/10 bg-[#1A1936] p-3">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-[#9DA3C0]">Confirmados RSVP</span>
+                      <span className="text-[#9DA3C0]">Confirmados</span>
                       <span className="font-extrabold text-[#4CE0B3]">
                         +94% Asistencia
                       </span>
@@ -894,7 +894,7 @@ function LandingPage() {
                 </div>
                 <p className="mt-3 max-w-xs text-xs font-medium leading-relaxed text-[#2D2A5A]">
                   Tu plataforma integral para crear invitaciones interactivas,
-                  confirmar asistencia RSVP, asignar mesas y controlar el acceso
+                  confirmar asistencia, asignar mesas y controlar el acceso
                   con código QR.
                 </p>
               </div>
@@ -933,7 +933,7 @@ function LandingPage() {
                 </h5>
                 <ul className="mt-3 space-y-2 text-xs font-semibold text-[#2D2A5A]">
                   <li>Invitación Digital</li>
-                  <li>Control RSVP</li>
+                  <li>Control de Asistencia</li>
                   <li>Seating Chart</li>
                   <li>Código QR SVG</li>
                 </ul>

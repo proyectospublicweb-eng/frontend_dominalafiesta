@@ -581,7 +581,7 @@ function InvitacionPublicaPage() {
               >
                 <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
                   <h3 className="text-base font-extrabold uppercase tracking-wide text-[#15B2F5]">
-                    📋 Confirmar Asistencia (RSVP)
+                    📋 Confirmar Asistencia
                   </h3>
                   <button
                     type="button"

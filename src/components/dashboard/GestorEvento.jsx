@@ -90,7 +90,7 @@ const EMAIL_HTML_TEMPLATES = [
     id: "minimal-gold",
     name: "Etiqueta Dorada Elegante",
     subject: "🥂 Estás invitado a {evento} - Confirma tu asistencia",
-    badge: "RSVP INVITATION",
+    badge: "INVITACIÓN DIGITAL",
     gradient: "from-[#241907] via-[#142257] to-[#121316]",
     borderClass: "border-amber-400/40",
     badgeColor: "#fde68a",
@@ -322,11 +322,15 @@ function GestorEvento({
   );
   const [selectedWhatsappLinkId, setSelectedWhatsappLinkId] =
     useState("principal");
+  const [selectedEmailLinkId, setSelectedEmailLinkId] =
+    useState("principal");
   const [broadcastChannel, setBroadcastChannel] = useState("Email HTML");
   const [selectedHtmlTemplate, setSelectedHtmlTemplate] = useState("neon-vip");
   const [showHtmlPreviewModal, setShowHtmlPreviewModal] = useState(false);
   const [htmlPreviewTab, setHtmlPreviewTab] = useState("visual"); // "visual" | "code"
   const [previewGuestId, setPreviewGuestId] = useState("");
+  const [confirmBroadcastModal, setConfirmBroadcastModal] = useState(null);
+  const [confirmDirectEmailGuest, setConfirmDirectEmailGuest] = useState(null);
 
   // Tab D: Logística (Seating Chart Drag & Drop, Checklist con fecha límite, Cronograma)
   const [draggedGuestId, setDraggedGuestId] = useState(null);
@@ -459,7 +463,7 @@ function GestorEvento({
         </h2>
         <p className="mt-2 text-sm text-[#8E94A9]">
           Crea tu primer evento en el Wizard paso a paso para acceder al Gestor
-          del Evento Activo (Diseño Virtual, Invitados RSVP, Difusión, Seating
+          del Evento Activo (Diseño Virtual, Invitados y Confirmaciones, Difusión, Seating
           Chart y Código QR).
         </p>
         <button
@@ -561,6 +565,11 @@ function GestorEvento({
   const selectedWhatsappLinkObj =
     allAvailableLinks.find(
       (l) => String(l.iditem) === String(selectedWhatsappLinkId)
+    ) || allAvailableLinks[0];
+
+  const selectedEmailLinkObj =
+    allAvailableLinks.find(
+      (l) => String(l.iditem) === String(selectedEmailLinkId)
     ) || allAvailableLinks[0];
 
   // Días restantes para el evento
@@ -908,21 +917,28 @@ function GestorEvento({
     null;
 
   const buildEmailHtmlCode = (guest) => {
-    const link = baseShareUrl;
+    const link = selectedEmailLinkObj?.url || baseShareUrl;
     const guestName = guest?.nombre || "Invitado Especial";
     const modalidade =
-      guest?.modalidad_pase ||
-      invForm?.modalidad_invitados ||
-      evento.modalidad_invitados ||
-      "Adultos y niños";
-    const pasesCount = guest?.pases || 2;
+      selectedEmailLinkObj && !selectedEmailLinkObj.isPrincipal
+        ? selectedEmailLinkObj.modalidad
+        : guest?.modalidad_pase ||
+          invForm?.modalidad_invitados ||
+          evento.modalidad_invitados ||
+          "Adultos y niños";
+    const pasesCount =
+      selectedEmailLinkObj &&
+      !selectedEmailLinkObj.isPrincipal &&
+      selectedEmailLinkObj.adultos + selectedEmailLinkObj.ninos > 0
+        ? selectedEmailLinkObj.adultos + selectedEmailLinkObj.ninos
+        : guest?.pases || 2;
     const btnText = invForm?.texto_boton_rsvp || "Confirmar Asistencia";
 
     return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>${formatGuestMessage(activeEmailTemplate.subject, guest)}</title>
+  <title>${formatGuestMessage(activeEmailTemplate.subject, guest, link)}</title>
 </head>
 <body style="margin:0;padding:24px;background-color:#0F1A45;font-family:Arial,sans-serif;color:#ffffff;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background-color:#142257;border:1px solid ${activeEmailTemplate.accentHex};border-radius:16px;overflow:hidden;">
@@ -947,7 +963,7 @@ function GestorEvento({
         </p>
         <p style="margin:0 0 12px;font-size:13px;color:#e5e7eb;">
           📍 <strong>Lugar:</strong> ${evento.lugar || "Salón VIP"} &nbsp;|&nbsp;
-          👔 <strong>Dress Code:</strong> ${invForm?.codigo_vestimenta || "Formal / Libre"}
+          👔 <strong>Código de Vestimenta:</strong> ${invForm?.codigo_vestimenta || "Formal / Libre"}
         </p>
         <div style="margin:16px auto;padding:10px 14px;background-color:rgba(21,178,245,0.1);border:1px solid rgba(21,178,245,0.35);border-radius:10px;display:inline-block;font-size:12px;color:#6C7EE1;">
           🔔 <strong>Modalidad de Asistencia:</strong> ${modalidade} (${pasesCount} pases)
@@ -965,6 +981,26 @@ function GestorEvento({
   </table>
 </body>
 </html>`;
+  };
+
+  const handleSendDirectEmail = async (guest) => {
+    const link = selectedEmailLinkObj?.url || baseShareUrl;
+    const subject = formatGuestMessage(
+      activeEmailTemplate.subject,
+      guest,
+      link
+    );
+    const bodyText = formatGuestMessage(whatsappMsg, guest, link);
+    const mailtoUrl = `mailto:${encodeURIComponent(
+      guest.correo || ""
+    )}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+      bodyText
+    )}`;
+    window.open(mailtoUrl, "_self");
+    await handleUpdateGuest(guest.idinvitado, {
+      invitacion_enviada: true,
+      canal_ultimo_envio: broadcastChannel || "Email HTML",
+    });
   };
 
   const handleSendWhatsApp = async (guest) => {
@@ -1574,7 +1610,7 @@ function GestorEvento({
               {pasesConfirmadosCount} / {evento.capacidad}
             </span>
             <h3 className="text-[13px] font-bold tracking-tight">
-              Asistencia RSVP
+              Confirmación de Asistencia
             </h3>
             <p className="mt-1 text-[11px] leading-tight text-white/90">
               {pendientesList.length} invitaciones pendientes por confirmar
@@ -4087,6 +4123,87 @@ function GestorEvento({
                 </select>
               </div>
 
+              {/* Selector de Link Creado para Enviar por Correo / SMS */}
+              <div className="mt-3 rounded-xl border border-[#6C7EE1]/25 bg-[#6C7EE1]/5 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#2D3047]">
+                    🔗 Selecciona el Link a Enviar ({allAvailableLinks.length}{" "}
+                    disponible{allAvailableLinks.length === 1 ? "" : "s"}):
+                  </label>
+                  <span className="rounded-md bg-[#6C7EE1]/15 px-2 py-0.5 text-[10px] font-bold text-[#6C7EE1]">
+                    Activo: {selectedEmailLinkObj.etiqueta}
+                  </span>
+                </div>
+
+                <div
+                  className={`mt-2 space-y-1.5 pr-1 ${
+                    allAvailableLinks.length > 5
+                      ? "max-h-[395px] overflow-y-auto"
+                      : ""
+                  }`}
+                >
+                  {allAvailableLinks.map((lnk) => {
+                    const isSelected =
+                      String(selectedEmailLinkObj.iditem) ===
+                      String(lnk.iditem);
+                    const soloAd = isSoloAdultosMod(lnk.modalidad);
+                    const soloNi = isSoloNinosMod(lnk.modalidad);
+                    return (
+                      <div
+                        key={lnk.iditem}
+                        onClick={() => setSelectedEmailLinkId(lnk.iditem)}
+                        className={`flex cursor-pointer flex-col justify-between gap-2 rounded-xl border px-3 py-2 text-xs transition sm:flex-row sm:items-center ${
+                          isSelected
+                            ? "border-[#6C7EE1] bg-white shadow-xs ring-2 ring-[#6C7EE1]/20"
+                            : "border-[#E6E9F4] bg-white/70 hover:border-[#6C7EE1] hover:bg-white"
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-extrabold text-[#2D3047]">
+                              {lnk.isPrincipal ? "⭐ " : "🔗 "}
+                              {lnk.etiqueta}
+                            </span>
+                            <span className="rounded-full border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2 py-0.5 text-[10px] font-bold text-[#6C7EE1]">
+                              🎟️ {lnk.modalidad}
+                            </span>
+                            {!soloNi && (
+                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-[#5B617A]">
+                                Adultos:{" "}
+                                {lnk.adultos > 0
+                                  ? `🔒 ${lnk.adultos}`
+                                  : "🔓 Libre"}
+                              </span>
+                            )}
+                            {!soloAd && (
+                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-[#5B617A]">
+                                Niños:{" "}
+                                {lnk.ninos > 0
+                                  ? `🔒 ${lnk.ninos}`
+                                  : "🔓 Libre"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 truncate font-mono text-[10px] text-[#6C7EE1]">
+                            {lnk.url}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`self-start shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-extrabold uppercase sm:self-center ${
+                            isSelected
+                              ? "bg-[#6C7EE1] text-white"
+                              : "border border-[#DCE0F0] bg-[#F7F8FC] text-[#8E94A9]"
+                          }`}
+                        >
+                          {isSelected ? "✓ Seleccionado" : "Seleccionar"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {EMAIL_HTML_TEMPLATES.map((t) => (
                   <button
@@ -4160,32 +4277,231 @@ function GestorEvento({
                 </div>
               </div>
 
+              <div className="mt-4 max-h-64 space-y-2 overflow-y-auto pr-1">
+                {invitados.map((g) => (
+                  <div
+                    key={g.idinvitado}
+                    className="flex flex-col gap-2 rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-[#2D3047]">
+                        {g.nombre}
+                      </p>
+                      <p className="truncate text-[10px] text-[#8E94A9]">
+                        {g.correo || "Sin correo"} •{" "}
+                        {g.invitacion_enviada
+                          ? `✓ Enviado (${g.canal_ultimo_envio || "Digital"})`
+                          : "No enviado"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDirectEmailGuest(g)}
+                      className="w-full shrink-0 cursor-pointer rounded-xl bg-[#6C7EE1] px-3.5 py-2 text-center text-[11px] font-bold text-white transition hover:bg-[#5A6CD0] sm:w-auto"
+                    >
+                      ✉️ Enviar Correo
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Modal de Confirmación para Envío Individual de Correo */}
+              {confirmDirectEmailGuest && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F1A45]/60 p-4 backdrop-blur-xs">
+                  <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[#E6E9F4] bg-white p-5 shadow-2xl sm:p-6">
+                    <div className="flex items-start justify-between gap-3 border-b border-[#E6E9F4] pb-3.5">
+                      <div>
+                        <h3 className="text-base font-extrabold text-[#2D3047]">
+                          ✉️ ¿Confirmas enviar este correo de invitación?
+                        </h3>
+                        <p className="mt-1 text-xs text-[#8E94A9]">
+                          Verifica los datos del invitado y el link seleccionado antes de continuar:
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDirectEmailGuest(null)}
+                        className="cursor-pointer rounded-lg border border-[#E6E9F4] px-2.5 py-1 text-xs font-bold text-[#8E94A9] hover:border-rose-400 hover:text-rose-500"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="mt-4 space-y-2.5 rounded-xl border border-[#E6E9F4] bg-[#F8F9FD] p-3.5 text-xs sm:p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-[#8E94A9]">
+                          Invitado:
+                        </span>
+                        <span className="font-extrabold text-[#2D3047]">
+                          {confirmDirectEmailGuest.nombre}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-[#8E94A9]">
+                          Correo Electrónico:
+                        </span>
+                        <span className="font-bold text-[#2D3047]">
+                          {confirmDirectEmailGuest.correo || "Sin correo registrado"}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-[#8E94A9]">
+                          Plantilla:
+                        </span>
+                        <span className="font-bold text-[#2D3047]">
+                          {activeEmailTemplate.name}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-[#8E94A9]">
+                          Link Seleccionado:
+                        </span>
+                        <span className="font-bold text-[#6C7EE1]">
+                          {selectedEmailLinkObj.etiqueta} (
+                          {selectedEmailLinkObj.modalidad})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-col-reverse items-stretch justify-end gap-2.5 sm:flex-row sm:items-center">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDirectEmailGuest(null)}
+                        className="cursor-pointer rounded-xl border border-[#E6E9F4] bg-white px-4 py-2.5 text-xs font-bold text-[#8E94A9] transition hover:border-[#2D3047] hover:text-[#2D3047]"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const guestToSend = confirmDirectEmailGuest;
+                          setConfirmDirectEmailGuest(null);
+                          await handleSendDirectEmail(guestToSend);
+                        }}
+                        className="cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0]"
+                      >
+                        ✓ Sí, Enviar Correo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-4 flex flex-wrap gap-2.5">
                 <button
                   type="button"
                   onClick={() =>
-                    handleBroadcastMasivo({
+                    setConfirmBroadcastModal({
                       soloPendientes: true,
                       canal: broadcastChannel,
                     })
                   }
-                  className="btn-glow-red flex-1 rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white"
+                  className="btn-glow-red flex-1 cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white"
                 >
                   📤 Enviar a No Enviados
                 </button>
                 <button
                   type="button"
                   onClick={() =>
-                    handleBroadcastMasivo({
+                    setConfirmBroadcastModal({
                       soloPendientes: false,
                       canal: broadcastChannel,
                     })
                   }
-                  className="rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-4 py-2.5 text-xs font-semibold text-[#2D3047] hover:text-[#6C7EE1]"
+                  className="cursor-pointer rounded-xl border border-[#DCE0F0] bg-[#F0F2F8] px-4 py-2.5 text-xs font-semibold text-[#2D3047] hover:text-[#6C7EE1]"
                 >
                   🔄 Reenviar a Todos ({invitados.length})
                 </button>
               </div>
+
+              {/* Modal de Confirmación para Envío Masivo */}
+              {confirmBroadcastModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F1A45]/60 p-4 backdrop-blur-xs">
+                  <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[#E6E9F4] bg-white p-5 shadow-2xl sm:p-6">
+                    <div className="flex items-start justify-between gap-3 border-b border-[#E6E9F4] pb-3.5">
+                      <div>
+                        <h3 className="text-base font-extrabold text-[#2D3047]">
+                          {confirmBroadcastModal.soloPendientes
+                            ? "📤 ¿Confirmas enviar a los invitados No Enviados?"
+                            : "🔄 ¿Confirmas reenviar a todos los invitados?"}
+                        </h3>
+                        <p className="mt-1 text-xs text-[#8E94A9]">
+                          Verifica los detalles de la campaña antes de disparar el envío:
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmBroadcastModal(null)}
+                        className="cursor-pointer rounded-lg border border-[#E6E9F4] px-2.5 py-1 text-xs font-bold text-[#8E94A9] hover:border-rose-400 hover:text-rose-500"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="mt-4 space-y-2.5 rounded-xl border border-[#E6E9F4] bg-[#F8F9FD] p-3.5 text-xs sm:p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-[#8E94A9]">
+                          Destinatarios:
+                        </span>
+                        <span className="font-extrabold text-[#2D3047]">
+                          {confirmBroadcastModal.soloPendientes
+                            ? `${
+                                invitados.filter((g) => !g.invitacion_enviada)
+                                  .length
+                              } invitado(s) sin envío previo`
+                            : `Todos los invitados (${invitados.length})`}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-[#8E94A9]">
+                          Canal de Envío:
+                        </span>
+                        <span className="rounded-full border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2.5 py-0.5 font-bold text-[#6C7EE1]">
+                          ✉️ {confirmBroadcastModal.canal}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-[#8E94A9]">
+                          Plantilla:
+                        </span>
+                        <span className="font-bold text-[#2D3047]">
+                          {activeEmailTemplate.name}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-[#8E94A9]">
+                          Link Seleccionado:
+                        </span>
+                        <span className="font-bold text-[#6C7EE1]">
+                          {selectedEmailLinkObj.etiqueta} (
+                          {selectedEmailLinkObj.modalidad})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-col-reverse items-stretch justify-end gap-2.5 sm:flex-row sm:items-center">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmBroadcastModal(null)}
+                        className="cursor-pointer rounded-xl border border-[#E6E9F4] bg-white px-4 py-2.5 text-xs font-bold text-[#8E94A9] transition hover:border-[#2D3047] hover:text-[#2D3047]"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const payload = confirmBroadcastModal;
+                          setConfirmBroadcastModal(null);
+                          await handleBroadcastMasivo(payload);
+                        }}
+                        className="cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0]"
+                      >
+                        ✓ Sí, Confirmar Envío
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Interactivo de Vista Previa Completa de Plantilla HTML */}
@@ -4373,15 +4689,27 @@ function GestorEvento({
                             {/* Notificación de Modalidad de Asistencia */}
                             <div className="mt-3 rounded-xl border border-[#15b2f5]/35 bg-[#15b2f5]/10 px-3.5 py-2 text-xs text-[#15b2f5]">
                               🔔 <strong>Modalidad de Asistencia:</strong>{" "}
-                              {previewGuestObj?.modalidad_pase ||
-                                invForm.modalidad_invitados ||
-                                "Adultos y niños"}{" "}
-                              ({previewGuestObj?.pases || 2} pases)
+                              {selectedEmailLinkObj &&
+                              !selectedEmailLinkObj.isPrincipal
+                                ? selectedEmailLinkObj.modalidad
+                                : previewGuestObj?.modalidad_pase ||
+                                  invForm.modalidad_invitados ||
+                                  "Adultos y niños"}{" "}
+                              (
+                              {selectedEmailLinkObj &&
+                              !selectedEmailLinkObj.isPrincipal &&
+                              selectedEmailLinkObj.adultos +
+                                selectedEmailLinkObj.ninos >
+                                0
+                                ? selectedEmailLinkObj.adultos +
+                                  selectedEmailLinkObj.ninos
+                                : previewGuestObj?.pases || 2}{" "}
+                              pases)
                             </div>
 
                             <div className="mt-5">
                               <a
-                                href={baseShareUrl}
+                                href={selectedEmailLinkObj?.url || baseShareUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`inline-block rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-wider shadow-lg transition hover:opacity-90 ${activeEmailTemplate.buttonClass}`}
@@ -4392,7 +4720,8 @@ function GestorEvento({
                             </div>
 
                             <p className="mt-4 break-all font-mono text-[10px] text-gray-400">
-                              Enlace de la invitación: {baseShareUrl}
+                              Enlace de la invitación:{" "}
+                              {selectedEmailLinkObj?.url || baseShareUrl}
                             </p>
                           </div>
                         </div>

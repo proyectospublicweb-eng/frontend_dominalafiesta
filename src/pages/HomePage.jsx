@@ -681,7 +681,7 @@ function HomePage() {
                                 </span>
                                 <div className="pr-1">
                                   <span className="block text-[9px] font-medium leading-tight text-white/80">
-                                    Control RSVP
+                                    Control de Asistencia
                                   </span>
                                   <span className="block text-xs font-extrabold leading-tight tracking-tight text-white">
                                     Invitados ({ev.total_invitados || 0})

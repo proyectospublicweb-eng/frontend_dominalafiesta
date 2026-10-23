@@ -68,7 +68,7 @@ function AuthLayout({ children }) {
               Mejor
             </h2>
             <p className="mx-auto mt-2.5 max-w-xs text-sm text-gray-400">
-              Crea invitaciones digitales, gestiona confirmaciones RSVP y controla el acceso con códigos QR.
+              Crea invitaciones digitales, gestiona confirmaciones de asistencia y controla el acceso con códigos QR.
             </p>
           </div>
         </div>
