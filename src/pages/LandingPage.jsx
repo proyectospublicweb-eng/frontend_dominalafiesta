@@ -185,7 +185,7 @@ function LandingPage() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
               <img
-                src="/logo-recuerdalo.png"
+                src="/logo-recuerdalo.png?v=2"
                 alt="Recuérdalo"
                 className="h-8 w-8 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm sm:h-9 sm:w-9"
               />
@@ -888,7 +888,7 @@ function LandingPage() {
               <div className="lg:col-span-2">
                 <div className="flex items-center gap-2.5">
                   <img
-                    src="/logo-recuerdalo.png"
+                    src="/logo-recuerdalo.png?v=2"
                     alt="Recuérdalo"
                     className="h-8 w-8 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm"
                   />
