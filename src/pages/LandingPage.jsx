@@ -187,7 +187,7 @@ function LandingPage() {
               <img
                 src="/logo-recuerdalo.png?v=3"
                 alt="Recuérdalo"
-                className="h-8 w-8 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm sm:h-9 sm:w-9"
+                className="h-10 w-10 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm sm:h-11 sm:w-11"
               />
               <span className="truncate text-sm font-extrabold tracking-tight text-[#17162E] sm:text-lg">
                 Recuerdalo<span className="text-[#5C4EE5]">.com.mx</span>
@@ -890,7 +890,7 @@ function LandingPage() {
                   <img
                     src="/logo-recuerdalo.png?v=3"
                     alt="Recuérdalo"
-                    className="h-8 w-8 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm"
+                    className="h-10 w-10 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm"
                   />
                   <span className="text-lg font-extrabold tracking-tight text-[#17162E]">
                     Recuerdalo.com.mx
