@@ -118,7 +118,7 @@ function HomePage() {
       color_secundario: formData.color_secundario || "#6C7EE1",
       imagen_portada: formData.imagen_portada || "",
       texto_boton_rsvp: formData.texto_boton_rsvp || "Confirmar Asistencia",
-      modalidad_invitados: formData.modalidad_invitados || "Adultos y niños",
+      modalidad_invitados: formData.modalidad_invitados || "Adultos + Niños",
       rsvp_habilitado: true,
     });
     setSelectedEventoId(null);

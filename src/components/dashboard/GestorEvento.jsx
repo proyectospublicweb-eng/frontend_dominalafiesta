@@ -113,17 +113,36 @@ const EMAIL_HTML_TEMPLATES = [
 const MODALIDADES_INVITADOS = [
   "Solo Adultos",
   "Solo Niños",
-  "Adultos y Niños",
-  "Padre e hijos",
-  "Madre e hijos",
-  "Padres e hijos",
-  "Un Padre, Un hijo",
-  "Una Madre, Un hijo",
-  "Toda la Familia",
+  "Solo Hombres",
+  "Solo Mujeres",
+  "Adultos + Niños",
+  "Papa + Niños",
+  "Mama + Niños",
+  "+LGBT",
 ];
 
+function normalizeModalidad(mod) {
+  const raw = String(mod || "").trim();
+  const lower = raw.toLowerCase();
+  if (!raw || lower === "adultos y niños" || lower === "padres e hijos" || lower === "toda la familia") {
+    return "Adultos + Niños";
+  }
+  if (lower === "padre e hijos" || lower === "un padre, un hijo") {
+    return "Papa + Niños";
+  }
+  if (lower === "madre e hijos" || lower === "una madre, un hijo") {
+    return "Mama + Niños";
+  }
+  return raw;
+}
+
 function isSoloAdultosMod(mod) {
-  return String(mod || "").trim().toLowerCase() === "solo adultos";
+  const m = String(mod || "").trim().toLowerCase();
+  return (
+    m === "solo adultos" ||
+    m === "solo hombres" ||
+    m === "solo mujeres"
+  );
 }
 
 function isSoloNinosMod(mod) {
@@ -287,7 +306,7 @@ function GestorEvento({
   const [invForm, setInvForm] = useState(null);
   const [customLinkForm, setCustomLinkForm] = useState({
     etiqueta: "",
-    modalidad: "Adultos y Niños",
+    modalidad: "Adultos + Niños",
     adultos: 0,
     ninos: 0,
   });
@@ -306,7 +325,7 @@ function GestorEvento({
     telefono: "",
     correo: "",
     grupo: "Amigos",
-    modalidad_pase: "Adultos y Niños",
+    modalidad_pase: "Adultos + Niños",
     adultos: 1,
     ninos: 0,
     estado_rsvp: "Pendiente",
@@ -381,8 +400,9 @@ function GestorEvento({
           imagen_portada: draftEvento.imagen_portada || "",
           texto_boton_rsvp:
             draftEvento.texto_boton_rsvp || "Confirmar Asistencia",
-          modalidad_invitados:
-            draftEvento.modalidad_invitados || "Adultos y niños",
+          modalidad_invitados: normalizeModalidad(
+            draftEvento.modalidad_invitados
+          ),
           permitir_acompanantes:
             draftEvento.permitir_acompanantes ?? true,
           confirmar_acceso_qr:
@@ -411,6 +431,9 @@ function GestorEvento({
         const { data } = await getEventoDetalleRequest(selectedEventoId);
         if (!active) return;
         setDetalle(data);
+        const modNormalizada = normalizeModalidad(
+          data.evento.modalidad_invitados
+        );
         setInvForm({
           ...data.evento,
           fecha_evento: formatDateInput(data.evento.fecha_evento),
@@ -418,8 +441,7 @@ function GestorEvento({
           imagen_portada: data.evento.imagen_portada || "",
           texto_boton_rsvp:
             data.evento.texto_boton_rsvp || "Confirmar Asistencia",
-          modalidad_invitados:
-            data.evento.modalidad_invitados || "Adultos y niños",
+          modalidad_invitados: modNormalizada,
           permitir_acompanantes:
             data.evento.permitir_acompanantes ?? true,
           confirmar_acceso_qr:
@@ -434,11 +456,11 @@ function GestorEvento({
         });
         setGuestForm((prev) => ({
           ...prev,
-          modalidad_pase: data.evento.modalidad_invitados || "Adultos y niños",
+          modalidad_pase: modNormalizada,
         }));
         setCustomLinkForm((prev) => ({
           ...prev,
-          modalidad: data.evento.modalidad_invitados || "Adultos y niños",
+          modalidad: modNormalizada,
         }));
         setNuevoPropietarioEmail(data.evento.propietario_email || "");
       } catch (err) {
@@ -520,11 +542,11 @@ function GestorEvento({
       } catch {
         parsed = {};
       }
-      const modalidad =
+      const modalidad = normalizeModalidad(
         parsed.modalidad ||
-        item.estado ||
-        invForm.modalidad_invitados ||
-        "Adultos y Niños";
+          item.estado ||
+          invForm.modalidad_invitados
+      );
       const soloAd = isSoloAdultosMod(modalidad);
       const soloNi = isSoloNinosMod(modalidad);
       const adultos = soloNi
@@ -553,7 +575,7 @@ function GestorEvento({
     {
       iditem: "principal",
       etiqueta: "Link General del Evento",
-      modalidad: invForm.modalidad_invitados || "Adultos y niños",
+      modalidad: normalizeModalidad(invForm.modalidad_invitados),
       adultos: 0,
       ninos: 0,
       url: baseShareUrl,
@@ -751,7 +773,7 @@ function GestorEvento({
         telefono: "",
         correo: "",
         grupo: "Amigos",
-        modalidad_pase: invForm.modalidad_invitados || "Adultos y niños",
+        modalidad_pase: normalizeModalidad(invForm.modalidad_invitados),
         adultos: 1,
         ninos: 0,
         estado_rsvp: "Pendiente",
@@ -843,10 +865,9 @@ function GestorEvento({
       estado_rsvp: isRejected(guest.estado_rsvp)
         ? "Rechazado"
         : guest.estado_rsvp || "Pendiente",
-      modalidad_pase:
-        guest.modalidad_pase ||
-        invForm.modalidad_invitados ||
-        "Adultos y niños",
+      modalidad_pase: normalizeModalidad(
+        guest.modalidad_pase || invForm.modalidad_invitados
+      ),
       adultos: guest.adultos ?? guest.pases ?? 1,
       ninos: guest.ninos ?? 0,
       mesa_asignada: guest.mesa_asignada || "Sin asignar",
@@ -919,13 +940,13 @@ function GestorEvento({
   const buildEmailHtmlCode = (guest) => {
     const link = selectedEmailLinkObj?.url || baseShareUrl;
     const guestName = guest?.nombre || "Invitado Especial";
-    const modalidade =
+    const modalidade = normalizeModalidad(
       selectedEmailLinkObj && !selectedEmailLinkObj.isPrincipal
         ? selectedEmailLinkObj.modalidad
         : guest?.modalidad_pase ||
           invForm?.modalidad_invitados ||
-          evento.modalidad_invitados ||
-          "Adultos y niños";
+          evento.modalidad_invitados
+    );
     const pasesCount =
       selectedEmailLinkObj &&
       !selectedEmailLinkObj.isPrincipal &&
@@ -1172,7 +1193,7 @@ function GestorEvento({
     setCustomLinkError("");
     setCustomLinkForm({
       etiqueta: item.etiqueta || "",
-      modalidad: item.modalidad || "Adultos y Niños",
+      modalidad: normalizeModalidad(item.modalidad),
       adultos: item.adultos ?? 0,
       ninos: item.ninos ?? 0,
     });
@@ -1210,7 +1231,7 @@ function GestorEvento({
 
   const executeSaveCustomLink = async () => {
     setShowConfirmCreateLinkModal(false);
-    const mod = customLinkForm.modalidad || "Adultos y Niños";
+    const mod = normalizeModalidad(customLinkForm.modalidad);
     const numAdultos = isSoloNinosMod(mod)
       ? 0
       : Math.max(0, parseInt(customLinkForm.adultos, 10) || 0);
@@ -2247,7 +2268,7 @@ function GestorEvento({
                           🔔 MODALIDAD DE ASISTENCIA
                         </span>
                         <strong className="mt-0.5 block text-xs font-bold uppercase tracking-wider text-white">
-                          🎟️ {invForm.modalidad_invitados || "Adultos y niños"}
+                          🎟️ {normalizeModalidad(invForm.modalidad_invitados)}
                         </strong>
                       </div>
 
@@ -2385,7 +2406,7 @@ function GestorEvento({
                             🔔 Modalidad de Asistencia Notificada:
                           </span>
                           <strong className="text-xs font-bold uppercase tracking-wider text-white">
-                            🎟️ {invForm.modalidad_invitados || "Adultos y niños"}
+                            🎟️ {normalizeModalidad(invForm.modalidad_invitados)}
                           </strong>
                         </div>
 
@@ -2672,7 +2693,7 @@ function GestorEvento({
                     </td>
                     <td className="px-4 py-3.5">
                       <span className="inline-flex items-center gap-1 rounded-full border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2.5 py-1 text-[11px] font-bold text-[#6C7EE1]">
-                        🎟️ {invForm.modalidad_invitados || "Adultos y niños"}
+                        🎟️ {normalizeModalidad(invForm.modalidad_invitados)}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
@@ -2724,8 +2745,9 @@ function GestorEvento({
                           type="button"
                           onClick={() =>
                             handleWhatsAppCustomLink({
-                              modalidad:
-                                invForm.modalidad_invitados || "Adultos y niños",
+                              modalidad: normalizeModalidad(
+                                invForm.modalidad_invitados
+                              ),
                               url: baseShareUrl,
                             })
                           }
@@ -2737,8 +2759,9 @@ function GestorEvento({
                           type="button"
                           onClick={() =>
                             handleShareCustomLink({
-                              modalidad:
-                                invForm.modalidad_invitados || "Adultos y niños",
+                              modalidad: normalizeModalidad(
+                                invForm.modalidad_invitados
+                              ),
                               url: baseShareUrl,
                             })
                           }
@@ -3031,7 +3054,7 @@ function GestorEvento({
 
               <div className="flex flex-wrap items-center gap-3">
                 <select
-                  value={invForm.modalidad_invitados || "Adultos y niños"}
+                  value={normalizeModalidad(invForm.modalidad_invitados)}
                   onChange={(e) =>
                     handleChangeModalidadInvitados(e.target.value)
                   }
@@ -3057,7 +3080,7 @@ function GestorEvento({
             <div className="mt-3 flex flex-wrap gap-2">
               {MODALIDADES_INVITADOS.map((mod) => {
                 const isSelected =
-                  (invForm.modalidad_invitados || "Adultos y niños") === mod;
+                  normalizeModalidad(invForm.modalidad_invitados) === mod;
                 return (
                   <button
                     key={mod}
@@ -3235,17 +3258,15 @@ function GestorEvento({
                       invitación.
                     </div>
                     <select
-                      value={
-                        guestForm.modalidad_pase ||
-                        invForm.modalidad_invitados ||
-                        "Adultos y niños"
-                      }
+                      value={normalizeModalidad(
+                        guestForm.modalidad_pase || invForm.modalidad_invitados
+                      )}
                       onChange={(e) => {
                         const val = e.target.value;
                         setGuestForm((p) => ({ ...p, modalidad_pase: val }));
                         handleChangeModalidadInvitados(val);
                       }}
-                      title="Tipo de invitación asignada (Solo adultos, Adultos y niños, etc.). También actualiza el aviso en la tarjeta de invitación."
+                      title="Tipo de invitación asignada (Solo Adultos, Adultos + Niños, etc.). También actualiza el aviso en la tarjeta de invitación."
                       className="w-full rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] px-3 py-2.5 text-xs font-semibold text-[#6C7EE1] outline-none focus:border-[#6C7EE1]"
                     >
                       {MODALIDADES_INVITADOS.map((mod) => (
@@ -3619,11 +3640,9 @@ function GestorEvento({
                           <td className="border-b-[3px] border-[#D0D9E6] py-3.5 pr-3">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <select
-                                value={
-                                  g.modalidad_pase ||
-                                  invForm.modalidad_invitados ||
-                                  "Adultos y niños"
-                                }
+                                value={normalizeModalidad(
+                                  g.modalidad_pase || invForm.modalidad_invitados
+                                )}
                                 onChange={(e) => {
                                   const val = e.target.value;
                                   handleUpdateGuest(g.idinvitado, {
@@ -4748,12 +4767,13 @@ function GestorEvento({
                             {/* Notificación de Modalidad de Asistencia */}
                             <div className="mt-3 rounded-xl border border-[#15b2f5]/35 bg-[#15b2f5]/10 px-3.5 py-2 text-xs text-[#15b2f5]">
                               🔔 <strong>Modalidad de Asistencia:</strong>{" "}
-                              {selectedEmailLinkObj &&
-                              !selectedEmailLinkObj.isPrincipal
-                                ? selectedEmailLinkObj.modalidad
-                                : previewGuestObj?.modalidad_pase ||
-                                  invForm.modalidad_invitados ||
-                                  "Adultos y niños"}{" "}
+                              {normalizeModalidad(
+                                selectedEmailLinkObj &&
+                                  !selectedEmailLinkObj.isPrincipal
+                                  ? selectedEmailLinkObj.modalidad
+                                  : previewGuestObj?.modalidad_pase ||
+                                      invForm.modalidad_invitados
+                              )}{" "}
                               (
                               {selectedEmailLinkObj &&
                               !selectedEmailLinkObj.isPrincipal &&

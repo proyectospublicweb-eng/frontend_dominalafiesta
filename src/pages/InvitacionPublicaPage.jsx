@@ -175,12 +175,16 @@ function InvitacionPublicaPage() {
               }`;
         }
 
-        const modalidad =
+        const rawModalidad =
           urlMod ||
           data.invitado?.modalidad_pase ||
           data.evento?.modalidad_invitados ||
-          "Adultos y Niños";
-        const modLower = String(modalidad).trim().toLowerCase();
+          "Adultos + Niños";
+        const modLower = String(rawModalidad).trim().toLowerCase();
+        const isOnlyAdults =
+          modLower === "solo adultos" ||
+          modLower === "solo hombres" ||
+          modLower === "solo mujeres";
 
         const defaultAdultos =
           modLower === "solo niños"
@@ -191,7 +195,7 @@ function InvitacionPublicaPage() {
             ? Number(data.invitado.adultos)
             : 1;
         const defaultNinos =
-          modLower === "solo adultos"
+          isOnlyAdults
             ? 0
             : urlNinos > 0
             ? urlNinos
@@ -276,13 +280,28 @@ function InvitacionPublicaPage() {
       (new Date(`${fechaStr}T00:00:00`).getTime() - Date.now()) / 86400000
     )
   );
-  const modalidadEvento =
+  const rawModalidadEvento =
     urlMod ||
     invitado?.modalidad_pase ||
     evento.modalidad_invitados ||
-    "Adultos y Niños";
-  const modEventoLower = String(modalidadEvento).trim().toLowerCase();
-  const soloAdultos = modEventoLower === "solo adultos";
+    "Adultos + Niños";
+  const modEventoLower = String(rawModalidadEvento).trim().toLowerCase();
+  const modalidadEvento =
+    modEventoLower === "adultos y niños" ||
+    modEventoLower === "padres e hijos" ||
+    modEventoLower === "toda la familia"
+      ? "Adultos + Niños"
+      : modEventoLower === "padre e hijos" ||
+        modEventoLower === "un padre, un hijo"
+      ? "Papa + Niños"
+      : modEventoLower === "madre e hijos" ||
+        modEventoLower === "una madre, un hijo"
+      ? "Mama + Niños"
+      : rawModalidadEvento;
+  const soloAdultos =
+    modEventoLower === "solo adultos" ||
+    modEventoLower === "solo hombres" ||
+    modEventoLower === "solo mujeres";
   const soloNinos = modEventoLower === "solo niños";
   const adultosLockedByLink = !soloNinos && urlAdultos > 0;
   const ninosLockedByLink = !soloAdultos && urlNinos > 0;

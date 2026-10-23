@@ -126,7 +126,7 @@ const FAQS = [
   },
   {
     q: "¿Puedo restringir pases para que sean solo adultos?",
-    a: "Sí, puedes elegir entre 'Solo adultos', 'Adultos y niños', 'Padre e hijos' u otras modalidades y se mostrará claramente en la invitación.",
+    a: "Sí, puedes elegir entre 'Solo Adultos', 'Solo Niños', 'Solo Hombres', 'Solo Mujeres', 'Adultos + Niños', 'Papa + Niños', 'Mama + Niños' o '+LGBT' y se mostrará claramente en la invitación.",
   },
   {
     q: "¿Cómo funciona la importación desde Excel?",
