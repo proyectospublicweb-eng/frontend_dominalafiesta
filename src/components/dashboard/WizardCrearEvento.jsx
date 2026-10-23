@@ -60,6 +60,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
     plantilla_tema: "neon-crimson",
     color_acento: "#15b2f5",
     mensaje_invitacion: "",
+    mesa_regalos_habilitada: false,
   });
 
   useEffect(() => {
@@ -426,6 +427,27 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                 }". ¡Tu presencia hará esta noche inolvidable!`}
                 className="w-full rounded-xl border border-[#E2E5F1] bg-[#F7F8FC] p-4 text-sm text-[#2D3047] placeholder-gray-400 outline-none transition focus:border-[#6C7EE1] focus:bg-white"
               />
+            </div>
+
+            <div>
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E5F1] bg-[#F7F8FC] px-4 py-3.5 text-xs transition hover:border-[#6C7EE1]">
+                <div>
+                  <span className="block font-extrabold text-[#2D3047]">
+                    🎁 ¿Tu evento tendrá Mesa de Regalos?
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-gray-500">
+                    Marca esta casilla si deseas agregar enlaces a productos de tiendas externas (Amazon, Mercado Libre, IKEA, Liverpool, etc.) en el editor del evento.
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={Boolean(form.mesa_regalos_habilitada)}
+                  onChange={(e) =>
+                    updateField("mesa_regalos_habilitada", e.target.checked)
+                  }
+                  className="h-4 w-4 shrink-0 cursor-pointer accent-[#6C7EE1]"
+                />
+              </label>
             </div>
           </div>
         )}

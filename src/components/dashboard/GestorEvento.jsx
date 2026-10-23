@@ -122,6 +122,102 @@ const MODALIDADES_INVITADOS = [
   "+LGBT",
 ];
 
+const TIENDAS_MESA_REGALOS = [
+  "Amazon",
+  "Mercado Libre",
+  "IKEA",
+  "Liverpool",
+  "Palacio de Hierro",
+  "Sears",
+  "Coppel",
+  "Walmart",
+  "Otra tienda",
+];
+
+function detectStoreFromUrl(rawUrl) {
+  const u = String(rawUrl || "").toLowerCase();
+  if (u.includes("amazon.") || u.includes("amzn.")) return "Amazon";
+  if (u.includes("mercadolibre.") || u.includes("meli.")) return "Mercado Libre";
+  if (u.includes("ikea.")) return "IKEA";
+  if (u.includes("liverpool.")) return "Liverpool";
+  if (u.includes("elpalaciodehierro.")) return "Palacio de Hierro";
+  if (u.includes("sears.")) return "Sears";
+  if (u.includes("coppel.")) return "Coppel";
+  if (u.includes("walmart.")) return "Walmart";
+  return "";
+}
+
+function getTiendaMeta(tienda) {
+  const t = String(tienda || "").toLowerCase();
+  if (t.includes("amazon")) {
+    return {
+      icon: "📦",
+      badgeClass: "bg-amber-500/20 text-amber-300 border-amber-400/40",
+      lightBadgeClass: "bg-amber-100 text-amber-900 border-amber-300",
+    };
+  }
+  if (t.includes("mercado")) {
+    return {
+      icon: "🤝",
+      badgeClass: "bg-yellow-400/20 text-yellow-200 border-yellow-400/40",
+      lightBadgeClass: "bg-yellow-100 text-yellow-900 border-yellow-300",
+    };
+  }
+  if (t.includes("ikea")) {
+    return {
+      icon: "🛋️",
+      badgeClass: "bg-sky-500/20 text-sky-200 border-sky-400/40",
+      lightBadgeClass: "bg-sky-100 text-sky-900 border-sky-300",
+    };
+  }
+  if (t.includes("liverpool")) {
+    return {
+      icon: "🛍️",
+      badgeClass: "bg-pink-500/20 text-pink-200 border-pink-400/40",
+      lightBadgeClass: "bg-pink-100 text-pink-900 border-pink-300",
+    };
+  }
+  if (t.includes("palacio")) {
+    return {
+      icon: "✨",
+      badgeClass: "bg-amber-400/20 text-amber-200 border-amber-300/40",
+      lightBadgeClass: "bg-amber-50 text-amber-900 border-amber-300",
+    };
+  }
+  return {
+    icon: "🎁",
+    badgeClass: "bg-[#15b2f5]/20 text-[#15b2f5] border-[#15b2f5]/40",
+    lightBadgeClass: "bg-indigo-50 text-indigo-900 border-indigo-200",
+  };
+}
+
+function parseMesaRegaloItem(item) {
+  let parsed = {};
+  try {
+    parsed = JSON.parse(item.detalle || "{}");
+  } catch {
+    parsed = {};
+  }
+  const url = String(
+    parsed.url ||
+      (String(item.detalle || "").startsWith("http") ? item.detalle : "")
+  ).trim();
+  const tienda =
+    parsed.tienda ||
+    item.estado ||
+    detectStoreFromUrl(url) ||
+    "Tienda Externa";
+  const producto = parsed.producto || item.titulo || "Regalo sugerido";
+  const nota = parsed.nota || item.fecha_limite || "";
+  return {
+    iditem: item.iditem,
+    tienda,
+    producto,
+    url,
+    nota,
+  };
+}
+
 function normalizeModalidad(mod) {
   const raw = String(mod || "").trim();
   const lower = raw.toLowerCase();
@@ -316,6 +412,17 @@ function GestorEvento({
   const [showConfirmCreateLinkModal, setShowConfirmCreateLinkModal] =
     useState(false);
 
+  // Mesa de Regalos (Enlaces a tiendas externas: Amazon, Mercado Libre, IKEA, etc.)
+  const [giftForm, setGiftForm] = useState({
+    tienda: "Amazon",
+    tiendaCustom: "",
+    producto: "",
+    url: "",
+    nota: "",
+  });
+  const [editingGiftId, setEditingGiftId] = useState(null);
+  const [giftError, setGiftError] = useState("");
+
   // Tab B: Lista de Invitados, Filtros y Modal/Panel de Alta Individual o CSV
   const [rsvpFilter, setRsvpFilter] = useState("Todos");
   const [groupFilter, setGroupFilter] = useState("Todos");
@@ -410,6 +517,9 @@ function GestorEvento({
             draftEvento.confirmar_acceso_qr ??
             draftEvento.permitir_acompanantes ??
             true,
+          mesa_regalos_habilitada: Boolean(
+            draftEvento.mesa_regalos_habilitada
+          ),
           recordatorio_dias: draftEvento.recordatorio_dias ?? 3,
           recordatorio_activo: Boolean(draftEvento.recordatorio_activo),
           recordatorio_mensaje:
@@ -449,6 +559,9 @@ function GestorEvento({
             data.evento.confirmar_acceso_qr ??
             data.evento.permitir_acompanantes ??
             true,
+          mesa_regalos_habilitada: Boolean(
+            data.evento.mesa_regalos_habilitada
+          ),
           recordatorio_dias: data.evento.recordatorio_dias ?? 3,
           recordatorio_activo: Boolean(data.evento.recordatorio_activo),
           recordatorio_mensaje:
@@ -572,6 +685,10 @@ function GestorEvento({
       };
     });
 
+  const mesaRegalosItems = logistica
+    .filter((i) => i.categoria === "mesa_regalo")
+    .map(parseMesaRegaloItem);
+
   const allAvailableLinks = [
     {
       iditem: "principal",
@@ -612,7 +729,13 @@ function GestorEvento({
     const payload = customPatch ? { ...invForm, ...customPatch } : invForm;
     try {
       if (!evento.idevento) {
-        const { data } = await createEventoRequest(payload);
+        const draftGifts = logistica.filter(
+          (i) => i.categoria === "mesa_regalo"
+        );
+        const { data } = await createEventoRequest({
+          ...payload,
+          regalos_iniciales: draftGifts,
+        });
         showNotice("✓ Evento guardado correctamente.");
         if (onDraftSaved) {
           await onDraftSaved(data);
@@ -628,6 +751,7 @@ function GestorEvento({
         fecha_evento: formatDateInput(data.fecha_evento),
         confirmar_acceso_qr:
           data.confirmar_acceso_qr ?? data.permitir_acompanantes ?? true,
+        mesa_regalos_habilitada: Boolean(data.mesa_regalos_habilitada),
       });
       onEventoUpdated();
       showNotice("✓ Evento guardado correctamente.");
@@ -1482,6 +1606,151 @@ function GestorEvento({
   };
 
   // =========================================================================
+  // HANDLERS: MESA DE REGALOS (TIENDAS EXTERNAS)
+  // =========================================================================
+  const handleStartEditGift = (gift) => {
+    const isStandardStore = TIENDAS_MESA_REGALOS.includes(gift.tienda);
+    setEditingGiftId(gift.iditem);
+    setGiftError("");
+    setGiftForm({
+      tienda: isStandardStore ? gift.tienda : "Otra tienda",
+      tiendaCustom: isStandardStore ? "" : gift.tienda,
+      producto: gift.producto || "",
+      url: gift.url || "",
+      nota: gift.nota || "",
+    });
+  };
+
+  const handleCancelEditGift = () => {
+    setEditingGiftId(null);
+    setGiftError("");
+    setGiftForm({
+      tienda: "Amazon",
+      tiendaCustom: "",
+      producto: "",
+      url: "",
+      nota: "",
+    });
+  };
+
+  const handleSaveGiftItem = async () => {
+    const prodClean = String(giftForm.producto || "").trim();
+    let urlClean = String(giftForm.url || "").trim();
+    if (!prodClean) {
+      setGiftError("Ingresa el nombre del producto o regalo.");
+      return;
+    }
+    if (!urlClean) {
+      setGiftError("Ingresa el enlace (URL) del producto en la tienda.");
+      return;
+    }
+    if (!/^https?:\/\//i.test(urlClean)) {
+      urlClean = `https://${urlClean}`;
+    }
+
+    const tiendaFinal =
+      giftForm.tienda === "Otra tienda"
+        ? String(giftForm.tiendaCustom || "").trim() ||
+          detectStoreFromUrl(urlClean) ||
+          "Tienda Externa"
+        : giftForm.tienda;
+
+    const notaClean = String(giftForm.nota || "").trim();
+    const detalleJson = JSON.stringify({
+      tienda: tiendaFinal,
+      producto: prodClean,
+      url: urlClean,
+      nota: notaClean,
+    });
+
+    setGiftError("");
+
+    if (editingGiftId) {
+      if (!evento.idevento || String(editingGiftId).startsWith("temp-")) {
+        setDetalle((prev) => ({
+          ...prev,
+          logistica: prev.logistica.map((i) =>
+            i.iditem === editingGiftId
+              ? {
+                  ...i,
+                  titulo: prodClean,
+                  detalle: detalleJson,
+                  estado: tiendaFinal.slice(0, 40),
+                  fecha_limite: notaClean.slice(0, 40),
+                }
+              : i
+          ),
+        }));
+        handleCancelEditGift();
+        showNotice("✓ Producto de mesa de regalos actualizado.");
+        return;
+      }
+
+      try {
+        const { data } = await updateLogisticaRequest(
+          evento.idevento,
+          editingGiftId,
+          {
+            titulo: prodClean,
+            detalle: detalleJson,
+            estado: tiendaFinal.slice(0, 40),
+            fecha_limite: notaClean.slice(0, 40),
+          }
+        );
+        setDetalle((prev) => ({
+          ...prev,
+          logistica: prev.logistica.map((i) =>
+            i.iditem === editingGiftId ? data : i
+          ),
+        }));
+        handleCancelEditGift();
+        showNotice("✓ Producto de mesa de regalos actualizado.");
+      } catch {
+        showNotice("Error al actualizar el producto en la mesa de regalos");
+      }
+      return;
+    }
+
+    if (!evento.idevento) {
+      const tempGift = {
+        iditem: `temp-gift-${Date.now()}`,
+        categoria: "mesa_regalo",
+        titulo: prodClean,
+        detalle: detalleJson,
+        estado: tiendaFinal.slice(0, 40),
+        fecha_limite: notaClean.slice(0, 40),
+      };
+      setDetalle((prev) => ({
+        ...prev,
+        logistica: [...prev.logistica, tempGift],
+      }));
+      handleCancelEditGift();
+      showNotice(
+        "✓ Regalo agregado en vista previa (haz clic en Guardar Evento para conservarlo)."
+      );
+      return;
+    }
+
+    try {
+      const { data } = await addLogisticaRequest(evento.idevento, {
+        categoria: "mesa_regalo",
+        titulo: prodClean,
+        detalle: detalleJson,
+        estado: tiendaFinal.slice(0, 40),
+        fecha_limite: notaClean.slice(0, 40),
+      });
+      setDetalle((prev) => ({
+        ...prev,
+        logistica: [...prev.logistica, data],
+      }));
+      handleCancelEditGift();
+      showNotice("✓ Producto agregado a la Mesa de Regalos.");
+    } catch {
+      showNotice("Error al agregar producto a la Mesa de Regalos");
+    }
+  };
+
+  // =========================================================================
   // HANDLERS: PRESUPUESTO
   // =========================================================================
   const handleAddBudget = async (e) => {
@@ -2095,7 +2364,281 @@ function GestorEvento({
                   />
                 </label>
               </div>
+
+              {/* Checkbox: ¿Tendrá Mesa de Regalos? */}
+              <div className="sm:col-span-2">
+                <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-3 text-xs transition hover:border-[#6C7EE1]">
+                  <div>
+                    <span className="block font-bold text-[#2D3047]">
+                      🎁 ¿Tu evento tendrá Mesa de Regalos?
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-[#8E94A9]">
+                      Activa esta opción para agregar enlaces a productos de
+                      tiendas externas (Amazon, Mercado Libre, IKEA, Liverpool,
+                      etc.) y mostrarlos en la invitación digital.
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(invForm.mesa_regalos_habilitada)}
+                    onChange={async (e) => {
+                      const checked = e.target.checked;
+                      setInvForm((prev) => ({
+                        ...prev,
+                        mesa_regalos_habilitada: checked,
+                      }));
+                      if (evento.idevento) {
+                        await handleSaveEvento(null, {
+                          mesa_regalos_habilitada: checked,
+                        });
+                      }
+                    }}
+                    className="h-4 w-4 shrink-0 cursor-pointer accent-[#6C7EE1]"
+                  />
+                </label>
+              </div>
             </div>
+
+            {/* Panel de Mesa de Regalos (se despliega cuando el check está activo) */}
+            {Boolean(invForm.mesa_regalos_habilitada) && (
+              <div className="space-y-3.5 rounded-2xl border border-[#6C7EE1]/35 bg-[#F7F8FC] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
+                      🎁 MESA DE REGALOS EN TIENDAS EXTERNAS
+                    </span>
+                    <h4 className="text-xs font-extrabold text-[#2D3047]">
+                      Agrega enlaces a productos de Amazon, Mercado Libre, IKEA,
+                      Liverpool, etc.
+                    </h4>
+                  </div>
+                  <span className="rounded-full bg-[#6C7EE1]/15 px-2.5 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
+                    {mesaRegalosItems.length} regalo(s)
+                  </span>
+                </div>
+
+                {/* Mini formulario para agregar / editar regalo */}
+                <div
+                  className={`grid grid-cols-1 gap-2.5 rounded-xl border p-3 sm:grid-cols-2 ${
+                    editingGiftId
+                      ? "border-amber-400 bg-amber-50/60"
+                      : "border-[#DCE0F0] bg-white"
+                  }`}
+                >
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                      Tienda Externa
+                    </label>
+                    <select
+                      value={giftForm.tienda}
+                      onChange={(e) =>
+                        setGiftForm((prev) => ({
+                          ...prev,
+                          tienda: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    >
+                      {TIENDAS_MESA_REGALOS.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {giftForm.tienda === "Otra tienda" ? (
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                        Nombre de la Tienda
+                      </label>
+                      <input
+                        type="text"
+                        value={giftForm.tiendaCustom}
+                        onChange={(e) =>
+                          setGiftForm((prev) => ({
+                            ...prev,
+                            tiendaCustom: e.target.value,
+                          }))
+                        }
+                        placeholder="Ej. Zara Home, Sephora, Costco..."
+                        className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                        Precio sugerido / Nota (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={giftForm.nota}
+                        onChange={(e) =>
+                          setGiftForm((prev) => ({
+                            ...prev,
+                            nota: e.target.value,
+                          }))
+                        }
+                        placeholder="Ej. $1,299 MXN • Color negro"
+                        className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                      />
+                    </div>
+                  )}
+
+                  {giftForm.tienda === "Otra tienda" && (
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                        Precio sugerido / Nota (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={giftForm.nota}
+                        onChange={(e) =>
+                          setGiftForm((prev) => ({
+                            ...prev,
+                            nota: e.target.value,
+                          }))
+                        }
+                        placeholder="Ej. $1,299 MXN • Color negro"
+                        className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                      />
+                    </div>
+                  )}
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                      Nombre del Producto o Regalo *
+                    </label>
+                    <input
+                      type="text"
+                      value={giftForm.producto}
+                      onChange={(e) => {
+                        if (giftError) setGiftError("");
+                        setGiftForm((prev) => ({
+                          ...prev,
+                          producto: e.target.value,
+                        }));
+                      }}
+                      placeholder="Ej. Cafetera Nespresso, Juego de Sábanas, Tarjeta de Regalo..."
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                      Enlace (URL) del Producto en la Tienda *
+                    </label>
+                    <input
+                      type="url"
+                      value={giftForm.url}
+                      onChange={(e) => {
+                        if (giftError) setGiftError("");
+                        const nextUrl = e.target.value;
+                        const detected = detectStoreFromUrl(nextUrl);
+                        setGiftForm((prev) => ({
+                          ...prev,
+                          url: nextUrl,
+                          tienda: detected || prev.tienda,
+                        }));
+                      }}
+                      placeholder="https://www.amazon.com.mx/... o https://articulo.mercadolibre.com.mx/..."
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    />
+                  </div>
+
+                  {giftError && (
+                    <p className="sm:col-span-2 text-[11px] font-bold text-rose-600">
+                      ⚠️ {giftError}
+                    </p>
+                  )}
+
+                  <div className="sm:col-span-2 flex flex-wrap items-center justify-end gap-2 pt-1">
+                    {editingGiftId && (
+                      <button
+                        type="button"
+                        onClick={handleCancelEditGift}
+                        className="rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-[11px] font-bold text-[#5B617A] transition hover:bg-gray-100"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleSaveGiftItem}
+                      className="cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2 text-[11px] font-extrabold text-white shadow-2xs transition hover:bg-[#5A6CD0]"
+                    >
+                      {editingGiftId
+                        ? "💾 Actualizar Regalo"
+                        : "➕ Agregar a Mesa de Regalos"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista de productos agregados a la Mesa de Regalos */}
+                {mesaRegalosItems.length > 0 ? (
+                  <div className="space-y-2">
+                    {mesaRegalosItems.map((gift) => {
+                      const meta = getTiendaMeta(gift.tienda);
+                      return (
+                        <div
+                          key={gift.iditem}
+                          className="flex flex-col justify-between gap-2 rounded-xl border border-[#DCE0F0] bg-white p-3 shadow-2xs sm:flex-row sm:items-center"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-extrabold ${meta.lightBadgeClass}`}
+                              >
+                                {meta.icon} {gift.tienda}
+                              </span>
+                              <strong className="truncate text-xs font-extrabold text-[#2D3047]">
+                                {gift.producto}
+                              </strong>
+                            </div>
+                            {gift.nota && (
+                              <p className="mt-0.5 text-[11px] font-medium text-[#5B617A]">
+                                {gift.nota}
+                              </p>
+                            )}
+                            <a
+                              href={gift.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-0.5 block truncate font-mono text-[10px] font-semibold text-[#6C7EE1] hover:underline"
+                            >
+                              {gift.url} ↗
+                            </a>
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditGift(gift)}
+                              className="rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-1 text-[10px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                            >
+                              ✏️ Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLogistica(gift.iditem)}
+                              className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-bold text-rose-600 transition hover:bg-rose-100"
+                            >
+                              🗑️ Quitar
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="rounded-xl border border-dashed border-[#DCE0F0] bg-white/70 p-3 text-center text-[11px] text-[#8E94A9]">
+                    Aún no has agregado productos. Pega enlaces de Amazon,
+                    Mercado Libre, IKEA o cualquier tienda para que tus
+                    invitados puedan ver tu mesa de regalos.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Configuración de Ubicación del Evento con Google Maps */}
             <div className="space-y-3 rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-4">
@@ -2366,6 +2909,60 @@ function GestorEvento({
                         </strong>
                       </div>
 
+                      {/* Mesa de Regalos en la Tarjeta Móvil */}
+                      {Boolean(invForm.mesa_regalos_habilitada) && (
+                        <div className="mt-3 rounded-xl border border-amber-400/35 bg-black/40 p-3 text-left">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                              🎁 MESA DE REGALOS
+                            </span>
+                            <span className="text-[9px] text-gray-400">
+                              {mesaRegalosItems.length} opción(es)
+                            </span>
+                          </div>
+                          {mesaRegalosItems.length > 0 ? (
+                            <div className="mt-2 space-y-1.5">
+                              {mesaRegalosItems.map((gift) => {
+                                const meta = getTiendaMeta(gift.tienda);
+                                return (
+                                  <a
+                                    key={gift.iditem}
+                                    href={gift.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-[11px] transition hover:border-amber-400/50 hover:bg-white/10"
+                                  >
+                                    <div className="min-w-0 flex-1">
+                                      <span
+                                        className={`inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold ${meta.badgeClass}`}
+                                      >
+                                        {meta.icon} {gift.tienda}
+                                      </span>
+                                      <p className="mt-0.5 truncate font-bold text-white">
+                                        {gift.producto}
+                                      </p>
+                                      {gift.nota && (
+                                        <p className="truncate text-[10px] text-gray-300">
+                                          {gift.nota}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className="shrink-0 rounded-md bg-amber-400/20 px-2 py-1 text-[10px] font-extrabold text-amber-300">
+                                      Ver ↗
+                                    </span>
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="mt-1.5 text-[10px] text-gray-400">
+                              Agrega enlaces de Amazon, Mercado Libre o IKEA en
+                              el editor para mostrarlos aquí.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <button
                         type="button"
                         onClick={() =>
@@ -2514,6 +3111,60 @@ function GestorEvento({
                             referrerPolicy="no-referrer-when-downgrade"
                           />
                         </div>
+
+                        {/* Mesa de Regalos en la Tarjeta de Escritorio */}
+                        {Boolean(invForm.mesa_regalos_habilitada) && (
+                          <div className="mt-4 rounded-xl border border-amber-400/35 bg-black/40 p-3.5 text-left">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                                🎁 MESA DE REGALOS SUGERIDOS
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                {mesaRegalosItems.length} producto(s)
+                              </span>
+                            </div>
+                            {mesaRegalosItems.length > 0 ? (
+                              <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                {mesaRegalosItems.map((gift) => {
+                                  const meta = getTiendaMeta(gift.tienda);
+                                  return (
+                                    <a
+                                      key={gift.iditem}
+                                      href={gift.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs transition hover:border-amber-400/50 hover:bg-white/10"
+                                    >
+                                      <div className="min-w-0 flex-1">
+                                        <span
+                                          className={`inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold ${meta.badgeClass}`}
+                                        >
+                                          {meta.icon} {gift.tienda}
+                                        </span>
+                                        <p className="mt-1 truncate font-bold text-white">
+                                          {gift.producto}
+                                        </p>
+                                        {gift.nota && (
+                                          <p className="truncate text-[10px] text-gray-300">
+                                            {gift.nota}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <span className="shrink-0 rounded-md bg-amber-400/20 px-2 py-1 text-[10px] font-extrabold text-amber-300">
+                                        Ir ↗
+                                      </span>
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="mt-1.5 text-xs text-gray-400">
+                                Agrega enlaces de Amazon, Mercado Libre, IKEA,
+                                etc. en el editor para visualizarlos aquí.
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="mt-6 flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:gap-3">

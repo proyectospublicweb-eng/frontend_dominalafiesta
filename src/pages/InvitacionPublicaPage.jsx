@@ -123,6 +123,64 @@ function buildQrMatrix(text) {
   return grid;
 }
 
+function getTiendaMetaPublic(tienda) {
+  const t = String(tienda || "").toLowerCase();
+  if (t.includes("amazon")) {
+    return {
+      icon: "📦",
+      badgeClass: "bg-amber-500/20 text-amber-300 border-amber-400/40",
+    };
+  }
+  if (t.includes("mercado")) {
+    return {
+      icon: "🤝",
+      badgeClass: "bg-yellow-400/20 text-yellow-200 border-yellow-400/40",
+    };
+  }
+  if (t.includes("ikea")) {
+    return {
+      icon: "🛋️",
+      badgeClass: "bg-sky-500/20 text-sky-200 border-sky-400/40",
+    };
+  }
+  if (t.includes("liverpool")) {
+    return {
+      icon: "🛍️",
+      badgeClass: "bg-pink-500/20 text-pink-200 border-pink-400/40",
+    };
+  }
+  if (t.includes("palacio")) {
+    return {
+      icon: "✨",
+      badgeClass: "bg-amber-400/20 text-amber-200 border-amber-300/40",
+    };
+  }
+  return {
+    icon: "🎁",
+    badgeClass: "bg-[#15B2F5]/20 text-[#15B2F5] border-[#15B2F5]/40",
+  };
+}
+
+function parsePublicGiftItem(item) {
+  let parsed = {};
+  try {
+    parsed = JSON.parse(item.detalle || "{}");
+  } catch {
+    parsed = {};
+  }
+  const url = String(
+    parsed.url ||
+      (String(item.detalle || "").startsWith("http") ? item.detalle : "")
+  ).trim();
+  return {
+    iditem: item.iditem,
+    tienda: parsed.tienda || item.estado || "Tienda Externa",
+    producto: parsed.producto || item.titulo || "Regalo sugerido",
+    url,
+    nota: parsed.nota || item.fecha_limite || "",
+  };
+}
+
 function InvitacionPublicaPage() {
   const { id: rawId } = useParams();
   const id = String(rawId || "").replace(/^e/i, "");
@@ -142,6 +200,7 @@ function InvitacionPublicaPage() {
   const [error, setError] = useState("");
   const [evento, setEvento] = useState(null);
   const [invitado, setInvitado] = useState(null);
+  const [mesaRegalos, setMesaRegalos] = useState([]);
 
   const [showRsvpForm, setShowRsvpForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -167,6 +226,11 @@ function InvitacionPublicaPage() {
         if (!active) return;
         setEvento(data.evento);
         setInvitado(data.invitado);
+        setMesaRegalos(
+          Array.isArray(data.mesa_regalos)
+            ? data.mesa_regalos.map(parsePublicGiftItem)
+            : []
+        );
         if (data.evento?.nombre) {
           document.title = data.invitado?.nombre
             ? `✨ Invitación para ${data.invitado.nombre} — ${data.evento.nombre}`
@@ -494,6 +558,58 @@ function InvitacionPublicaPage() {
                 </p>
               )}
             </div>
+
+            {/* Mesa de Regalos en Tiendas Externas (Condicional según check del evento) */}
+            {Boolean(evento.mesa_regalos_habilitada) &&
+              mesaRegalos.length > 0 && (
+                <div className="mt-4 rounded-2xl border border-amber-400/35 bg-black/35 p-4 text-left">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-300">
+                      🎁 MESA DE REGALOS SUGERIDOS
+                    </span>
+                    <span className="rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[10px] font-bold text-amber-200">
+                      {mesaRegalos.length} opción(es)
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray-300">
+                    Tu presencia es nuestro mejor regalo, pero si deseas
+                    tener un detalle con nosotros, aquí tienes algunas opciones:
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {mesaRegalos.map((gift) => {
+                      const meta = getTiendaMetaPublic(gift.tienda);
+                      return (
+                        <a
+                          key={gift.iditem}
+                          href={gift.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs transition hover:border-amber-400/50 hover:bg-white/10"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <span
+                              className={`inline-block rounded border px-2 py-0.5 text-[10px] font-extrabold ${meta.badgeClass}`}
+                            >
+                              {meta.icon} {gift.tienda}
+                            </span>
+                            <p className="mt-1 truncate font-extrabold text-white">
+                              {gift.producto}
+                            </p>
+                            {gift.nota && (
+                              <p className="truncate text-[11px] text-gray-300">
+                                {gift.nota}
+                              </p>
+                            )}
+                          </div>
+                          <span className="shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 text-[11px] font-extrabold text-[#171F39] shadow">
+                            Ver en tienda ↗
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
             {/* Mensaje de confirmación tras enviar formulario */}
             {feedbackMsg && (

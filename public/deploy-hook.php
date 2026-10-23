@@ -76,6 +76,14 @@ foreach ($data['files'] as $relPath => $b64Content) {
     }
 }
 
+if ($target === 'backend') {
+    $tmpDir = $baseDir . '/tmp';
+    if (!is_dir($tmpDir)) {
+        @mkdir($tmpDir, 0755, true);
+    }
+    @touch($tmpDir . '/restart.txt');
+}
+
 echo json_encode([
     'ok' => true,
     'target' => $target,
