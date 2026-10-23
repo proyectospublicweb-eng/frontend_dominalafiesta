@@ -16,6 +16,11 @@ function RegisterPage() {
     const password = formData.get("password");
     const confirmPassword = formData.get("confirmPassword");
 
+    if (!password || String(password).length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden");
       return;
@@ -65,13 +70,14 @@ function RegisterPage() {
           />
 
           <PasswordField
-            minLength={6}
+            minLength={8}
             autoComplete="new-password"
-            placeholder="Contraseña"
+            placeholder="Contraseña (mínimo 8 caracteres)"
           />
 
           <PasswordField
             name="confirmPassword"
+            minLength={8}
             autoComplete="new-password"
             placeholder="Repetir contraseña"
           />

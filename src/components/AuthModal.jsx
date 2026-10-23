@@ -35,6 +35,10 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
     const password = formData.get("password");
 
     if (mode === "register") {
+      if (!password || String(password).length < 8) {
+        setError("La contraseña debe tener al menos 8 caracteres");
+        return;
+      }
       const confirmPassword = formData.get("confirmPassword");
       if (password !== confirmPassword) {
         setError("Las contraseñas no coinciden");
@@ -129,16 +133,21 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
             />
 
             <PasswordField
-              minLength={mode === "register" ? 6 : undefined}
+              minLength={mode === "register" ? 8 : undefined}
               autoComplete={
                 mode === "login" ? "current-password" : "new-password"
               }
-              placeholder="Contraseña"
+              placeholder={
+                mode === "register"
+                  ? "Contraseña (mínimo 8 caracteres)"
+                  : "Contraseña"
+              }
             />
 
             {mode === "register" && (
               <PasswordField
                 name="confirmPassword"
+                minLength={8}
                 autoComplete="new-password"
                 placeholder="Repetir contraseña"
               />
