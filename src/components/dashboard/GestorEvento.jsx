@@ -3275,7 +3275,7 @@ function GestorEvento({
                       etiqueta: e.target.value,
                     }));
                   }}
-                  placeholder="Ej. Familia Pérez, Amigos trabajo..."
+                  placeholder="Ej. Link 2 Personalizado"
                   className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-[#2D3047] outline-none transition ${
                     customLinkError
                       ? "border-rose-500 ring-2 ring-rose-500/20"
