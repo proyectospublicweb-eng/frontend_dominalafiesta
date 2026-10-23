@@ -2101,7 +2101,7 @@ function GestorEvento({
           {/* Editor Rápido (Columna Izquierda: 5 cols) */}
           <form
             onSubmit={handleSaveEvento}
-            className="space-y-5 rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6 xl:col-span-5"
+            className="min-w-0 space-y-5 rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6 xl:col-span-5"
           >
             <div className="flex items-center justify-between border-b border-[#E6E9F4] pb-3">
               <div>
@@ -2552,12 +2552,12 @@ function GestorEvento({
                     </p>
                   )}
 
-                  <div className="sm:col-span-2 flex flex-wrap items-center justify-end gap-2 pt-1">
+                  <div className="sm:col-span-2 flex flex-col-reverse items-stretch justify-end gap-2 pt-1 sm:flex-row sm:items-center">
                     {editingGiftId && (
                       <button
                         type="button"
                         onClick={handleCancelEditGift}
-                        className="rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-[11px] font-bold text-[#5B617A] transition hover:bg-gray-100"
+                        className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-center text-[11px] font-bold text-[#5B617A] transition hover:bg-gray-100 sm:w-auto"
                       >
                         Cancelar
                       </button>
@@ -2565,7 +2565,7 @@ function GestorEvento({
                     <button
                       type="button"
                       onClick={handleSaveGiftItem}
-                      className="cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2 text-[11px] font-extrabold text-white shadow-2xs transition hover:bg-[#5A6CD0]"
+                      className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-center text-[11px] font-extrabold text-white shadow-2xs transition hover:bg-[#5A6CD0] sm:w-auto sm:py-2"
                     >
                       {editingGiftId
                         ? "💾 Actualizar Regalo"
@@ -2582,21 +2582,21 @@ function GestorEvento({
                       return (
                         <div
                           key={gift.iditem}
-                          className="flex flex-col justify-between gap-2 rounded-xl border border-[#DCE0F0] bg-white p-3 shadow-2xs sm:flex-row sm:items-center"
+                          className="flex min-w-0 flex-col justify-between gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 shadow-2xs sm:flex-row sm:items-center"
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <span
-                                className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-extrabold ${meta.lightBadgeClass}`}
+                                className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-extrabold ${meta.lightBadgeClass}`}
                               >
                                 {meta.icon} {gift.tienda}
                               </span>
-                              <strong className="truncate text-xs font-extrabold text-[#2D3047]">
+                              <strong className="min-w-0 max-w-full truncate text-xs font-extrabold text-[#2D3047]">
                                 {gift.producto}
                               </strong>
                             </div>
                             {gift.nota && (
-                              <p className="mt-0.5 text-[11px] font-medium text-[#5B617A]">
+                              <p className="mt-0.5 truncate text-[11px] font-medium text-[#5B617A]">
                                 {gift.nota}
                               </p>
                             )}
@@ -2604,24 +2604,24 @@ function GestorEvento({
                               href={gift.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="mt-0.5 block truncate font-mono text-[10px] font-semibold text-[#6C7EE1] hover:underline"
+                              className="mt-0.5 block max-w-full truncate font-mono text-[10px] font-semibold text-[#6C7EE1] hover:underline"
                             >
                               {gift.url} ↗
                             </a>
                           </div>
 
-                          <div className="flex shrink-0 items-center gap-1.5">
+                          <div className="flex w-full shrink-0 items-center justify-end gap-1.5 border-t border-[#F0F2F8] pt-2 sm:w-auto sm:border-t-0 sm:pt-0">
                             <button
                               type="button"
                               onClick={() => handleStartEditGift(gift)}
-                              className="rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-1 text-[10px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                              className="flex-1 rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-1.5 text-center text-[10px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1] sm:flex-none sm:py-1"
                             >
                               ✏️ Editar
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeleteLogistica(gift.iditem)}
-                              className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-bold text-rose-600 transition hover:bg-rose-100"
+                              className="flex-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-center text-[10px] font-bold text-rose-600 transition hover:bg-rose-100 sm:flex-none sm:py-1"
                             >
                               🗑️ Quitar
                             </button>
@@ -2750,7 +2750,7 @@ function GestorEvento({
           </form>
 
           {/* Vista Previa en Vivo: Móvil y Escritorio (Columna Derecha: 7 cols) */}
-          <div className="flex flex-col rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6 xl:col-span-7">
+          <div className="flex min-w-0 flex-col rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6 xl:col-span-7">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E9F4] pb-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6C7EE1]">
@@ -3124,7 +3124,7 @@ function GestorEvento({
                               </span>
                             </div>
                             {mesaRegalosItems.length > 0 ? (
-                              <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                              <div className="mt-2.5 grid grid-cols-1 gap-2 2xl:grid-cols-2">
                                 {mesaRegalosItems.map((gift) => {
                                   const meta = getTiendaMeta(gift.tienda);
                                   return (

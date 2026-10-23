@@ -584,9 +584,9 @@ function InvitacionPublicaPage() {
                           href={gift.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs transition hover:border-amber-400/50 hover:bg-white/10"
+                          className="flex flex-col items-start justify-between gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs transition hover:border-amber-400/50 hover:bg-white/10 sm:flex-row sm:items-center sm:gap-3"
                         >
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0 w-full flex-1">
                             <span
                               className={`inline-block rounded border px-2 py-0.5 text-[10px] font-extrabold ${meta.badgeClass}`}
                             >
@@ -601,7 +601,7 @@ function InvitacionPublicaPage() {
                               </p>
                             )}
                           </div>
-                          <span className="shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 text-[11px] font-extrabold text-[#171F39] shadow">
+                          <span className="w-full shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 text-center text-[11px] font-extrabold text-[#171F39] shadow sm:w-auto">
                             Ver en tienda ↗
                           </span>
                         </a>
