@@ -184,9 +184,11 @@ function LandingPage() {
         <header className="relative z-20 mx-auto max-w-7xl px-4 pt-4 pb-2 sm:px-8 sm:py-6">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/60 bg-white/40 text-sm font-black text-[#17162E] shadow-sm backdrop-blur-md sm:h-9 sm:w-9 sm:text-base">
-                ✦
-              </div>
+              <img
+                src="/logo-recuerdalo.png"
+                alt="Recuérdalo"
+                className="h-8 w-8 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm sm:h-9 sm:w-9"
+              />
               <span className="truncate text-sm font-extrabold tracking-tight text-[#17162E] sm:text-lg">
                 Recuerdalo<span className="text-[#5C4EE5]">.com.mx</span>
               </span>
@@ -885,9 +887,11 @@ function LandingPage() {
             <div className="grid grid-cols-1 gap-8 border-b border-[#17162E]/15 py-12 sm:grid-cols-2 lg:grid-cols-5">
               <div className="lg:col-span-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#17162E] text-sm font-extrabold text-[#7BE7FF]">
-                    ✦
-                  </div>
+                  <img
+                    src="/logo-recuerdalo.png"
+                    alt="Recuérdalo"
+                    className="h-8 w-8 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm"
+                  />
                   <span className="text-lg font-extrabold tracking-tight text-[#17162E]">
                     Recuerdalo.com.mx
                   </span>
