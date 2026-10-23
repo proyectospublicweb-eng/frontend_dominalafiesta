@@ -31,6 +31,9 @@ function App() {
             <Route path="/events/:id" element={<HomePage />} />
             <Route path="/events/:id/:tab" element={<HomePage />} />
           </Route>
+
+          {/* Ruta personalizada: /:nombreEvento/e:id (ej. /cumpledeluis/e7) */}
+          <Route path="/:eventoSlug/:id" element={<InvitacionPublicaPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

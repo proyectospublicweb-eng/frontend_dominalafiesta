@@ -735,8 +735,8 @@ function LandingPage() {
             ))}
           </div>
 
-          {/* Barra integrada de Cuenta Regresiva Demo (100% responsiva en móvil/tablet/desk) */}
-          <div className="mt-9 flex flex-col items-center justify-between gap-4 rounded-2xl border border-[#5C60A8]/40 bg-[#141329] p-4 sm:mt-12 sm:flex-row sm:gap-6 sm:p-6">
+          {/* Barra integrada de Cuenta Regresiva Demo (Oculta temporalmente, código preservado) */}
+          <div className="hidden mt-9 flex-col items-center justify-between gap-4 rounded-2xl border border-[#5C60A8]/40 bg-[#141329] p-4 sm:mt-12 sm:flex-row sm:gap-6 sm:p-6">
             <div className="text-center sm:text-left">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7BE7FF] sm:text-[11px]">
                 ⏳ DEMO EN VIVO • PRÓXIMA GRAN GALA VIP

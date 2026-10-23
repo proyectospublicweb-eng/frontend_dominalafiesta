@@ -34,6 +34,7 @@ export const GESTOR_TABS = [
     label: "💰 Presupuesto (Opcional)",
     short: "💰 Presupuesto",
     pathHint: "/events/[id]/budget",
+    hidden: true, // Oculto temporalmente sin eliminar la funcionalidad
   },
   {
     id: "settings",
@@ -55,8 +56,8 @@ export function normalizeGestorTab(rawTab) {
     difusion: "broadcast",
     logistics: "invitation", // Redirige a invitation mientras Logística esté oculta
     logistica: "invitation",
-    budget: "budget",
-    presupuesto: "budget",
+    budget: "invitation", // Redirige a invitation mientras Presupuesto esté oculto
+    presupuesto: "invitation",
     settings: "settings",
     configuracion: "settings",
   };

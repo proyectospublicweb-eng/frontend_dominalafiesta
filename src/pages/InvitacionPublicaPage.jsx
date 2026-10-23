@@ -124,9 +124,19 @@ function buildQrMatrix(text) {
 }
 
 function InvitacionPublicaPage() {
-  const { id } = useParams();
+  const { id: rawId } = useParams();
+  const id = String(rawId || "").replace(/^e/i, "");
   const [searchParams] = useSearchParams();
   const guestToken = searchParams.get("guest") || searchParams.get("pase") || "";
+  const urlMod = (searchParams.get("mod") || "").trim();
+  const urlAdultos = Math.max(
+    0,
+    parseInt(searchParams.get("adultos") || "0", 10) || 0
+  );
+  const urlNinos = Math.max(
+    0,
+    parseInt(searchParams.get("ninos") || "0", 10) || 0
+  );
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -159,22 +169,28 @@ function InvitacionPublicaPage() {
         setInvitado(data.invitado);
 
         const modalidad =
+          urlMod ||
           data.invitado?.modalidad_pase ||
           data.evento?.modalidad_invitados ||
-          "Adultos y niños";
+          "Adultos y Niños";
+        const modLower = String(modalidad).trim().toLowerCase();
 
         const defaultAdultos =
-          modalidad === "Solo niños"
+          modLower === "solo niños"
             ? 0
+            : urlAdultos > 0
+            ? urlAdultos
             : data.invitado?.adultos !== undefined
             ? Number(data.invitado.adultos)
             : 1;
         const defaultNinos =
-          modalidad === "Solo adultos"
+          modLower === "solo adultos"
             ? 0
+            : urlNinos > 0
+            ? urlNinos
             : data.invitado?.ninos !== undefined
             ? Number(data.invitado.ninos)
-            : modalidad === "Solo niños"
+            : modLower === "solo niños"
             ? 1
             : 0;
 
@@ -204,7 +220,7 @@ function InvitacionPublicaPage() {
     return () => {
       active = false;
     };
-  }, [id, guestToken]);
+  }, [id, guestToken, urlMod, urlAdultos, urlNinos]);
 
   const qrMatrix = useMemo(
     () =>
@@ -254,9 +270,15 @@ function InvitacionPublicaPage() {
     )
   );
   const modalidadEvento =
-    invitado?.modalidad_pase || evento.modalidad_invitados || "Adultos y niños";
-  const soloAdultos = modalidadEvento === "Solo adultos";
-  const soloNinos = modalidadEvento === "Solo niños";
+    urlMod ||
+    invitado?.modalidad_pase ||
+    evento.modalidad_invitados ||
+    "Adultos y Niños";
+  const modEventoLower = String(modalidadEvento).trim().toLowerCase();
+  const soloAdultos = modEventoLower === "solo adultos";
+  const soloNinos = modEventoLower === "solo niños";
+  const adultosLockedByLink = !soloNinos && urlAdultos > 0;
+  const ninosLockedByLink = !soloAdultos && urlNinos > 0;
 
   const handleConfirmSubmit = async (e) => {
     e.preventDefault();
@@ -270,8 +292,17 @@ function InvitacionPublicaPage() {
         telefono: form.telefono.trim(),
         correo: form.correo.trim(),
         estado_rsvp: form.estado_rsvp,
-        adultos: soloNinos ? 0 : Number(form.adultos || 0),
-        ninos: soloAdultos ? 0 : Number(form.ninos || 0),
+        modalidad_pase: modalidadEvento,
+        adultos: soloNinos
+          ? 0
+          : adultosLockedByLink
+          ? urlAdultos
+          : Number(form.adultos || 0),
+        ninos: soloAdultos
+          ? 0
+          : ninosLockedByLink
+          ? urlNinos
+          : Number(form.ninos || 0),
         nota_alimentacion: form.nota_alimentacion.trim(),
       });
       setInvitado(data.invitado);
@@ -376,7 +407,7 @@ function InvitacionPublicaPage() {
                 </p>
               )}
               <p>
-                👔 <strong>Dress Code:</strong>{" "}
+                👔 <strong>Código de Vestimenta:</strong>{" "}
                 {evento.codigo_vestimenta || "Formal / Libre"}
               </p>
             </div>
@@ -413,6 +444,26 @@ function InvitacionPublicaPage() {
               <strong className="mt-0.5 block text-sm font-extrabold uppercase tracking-wider text-white">
                 🎟️ {modalidadEvento}
               </strong>
+              {(adultosLockedByLink || ninosLockedByLink) && (
+                <p className="mt-1 text-[11px] font-semibold text-gray-200">
+                  Pases incluidos en esta invitación:{" "}
+                  {!soloNinos && (
+                    <span className="text-[#15B2F5]">
+                      {adultosLockedByLink
+                        ? `${urlAdultos} Adulto(s)`
+                        : "Adultos libre"}
+                    </span>
+                  )}
+                  {!soloNinos && !soloAdultos && " • "}
+                  {!soloAdultos && (
+                    <span className="text-[#15B2F5]">
+                      {ninosLockedByLink
+                        ? `${urlNinos} Niño(s)`
+                        : "Niños libre"}
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
 
             {/* Mensaje de confirmación tras enviar formulario */}
@@ -440,35 +491,43 @@ function InvitacionPublicaPage() {
                   </strong>
                 </p>
 
-                {/* Código QR del Pase del Invitado */}
-                <div className="mx-auto mt-4 inline-block rounded-2xl bg-white p-3 shadow-lg">
-                  <svg
-                    viewBox="0 0 21 21"
-                    className="h-32 w-32"
-                    shapeRendering="crispEdges"
-                  >
-                    {qrMatrix.map((row, rIdx) =>
-                      row.map((cell, cIdx) =>
-                        cell ? (
-                          <rect
-                            key={`${rIdx}-${cIdx}`}
-                            x={cIdx}
-                            y={rIdx}
-                            width={1}
-                            height={1}
-                            fill="#171F39"
-                          />
-                        ) : null
-                      )
-                    )}
-                  </svg>
-                </div>
-                <p className="mt-2 font-mono text-[11px] font-extrabold text-[#15B2F5]">
-                  TOKEN: {invitado.token_invitacion}
-                </p>
-                <p className="mt-1 text-[10px] text-gray-400">
-                  Presenta este código QR en la entrada del evento.
-                </p>
+                {/* Código QR del Pase del Invitado (condicional según "¿Confirmar Acceso el día del evento?") */}
+                {Boolean(
+                  evento.confirmar_acceso_qr ??
+                    evento.permitir_acompanantes ??
+                    true
+                ) && (
+                  <>
+                    <div className="mx-auto mt-4 inline-block rounded-2xl bg-white p-3 shadow-lg">
+                      <svg
+                        viewBox="0 0 21 21"
+                        className="h-32 w-32"
+                        shapeRendering="crispEdges"
+                      >
+                        {qrMatrix.map((row, rIdx) =>
+                          row.map((cell, cIdx) =>
+                            cell ? (
+                              <rect
+                                key={`${rIdx}-${cIdx}`}
+                                x={cIdx}
+                                y={rIdx}
+                                width={1}
+                                height={1}
+                                fill="#171F39"
+                              />
+                            ) : null
+                          )
+                        )}
+                      </svg>
+                    </div>
+                    <p className="mt-2 font-mono text-[11px] font-extrabold text-[#15B2F5]">
+                      TOKEN: {invitado.token_invitacion}
+                    </p>
+                    <p className="mt-1 text-[10px] text-gray-400">
+                      Presenta este código QR en la entrada del evento.
+                    </p>
+                  </>
+                )}
 
                 <button
                   type="button"
@@ -615,44 +674,87 @@ function InvitacionPublicaPage() {
                   <>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-300">
-                          Adultos {soloNinos && "(No aplica)"}
+                        <label className="mb-1 flex items-center justify-between text-xs font-semibold text-gray-300">
+                          <span>Adultos</span>
+                          {soloNinos ? (
+                            <span className="text-[10px] font-bold text-gray-400">
+                              (No aplica)
+                            </span>
+                          ) : adultosLockedByLink ? (
+                            <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
+                              🔒 Bloqueado ({urlAdultos})
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-medium text-[#15B2F5]">
+                              🔓 Libre
+                            </span>
+                          )}
                         </label>
                         <input
                           type="number"
                           min={soloNinos ? 0 : 1}
-                          max={15}
-                          disabled={soloNinos}
-                          value={soloNinos ? 0 : form.adultos}
+                          max={25}
+                          disabled={soloNinos || adultosLockedByLink}
+                          value={
+                            soloNinos
+                              ? 0
+                              : adultosLockedByLink
+                              ? urlAdultos
+                              : form.adultos
+                          }
                           onChange={(e) =>
                             setForm((p) => ({
                               ...p,
                               adultos: e.target.value,
                             }))
                           }
-                          className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5] disabled:opacity-40"
+                          className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5] disabled:cursor-not-allowed disabled:opacity-50"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-300">
-                          Niños {soloAdultos && "(Solo adultos)"}
+                        <label className="mb-1 flex items-center justify-between text-xs font-semibold text-gray-300">
+                          <span>Niños</span>
+                          {soloAdultos ? (
+                            <span className="text-[10px] font-bold text-gray-400">
+                              (Solo adultos)
+                            </span>
+                          ) : ninosLockedByLink ? (
+                            <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
+                              🔒 Bloqueado ({urlNinos})
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-medium text-[#15B2F5]">
+                              🔓 Libre
+                            </span>
+                          )}
                         </label>
                         <input
                           type="number"
                           min={0}
-                          max={15}
-                          disabled={soloAdultos}
-                          value={soloAdultos ? 0 : form.ninos}
+                          max={25}
+                          disabled={soloAdultos || ninosLockedByLink}
+                          value={
+                            soloAdultos
+                              ? 0
+                              : ninosLockedByLink
+                              ? urlNinos
+                              : form.ninos
+                          }
                           onChange={(e) =>
                             setForm((p) => ({
                               ...p,
                               ninos: e.target.value,
                             }))
                           }
-                          className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5] disabled:opacity-40"
+                          className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5] disabled:cursor-not-allowed disabled:opacity-50"
                         />
                       </div>
                     </div>
+                    {(adultosLockedByLink || ninosLockedByLink) && (
+                      <p className="text-[11px] text-amber-200/90">
+                        🔒 Los campos con candado tienen el número de pases preasignado por el organizador.
+                      </p>
+                    )}
 
                     <div>
                       <label className="mb-1 block text-xs font-semibold text-gray-300">

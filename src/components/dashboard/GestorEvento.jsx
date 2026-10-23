@@ -111,13 +111,24 @@ const EMAIL_HTML_TEMPLATES = [
 ];
 
 const MODALIDADES_INVITADOS = [
-  "Solo adultos",
-  "Solo niños",
-  "Adultos y niños",
+  "Solo Adultos",
+  "Solo Niños",
+  "Adultos y Niños",
   "Padre e hijos",
   "Madre e hijos",
   "Padres e hijos",
+  "Un Padre, Un hijo",
+  "Una Madre, Un hijo",
+  "Toda la Familia",
 ];
+
+function isSoloAdultosMod(mod) {
+  return String(mod || "").trim().toLowerCase() === "solo adultos";
+}
+
+function isSoloNinosMod(mod) {
+  return String(mod || "").trim().toLowerCase() === "solo niños";
+}
 
 function formatDateInput(val) {
   if (!val) return "";
@@ -271,9 +282,15 @@ function GestorEvento({
   const [detalle, setDetalle] = useState(null);
   const [toast, setToast] = useState("");
 
-  // Tab A: Vista previa Móvil vs Escritorio y Editor Rápido
+  // Tab A: Vista previa Móvil vs Escritorio, Editor Rápido y Generador de Links por Modalidad/Pases
   const [previewDevice, setPreviewDevice] = useState("mobile"); // "mobile" | "desktop"
   const [invForm, setInvForm] = useState(null);
+  const [customLinkForm, setCustomLinkForm] = useState({
+    etiqueta: "",
+    modalidad: "Adultos y Niños",
+    adultos: 0,
+    ninos: 0,
+  });
 
   // Tab B: Lista de Invitados, Filtros y Modal/Panel de Alta Individual o CSV
   const [rsvpFilter, setRsvpFilter] = useState("Todos");
@@ -285,7 +302,7 @@ function GestorEvento({
     telefono: "",
     correo: "",
     grupo: "Amigos",
-    modalidad_pase: "Adultos y niños",
+    modalidad_pase: "Adultos y Niños",
     adultos: 1,
     ninos: 0,
     estado_rsvp: "Pendiente",
@@ -293,11 +310,11 @@ function GestorEvento({
     nota_alimentacion: "",
   });
   const [csvText, setCsvText] = useState("");
+  const [editingGuest, setEditingGuest] = useState(null);
 
   // Tab C: Centro de Envíos y Difusión (Enlaces, WhatsApp, Email/SMS, Recordatorios)
-  const [linkMode, setLinkMode] = useState("general"); // "general" | "individual"
   const [whatsappMsg, setWhatsappMsg] = useState(
-    "¡Hola {nombre}! 🎉 Estás cordialmente invitado(a) a {evento} el día {fecha} a las {hora} hrs en {lugar}. Confirma tu asistencia en tu pase único: {enlace}"
+    "¡Hola {nombre}! 🎉 Estás cordialmente invitado(a) a {evento} el día {fecha} a las {hora} hrs en {lugar}. Confirma tu asistencia en la invitación virtual: {enlace}"
   );
   const [broadcastChannel, setBroadcastChannel] = useState("Email HTML");
   const [selectedHtmlTemplate, setSelectedHtmlTemplate] = useState("neon-vip");
@@ -356,11 +373,17 @@ function GestorEvento({
             draftEvento.texto_boton_rsvp || "Confirmar Asistencia",
           modalidad_invitados:
             draftEvento.modalidad_invitados || "Adultos y niños",
+          permitir_acompanantes:
+            draftEvento.permitir_acompanantes ?? true,
+          confirmar_acceso_qr:
+            draftEvento.confirmar_acceso_qr ??
+            draftEvento.permitir_acompanantes ??
+            true,
           recordatorio_dias: draftEvento.recordatorio_dias ?? 3,
           recordatorio_activo: Boolean(draftEvento.recordatorio_activo),
           recordatorio_mensaje:
             draftEvento.recordatorio_mensaje ||
-            "¡Hola {nombre}! Faltan {dias} días para {evento}. Por favor confirma tu asistencia en tu enlace único: {enlace}",
+            "¡Hola {nombre}! Faltan {dias} días para {evento}. Por favor confirma tu asistencia en la invitación virtual: {enlace}",
         };
         setDetalle({
           evento: draftObj,
@@ -387,15 +410,25 @@ function GestorEvento({
             data.evento.texto_boton_rsvp || "Confirmar Asistencia",
           modalidad_invitados:
             data.evento.modalidad_invitados || "Adultos y niños",
+          permitir_acompanantes:
+            data.evento.permitir_acompanantes ?? true,
+          confirmar_acceso_qr:
+            data.evento.confirmar_acceso_qr ??
+            data.evento.permitir_acompanantes ??
+            true,
           recordatorio_dias: data.evento.recordatorio_dias ?? 3,
           recordatorio_activo: Boolean(data.evento.recordatorio_activo),
           recordatorio_mensaje:
             data.evento.recordatorio_mensaje ||
-            "¡Hola {nombre}! Faltan {dias} días para {evento}. Por favor confirma tu asistencia en tu enlace único: {enlace}",
+            "¡Hola {nombre}! Faltan {dias} días para {evento}. Por favor confirma tu asistencia en la invitación virtual: {enlace}",
         });
         setGuestForm((prev) => ({
           ...prev,
           modalidad_pase: data.evento.modalidad_invitados || "Adultos y niños",
+        }));
+        setCustomLinkForm((prev) => ({
+          ...prev,
+          modalidad: data.evento.modalidad_invitados || "Adultos y niños",
         }));
         setNuevoPropietarioEmail(data.evento.propietario_email || "");
       } catch (err) {
@@ -449,9 +482,24 @@ function GestorEvento({
     PLANTILLAS.find((p) => p.id === invForm.plantilla_tema) || PLANTILLAS[0];
   const mapLocation = getGoogleMapsUrls(invForm.lugar, invForm.direccion);
 
-  const baseShareUrl = `${window.location.origin}/rsvp/${evento.idevento || "nuevo"}`;
-  const getGuestPersonalLink = (guest) =>
-    `${baseShareUrl}?guest=${guest.token_invitacion || guest.idinvitado}`;
+  const eventoSlug =
+    String(invForm?.nombre || evento?.nombre || "evento")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "") || "evento";
+  const baseShareUrl = `${window.location.origin}/${eventoSlug}/e${
+    evento.idevento || "nuevo"
+  }`;
+  const buildCustomInviteUrl = ({ modalidad, adultos, ninos }) => {
+    const params = new URLSearchParams();
+    if (modalidad) params.set("mod", modalidad);
+    const numAd = Math.max(0, Number(adultos) || 0);
+    const numNi = Math.max(0, Number(ninos) || 0);
+    params.set("adultos", String(numAd));
+    params.set("ninos", String(numNi));
+    return `${baseShareUrl}?${params.toString()}`;
+  };
 
   // Días restantes para el evento
   const diasParaEvento = Math.max(
@@ -591,7 +639,8 @@ function GestorEvento({
     setGuestForm((prev) => ({
       ...prev,
       modalidad_pase: nuevaModalidad,
-      ninos: nuevaModalidad === "Solo adultos" ? 0 : prev.ninos,
+      adultos: isSoloNinosMod(nuevaModalidad) ? 0 : prev.adultos,
+      ninos: isSoloAdultosMod(nuevaModalidad) ? 0 : prev.ninos,
     }));
     try {
       const { data } = await updateEventoRequest(evento.idevento, {
@@ -711,6 +760,53 @@ function GestorEvento({
     }
   };
 
+  const handleOpenEditGuest = (guest) => {
+    setEditingGuest({
+      idinvitado: guest.idinvitado,
+      nombre: guest.nombre || "",
+      telefono: guest.telefono || "",
+      correo: guest.correo || "",
+      grupo: guest.grupo || "Amigos",
+      estado_rsvp: isRejected(guest.estado_rsvp)
+        ? "Rechazado"
+        : guest.estado_rsvp || "Pendiente",
+      modalidad_pase:
+        guest.modalidad_pase ||
+        invForm.modalidad_invitados ||
+        "Adultos y niños",
+      adultos: guest.adultos ?? guest.pases ?? 1,
+      ninos: guest.ninos ?? 0,
+      mesa_asignada: guest.mesa_asignada || "Sin asignar",
+      nota_alimentacion: guest.nota_alimentacion || "",
+    });
+  };
+
+  const handleSaveEditedGuest = async (e) => {
+    e.preventDefault();
+    if (!editingGuest || !editingGuest.nombre.trim()) return;
+    const soloAd = isSoloAdultosMod(editingGuest.modalidad_pase);
+    const soloNi = isSoloNinosMod(editingGuest.modalidad_pase);
+    const numAd = soloNi ? 0 : Math.max(0, Number(editingGuest.adultos) || 0);
+    const numNi = soloAd ? 0 : Math.max(0, Number(editingGuest.ninos) || 0);
+    const totalPases = Math.max(1, numAd + numNi);
+
+    await handleUpdateGuest(editingGuest.idinvitado, {
+      nombre: editingGuest.nombre.trim(),
+      telefono: editingGuest.telefono.trim(),
+      correo: editingGuest.correo.trim(),
+      grupo: editingGuest.grupo,
+      estado_rsvp: editingGuest.estado_rsvp,
+      modalidad_pase: editingGuest.modalidad_pase,
+      adultos: numAd,
+      ninos: numNi,
+      pases: totalPases,
+      mesa_asignada: editingGuest.mesa_asignada,
+      nota_alimentacion: editingGuest.nota_alimentacion.trim(),
+    });
+    showNotice(`✓ Datos de "${editingGuest.nombre.trim()}" actualizados.`);
+    setEditingGuest(null);
+  };
+
   const handleDeleteGuest = async (idInvitado) => {
     try {
       await deleteInvitadoRequest(evento.idevento, idInvitado);
@@ -728,7 +824,7 @@ function GestorEvento({
   // HANDLERS: DIFUSIÓN Y RECORDATORIOS (TAB C)
   // =========================================================================
   const formatGuestMessage = (templateStr, guest) => {
-    const link = guest ? getGuestPersonalLink(guest) : baseShareUrl;
+    const link = baseShareUrl;
     return String(templateStr || "")
       .replaceAll("{nombre}", guest?.nombre || "Invitado Especial")
       .replaceAll("{evento}", evento.nombre)
@@ -748,7 +844,7 @@ function GestorEvento({
     null;
 
   const buildEmailHtmlCode = (guest) => {
-    const link = guest ? getGuestPersonalLink(guest) : baseShareUrl;
+    const link = baseShareUrl;
     const guestName = guest?.nombre || "Invitado Especial";
     const modalidade =
       guest?.modalidad_pase ||
@@ -940,6 +1036,13 @@ function GestorEvento({
   };
 
   const handleDeleteLogistica = async (idItem) => {
+    if (String(idItem).startsWith("temp-")) {
+      setDetalle((prev) => ({
+        ...prev,
+        logistica: prev.logistica.filter((i) => i.iditem !== idItem),
+      }));
+      return;
+    }
     try {
       await deleteLogisticaRequest(evento.idevento, idItem);
       setDetalle((prev) => ({
@@ -949,6 +1052,127 @@ function GestorEvento({
     } catch {
       showNotice("Error al eliminar elemento");
     }
+  };
+
+  const handleCreateCustomLink = async (e) => {
+    e.preventDefault();
+    const mod = customLinkForm.modalidad || "Adultos y Niños";
+    const numAdultos = isSoloNinosMod(mod)
+      ? 0
+      : Math.max(0, parseInt(customLinkForm.adultos, 10) || 0);
+    const numNinos = isSoloAdultosMod(mod)
+      ? 0
+      : Math.max(0, parseInt(customLinkForm.ninos, 10) || 0);
+
+    const autoLabelParts = [mod];
+    if (!isSoloNinosMod(mod)) {
+      autoLabelParts.push(
+        numAdultos > 0 ? `${numAdultos} Adulto(s)` : "Adultos libre"
+      );
+    }
+    if (!isSoloAdultosMod(mod)) {
+      autoLabelParts.push(
+        numNinos > 0 ? `${numNinos} Niño(s)` : "Niños libre"
+      );
+    }
+    const tituloFinal =
+      customLinkForm.etiqueta.trim() || autoLabelParts.join(" • ");
+    const detalleJson = JSON.stringify({
+      modalidad: mod,
+      adultos: numAdultos,
+      ninos: numNinos,
+    });
+
+    if (!evento.idevento) {
+      const tempItem = {
+        iditem: `temp-${Date.now()}`,
+        categoria: "link_invitacion",
+        titulo: tituloFinal,
+        detalle: detalleJson,
+        estado: mod,
+        capacidad_mesa: numAdultos,
+        hora_itinerario: String(numNinos),
+      };
+      setDetalle((prev) => ({
+        ...prev,
+        logistica: [...prev.logistica, tempItem],
+      }));
+      setCustomLinkForm((prev) => ({
+        ...prev,
+        etiqueta: "",
+        adultos: 0,
+        ninos: 0,
+      }));
+      showNotice(
+        "✓ Link generado en vista previa (guarda el evento para conservarlo)."
+      );
+      return;
+    }
+
+    try {
+      const { data } = await addLogisticaRequest(evento.idevento, {
+        categoria: "link_invitacion",
+        titulo: tituloFinal,
+        detalle: detalleJson,
+        estado: mod,
+        capacidad_mesa: numAdultos,
+        hora_itinerario: String(numNinos),
+      });
+      setDetalle((prev) => ({
+        ...prev,
+        logistica: [...prev.logistica, data],
+      }));
+      setCustomLinkForm((prev) => ({
+        ...prev,
+        etiqueta: "",
+        adultos: 0,
+        ninos: 0,
+      }));
+      showNotice("✓ Nuevo link de invitación generado y agregado a la tabla.");
+    } catch {
+      showNotice("Error al generar el link de invitación");
+    }
+  };
+
+  const handleShareCustomLink = async (linkItem) => {
+    const shareText = `¡Hola! 🎉 Estás cordialmente invitado(a) a ${
+      evento.nombre || "nuestro evento"
+    } el día ${formatDateInput(evento.fecha_evento)} a las ${
+      evento.hora_evento || "20:00"
+    } hrs en ${
+      evento.lugar || "el lugar del evento"
+    }. Confirma tu asistencia en esta invitación virtual (${
+      linkItem.modalidad
+    }): ${linkItem.url}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Invitación: ${evento.nombre}`,
+          text: shareText,
+          url: linkItem.url,
+        });
+        return;
+      } catch {
+        // Si el usuario cancela el share nativo, abrimos WhatsApp como respaldo
+      }
+    }
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleWhatsAppCustomLink = (linkItem) => {
+    const shareText = `¡Hola! 🎉 Estás cordialmente invitado(a) a ${
+      evento.nombre || "nuestro evento"
+    } el día ${formatDateInput(evento.fecha_evento)} a las ${
+      evento.hora_evento || "20:00"
+    } hrs en ${
+      evento.lugar || "el lugar del evento"
+    }. Confirma tu asistencia en esta invitación virtual (${
+      linkItem.modalidad
+    }): ${linkItem.url}`;
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
   };
 
   // =========================================================================
@@ -1071,6 +1295,43 @@ function GestorEvento({
         String(b.hora_itinerario || b.titulo)
       )
   );
+  const customLinksItems = logistica
+    .filter((i) => i.categoria === "link_invitacion")
+    .map((item) => {
+      let parsed = {};
+      try {
+        parsed = JSON.parse(item.detalle || "{}");
+      } catch {
+        parsed = {};
+      }
+      const modalidad =
+        parsed.modalidad ||
+        item.estado ||
+        invForm.modalidad_invitados ||
+        "Adultos y Niños";
+      const soloAd = isSoloAdultosMod(modalidad);
+      const soloNi = isSoloNinosMod(modalidad);
+      const adultos = soloNi
+        ? 0
+        : Math.max(
+            0,
+            Number(parsed.adultos ?? item.capacidad_mesa ?? 0) || 0
+          );
+      const ninos = soloAd
+        ? 0
+        : Math.max(
+            0,
+            Number(parsed.ninos ?? item.hora_itinerario ?? 0) || 0
+          );
+      return {
+        iditem: item.iditem,
+        etiqueta: item.titulo || "Link Personalizado",
+        modalidad,
+        adultos,
+        ninos,
+        url: buildCustomInviteUrl({ modalidad, adultos, ninos }),
+      };
+    });
 
   // QR SVG Download handler
   const qrCodeValue = `${window.location.origin}/checkin/${evento.idevento}?code=${
@@ -1292,9 +1553,6 @@ function GestorEvento({
           >
             <div className="flex items-center justify-between border-b border-[#E6E9F4] pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
-                  TAB A • /events/{evento.idevento}/invitation
-                </span>
                 <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                   📇 Editor Rápido de Invitación
                 </h3>
@@ -1516,6 +1774,37 @@ function GestorEvento({
                   }
                   className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-3 text-xs transition hover:border-[#6C7EE1]">
+                  <div>
+                    <span className="block font-bold text-[#2D3047]">
+                      🔳 ¿Confirmar Acceso el día del evento?
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-[#8E94A9]">
+                      Si está activado, al invitado se le mostrará un Código QR
+                      después de confirmar su asistencia en la invitación virtual.
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(
+                      invForm.confirmar_acceso_qr ??
+                        invForm.permitir_acompanantes ??
+                        true
+                    )}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setInvForm((prev) => ({
+                        ...prev,
+                        confirmar_acceso_qr: checked,
+                        permitir_acompanantes: checked,
+                      }));
+                    }}
+                    className="h-4 w-4 shrink-0 cursor-pointer accent-[#6C7EE1]"
+                  />
+                </label>
               </div>
             </div>
 
@@ -1986,6 +2275,375 @@ function GestorEvento({
               </a>
             </div>
           </div>
+
+          {/* =================================================================
+              ZONA INFERIOR: GENERADOR DE LINKS ADICIONALES POR MODALIDAD Y PASES
+             ================================================================= */}
+          <div className="xl:col-span-12 rounded-2xl border border-[#E6E9F4] bg-white p-6 shadow-xs">
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#E6E9F4] pb-4">
+              <div>
+                <h2
+                  className="text-lg font-extrabold tracking-wide text-[#f59e0b]"
+                  style={{ color: "#f59e0b" }}
+                >
+                  🔗 Links de Invitación por Modalidad de Asistencia y Cantidad de Pases
+                </h2>
+                <p className="mt-1 text-xs text-[#8E94A9]">
+                  Genera diferentes enlaces para este mismo evento (con la misma plantilla y datos) diferenciados por{" "}
+                  <strong className="text-[#2D3047]">Modalidad de Asistencia</strong> y{" "}
+                  <strong className="text-[#2D3047]">Cantidad de Pases (Adultos, Niños)</strong>.
+                </p>
+              </div>
+              <div className="rounded-xl border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-3.5 py-2 text-[11px] font-medium text-[#2D3047]">
+                💡 <strong>Nota:</strong> Si dejas <strong>Adultos</strong> o{" "}
+                <strong>Niños</strong> en <strong>0</strong>, el invitado podrá
+                elegir libremente la cantidad. Si ingresas un número mayor a 0,
+                ese campo estará <strong>🔒 bloqueado</strong> para el invitado.
+              </div>
+            </div>
+
+            {/* Formulario para crear un nuevo link diferenciado */}
+            <form
+              onSubmit={handleCreateCustomLink}
+              className="mt-5 grid grid-cols-1 items-end gap-4 rounded-2xl border border-[#E6E9F4] bg-[#F8F9FD] p-5 md:grid-cols-12"
+            >
+              <div className="md:col-span-3">
+                <label className="mb-1.5 block text-xs font-bold text-[#2D3047]">
+                  Referencia / Etiqueta (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={customLinkForm.etiqueta}
+                  onChange={(e) =>
+                    setCustomLinkForm((p) => ({
+                      ...p,
+                      etiqueta: e.target.value,
+                    }))
+                  }
+                  placeholder="Ej. Parejas, Familia con niños..."
+                  className="w-full rounded-xl border border-[#E6E9F4] bg-white px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="mb-1.5 block text-xs font-bold text-[#2D3047]">
+                  Modalidad de Asistencia
+                </label>
+                <select
+                  value={customLinkForm.modalidad}
+                  onChange={(e) => {
+                    const nuevaMod = e.target.value;
+                    setCustomLinkForm((p) => ({
+                      ...p,
+                      modalidad: nuevaMod,
+                      adultos: isSoloNinosMod(nuevaMod) ? 0 : p.adultos,
+                      ninos: isSoloAdultosMod(nuevaMod) ? 0 : p.ninos,
+                    }));
+                  }}
+                  className="w-full rounded-xl border border-[#E6E9F4] bg-white px-3.5 py-2.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                >
+                  {MODALIDADES_INVITADOS.map((mod) => (
+                    <option key={mod} value={mod}>
+                      {mod}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[#2D3047]">
+                  <span>Pases Adultos</span>
+                  {isSoloNinosMod(customLinkForm.modalidad) ? (
+                    <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-600">
+                      No aplica
+                    </span>
+                  ) : Number(customLinkForm.adultos) > 0 ? (
+                    <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
+                      🔒 Bloqueado
+                    </span>
+                  ) : (
+                    <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                      🔓 Libre (0)
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={25}
+                  disabled={isSoloNinosMod(customLinkForm.modalidad)}
+                  value={
+                    isSoloNinosMod(customLinkForm.modalidad)
+                      ? 0
+                      : customLinkForm.adultos
+                  }
+                  onChange={(e) =>
+                    setCustomLinkForm((p) => ({
+                      ...p,
+                      adultos: Math.max(0, parseInt(e.target.value || "0", 10) || 0),
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#E6E9F4] bg-white px-3.5 py-2.5 text-xs font-bold text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[#2D3047]">
+                  <span>Pases Niños</span>
+                  {isSoloAdultosMod(customLinkForm.modalidad) ? (
+                    <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-600">
+                      No aplica
+                    </span>
+                  ) : Number(customLinkForm.ninos) > 0 ? (
+                    <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
+                      🔒 Bloqueado
+                    </span>
+                  ) : (
+                    <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                      🔓 Libre (0)
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={25}
+                  disabled={isSoloAdultosMod(customLinkForm.modalidad)}
+                  value={
+                    isSoloAdultosMod(customLinkForm.modalidad)
+                      ? 0
+                      : customLinkForm.ninos
+                  }
+                  onChange={(e) =>
+                    setCustomLinkForm((p) => ({
+                      ...p,
+                      ninos: Math.max(0, parseInt(e.target.value || "0", 10) || 0),
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#E6E9F4] bg-white px-3.5 py-2.5 text-xs font-bold text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <button
+                  type="submit"
+                  className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0]"
+                >
+                  ＋ Crear Link
+                </button>
+              </div>
+            </form>
+
+            {/* Tabla de Links Generados */}
+            <div className="mt-6 overflow-x-auto rounded-2xl border border-[#E6E9F4]">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead
+                  style={{ backgroundColor: "#fde68a", color: "#111212" }}
+                >
+                  <tr
+                    className="border-b border-[#E6E9F4] bg-[#fde68a] text-[11px] font-bold uppercase tracking-wider text-[#111212]"
+                    style={{ backgroundColor: "#fde68a", color: "#111212" }}
+                  >
+                    <th className="px-4 py-3 text-[#111212]">Referencia</th>
+                    <th className="px-4 py-3 text-[#111212]">Modalidad de Asistencia</th>
+                    <th className="px-4 py-3 text-[#111212]">Pases Adultos</th>
+                    <th className="px-4 py-3 text-[#111212]">Pases Niños</th>
+                    <th className="px-4 py-3 text-[#111212]">Link Generado</th>
+                    <th className="px-4 py-3 text-right text-[#111212]">Copiar o Compartir</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E6E9F4]">
+                  {/* Fila 1: Link General Principal del Evento */}
+                  <tr className="bg-[#F8F9FD]/60 hover:bg-[#F3F6FA]">
+                    <td className="px-4 py-3.5 font-bold text-[#2D3047]">
+                      <span className="mr-1.5 inline-block rounded-md bg-[#6C7EE1]/15 px-2 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
+                        ⭐ Principal
+                      </span>
+                      Link General del Evento
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2.5 py-1 text-[11px] font-bold text-[#6C7EE1]">
+                        🎟️ {invForm.modalidad_invitados || "Adultos y niños"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      {isSoloNinosMod(invForm.modalidad_invitados) ? (
+                        <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-500">
+                          🚫 No aplica (0)
+                        </span>
+                      ) : (
+                        <span className="rounded-lg bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                          🔓 0 (Libre)
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      {isSoloAdultosMod(invForm.modalidad_invitados) ? (
+                        <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-500">
+                          🚫 No aplica (0)
+                        </span>
+                      ) : (
+                        <span className="rounded-lg bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                          🔓 0 (Libre)
+                        </span>
+                      )}
+                    </td>
+                    <td className="max-w-xs truncate px-4 py-3.5 font-mono text-[11px] text-[#2D3047]">
+                      <a
+                        href={baseShareUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#6C7EE1] hover:underline"
+                        title={baseShareUrl}
+                      >
+                        {baseShareUrl}
+                      </a>
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="flex flex-wrap items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(baseShareUrl);
+                            showNotice("✓ Link general copiado al portapapeles.");
+                          }}
+                          className="cursor-pointer rounded-lg border border-[#E6E9F4] bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                        >
+                          📋 Copiar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleWhatsAppCustomLink({
+                              modalidad:
+                                invForm.modalidad_invitados || "Adultos y niños",
+                              url: baseShareUrl,
+                            })
+                          }
+                          className="cursor-pointer rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-500 hover:text-white"
+                        >
+                          📲 WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleShareCustomLink({
+                              modalidad:
+                                invForm.modalidad_invitados || "Adultos y niños",
+                              url: baseShareUrl,
+                            })
+                          }
+                          className="cursor-pointer rounded-lg border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2.5 py-1.5 text-[11px] font-bold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
+                        >
+                          🔗 Compartir
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* Filas de Links Personalizados Creados */}
+                  {customLinksItems.map((item) => {
+                    const soloAd = isSoloAdultosMod(item.modalidad);
+                    const soloNi = isSoloNinosMod(item.modalidad);
+                    return (
+                      <tr
+                        key={item.iditem}
+                        className="transition hover:bg-[#F8F9FD]"
+                      >
+                        <td className="px-4 py-3.5 font-bold text-[#2D3047]">
+                          {item.etiqueta}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2.5 py-1 text-[11px] font-bold text-[#6C7EE1]">
+                            🎟️ {item.modalidad}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          {soloNi ? (
+                            <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-500">
+                              🚫 No aplica (0)
+                            </span>
+                          ) : item.adultos > 0 ? (
+                            <span className="rounded-lg bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-700">
+                              🔒 {item.adultos} Adulto(s) (Bloqueado)
+                            </span>
+                          ) : (
+                            <span className="rounded-lg bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                              🔓 0 (Libre)
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          {soloAd ? (
+                            <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-500">
+                              🚫 No aplica (0)
+                            </span>
+                          ) : item.ninos > 0 ? (
+                            <span className="rounded-lg bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-700">
+                              🔒 {item.ninos} Niño(s) (Bloqueado)
+                            </span>
+                          ) : (
+                            <span className="rounded-lg bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                              🔓 0 (Libre)
+                            </span>
+                          )}
+                        </td>
+                        <td className="max-w-xs truncate px-4 py-3.5 font-mono text-[11px] text-[#2D3047]">
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#6C7EE1] hover:underline"
+                            title={item.url}
+                          >
+                            {item.url}
+                          </a>
+                        </td>
+                        <td className="px-4 py-3.5 text-right">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard?.writeText(item.url);
+                                showNotice(
+                                  `✓ Link "${item.etiqueta}" copiado al portapapeles.`
+                                );
+                              }}
+                              className="cursor-pointer rounded-lg border border-[#E6E9F4] bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                            >
+                              📋 Copiar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleWhatsAppCustomLink(item)}
+                              className="cursor-pointer rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-500 hover:text-white"
+                            >
+                              📲 WhatsApp
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleShareCustomLink(item)}
+                              className="cursor-pointer rounded-lg border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2.5 py-1.5 text-[11px] font-bold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
+                            >
+                              🔗 Compartir
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLogistica(item.iditem)}
+                              title="Eliminar este link"
+                              className="cursor-pointer rounded-lg border border-rose-500/25 bg-rose-500/10 px-2 py-1.5 text-[11px] font-bold text-rose-600 transition hover:bg-rose-500 hover:text-white"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
@@ -2116,9 +2774,6 @@ function GestorEvento({
           <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E9F4] pb-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
-                  TAB B • /events/{evento.idevento}/guests
-                </span>
                 <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                   ➕ Agregar Invitados
                 </h3>
@@ -2381,12 +3036,11 @@ function GestorEvento({
                   {/* Botón + Agregar */}
                   <div className="group relative lg:col-span-2">
                     <div className="pointer-events-none invisible absolute bottom-full right-0 z-30 mb-1.5 w-56 rounded-xl border border-[#6C7EE1]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
-                      Registra al invitado en el evento y genera su enlace único
-                      de confirmación RSVP.
+                      Registra al invitado en la lista del evento.
                     </div>
                     <button
                       type="submit"
-                      title="Registra al invitado en el evento y genera su enlace único de confirmación RSVP."
+                      title="Registra al invitado en la lista del evento."
                       className="btn-glow-red w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#5A6CD0]"
                     >
                       + Agregar
@@ -2548,7 +3202,7 @@ function GestorEvento({
                       Requerimientos (Menú/Alergias)
                     </th>
                     <th className="rounded-r-2xl border-b-[3px] border-[#D0D9E6] py-3.5 pr-5 text-right text-[11px] font-extrabold uppercase tracking-wider text-[#37475A]">
-                      Enlace Personalizado
+                      Acciones
                     </th>
                   </tr>
                 </thead>
@@ -2710,27 +3364,21 @@ function GestorEvento({
                             />
                           </td>
 
-                          {/* Enlace Personalizado y Acciones */}
+                          {/* Acciones */}
                           <td className="rounded-r-2xl border-b-[3px] border-[#D0D9E6] py-3.5 pr-5 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 type="button"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(
-                                    getGuestPersonalLink(g)
-                                  );
-                                  showNotice(
-                                    `✓ Enlace único de ${g.nombre} copiado.`
-                                  );
-                                }}
-                                className="rounded-xl border-b-[3px] border-[#1D4ED8] bg-[#3167FF] px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-sm shadow-[#3167FF]/25 transition hover:brightness-110"
+                                onClick={() => handleOpenEditGuest(g)}
+                                className="cursor-pointer rounded-xl border-b-[3px] border-[#5A6CD0] bg-[#6C7EE1] px-2.5 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-xs transition hover:brightness-110"
+                                title="Editar invitado"
                               >
-                                🔗 Copiar Pase
+                                ✏️ Editar
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteGuest(g.idinvitado)}
-                                className="flex h-7 w-7 items-center justify-center rounded-xl border-b-[2px] border-[#B80F6A] bg-[#EC1A8B] text-xs font-extrabold text-white shadow-xs transition hover:brightness-110"
+                                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-xl border-b-[2px] border-[#B80F6A] bg-[#EC1A8B] text-xs font-extrabold text-white shadow-xs transition hover:brightness-110"
                                 title="Eliminar invitado"
                               >
                                 ✕
@@ -2744,6 +3392,245 @@ function GestorEvento({
                 </tbody>
               </table>
             </div>
+
+            {/* Modal para Editar Invitado */}
+            {editingGuest && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-xs">
+                <div className="w-full max-w-xl rounded-3xl border border-[#DCE0F0] bg-white p-6 shadow-2xl">
+                  <div className="flex items-center justify-between border-b border-[#E6E9F4] pb-3.5">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
+                        EDICIÓN DE REGISTRO
+                      </span>
+                      <h3 className="text-lg font-extrabold text-[#2D3047]">
+                        ✏️ Editar Invitado: {editingGuest.nombre}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditingGuest(null)}
+                      className="cursor-pointer rounded-lg bg-[#F0F2F8] px-2.5 py-1 text-xs font-bold text-[#6E7491] hover:text-[#2D3047]"
+                    >
+                      ✕ Cerrar
+                    </button>
+                  </div>
+
+                  <form
+                    onSubmit={handleSaveEditedGuest}
+                    className="mt-4 space-y-4 text-xs"
+                  >
+                    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                      <div className="sm:col-span-2">
+                        <label className="mb-1 block font-bold text-[#2D3047]">
+                          Nombre del Invitado *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editingGuest.nombre}
+                          onChange={(e) =>
+                            setEditingGuest((p) => ({
+                              ...p,
+                              nombre: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block font-bold text-[#2D3047]">
+                          Teléfono / WhatsApp
+                        </label>
+                        <input
+                          type="text"
+                          value={editingGuest.telefono}
+                          onChange={(e) =>
+                            setEditingGuest((p) => ({
+                              ...p,
+                              telefono: e.target.value,
+                            }))
+                          }
+                          placeholder="+52 55..."
+                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block font-bold text-[#2D3047]">
+                          Correo Electrónico
+                        </label>
+                        <input
+                          type="email"
+                          value={editingGuest.correo}
+                          onChange={(e) =>
+                            setEditingGuest((p) => ({
+                              ...p,
+                              correo: e.target.value,
+                            }))
+                          }
+                          placeholder="correo@ejemplo.com"
+                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block font-bold text-[#2D3047]">
+                          Grupo / Categoría
+                        </label>
+                        <select
+                          value={editingGuest.grupo}
+                          onChange={(e) =>
+                            setEditingGuest((p) => ({
+                              ...p,
+                              grupo: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                        >
+                          <option value="Familia">Familia</option>
+                          <option value="Amigos">Amigos</option>
+                          <option value="VIP">VIP</option>
+                          <option value="Trabajo">Trabajo</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block font-bold text-[#2D3047]">
+                          Estado de Confirmación
+                        </label>
+                        <select
+                          value={editingGuest.estado_rsvp}
+                          onChange={(e) =>
+                            setEditingGuest((p) => ({
+                              ...p,
+                              estado_rsvp: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                        >
+                          <option value="Confirmado">🟢 Confirmado</option>
+                          <option value="Pendiente">🟡 Pendiente</option>
+                          <option value="Rechazado">🔴 Rechazado</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block font-bold text-[#2D3047]">
+                          Modalidad de Asistencia
+                        </label>
+                        <select
+                          value={editingGuest.modalidad_pase}
+                          onChange={(e) => {
+                            const mod = e.target.value;
+                            setEditingGuest((p) => ({
+                              ...p,
+                              modalidad_pase: mod,
+                              adultos: isSoloNinosMod(mod) ? 0 : p.adultos,
+                              ninos: isSoloAdultosMod(mod) ? 0 : p.ninos,
+                            }));
+                          }}
+                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs font-semibold text-[#6C7EE1] outline-none focus:border-[#6C7EE1]"
+                        >
+                          {MODALIDADES_INVITADOS.map((mod) => (
+                            <option key={mod} value={mod}>
+                              {mod}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="mb-1 block font-bold text-[#2D3047]">
+                            Pases Adultos
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={25}
+                            disabled={isSoloNinosMod(
+                              editingGuest.modalidad_pase
+                            )}
+                            value={
+                              isSoloNinosMod(editingGuest.modalidad_pase)
+                                ? 0
+                                : editingGuest.adultos
+                            }
+                            onChange={(e) =>
+                              setEditingGuest((p) => ({
+                                ...p,
+                                adultos: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2.5 text-center text-xs font-bold text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:opacity-50"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block font-bold text-[#2D3047]">
+                            Pases Niños
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={25}
+                            disabled={isSoloAdultosMod(
+                              editingGuest.modalidad_pase
+                            )}
+                            value={
+                              isSoloAdultosMod(editingGuest.modalidad_pase)
+                                ? 0
+                                : editingGuest.ninos
+                            }
+                            onChange={(e) =>
+                              setEditingGuest((p) => ({
+                                ...p,
+                                ninos: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2.5 text-center text-xs font-bold text-[#6C7EE1] outline-none focus:border-[#6C7EE1] disabled:opacity-50"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="mb-1 block font-bold text-[#2D3047]">
+                          Requerimientos (Menú Especial / Alergias)
+                        </label>
+                        <input
+                          type="text"
+                          value={editingGuest.nota_alimentacion}
+                          onChange={(e) =>
+                            setEditingGuest((p) => ({
+                              ...p,
+                              nota_alimentacion: e.target.value,
+                            }))
+                          }
+                          placeholder="Normal / Sin alergias..."
+                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2.5 border-t border-[#E6E9F4] pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setEditingGuest(null)}
+                        className="cursor-pointer rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-4 py-2.5 text-xs font-bold text-[#6E7491] transition hover:bg-[#ECEFFA]"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="cursor-pointer rounded-xl bg-[#6C7EE1] px-5 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md transition hover:bg-[#5A6CD0]"
+                      >
+                        💾 Guardar Cambios
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2753,99 +3640,34 @@ function GestorEvento({
          ===================================================================== */}
       {currentTab === "broadcast" && (
         <div className="space-y-6">
-          {/* 1. Generador de Enlaces (General vs Individuales) */}
+          {/* 1. Enlace de Invitación del Evento */}
           <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
-                  TAB C • /events/{evento.idevento}/broadcast
-                </span>
                 <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
-                  🔗 Generador de Enlaces de Invitación
+                  🔗 Enlace de Invitación del Evento
                 </h3>
-              </div>
-
-              <div className="flex rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1">
-                <button
-                  type="button"
-                  onClick={() => setLinkMode("general")}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
-                    linkMode === "general"
-                      ? "bg-[#6C7EE1] text-white"
-                      : "text-[#8E94A9] hover:text-[#6C7EE1]"
-                  }`}
-                >
-                  🌐 Enlace General
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLinkMode("individual")}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
-                    linkMode === "individual"
-                      ? "bg-[#6C7EE1] text-white"
-                      : "text-[#8E94A9] hover:text-[#6C7EE1]"
-                  }`}
-                >
-                  🎟️ Enlaces Individuales ({invitados.length})
-                </button>
               </div>
             </div>
 
-            {linkMode === "general" ? (
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                <input
-                  type="text"
-                  readOnly
-                  value={baseShareUrl}
-                  className="flex-1 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-4 py-3 font-mono text-xs text-[#6C7EE1]"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(baseShareUrl);
-                    showNotice("✓ Enlace general copiado al portapapeles.");
-                  }}
-                  className="btn-glow-red rounded-xl bg-[#6C7EE1] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white"
-                >
-                  📋 Copiar Enlace General
-                </button>
-              </div>
-            ) : (
-              <div className="mt-4 max-h-48 overflow-y-auto rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-3">
-                <div className="space-y-2">
-                  {invitados.map((g) => (
-                    <div
-                      key={g.idinvitado}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#ECEFFA] bg-white border border-[#E6E9F4] px-3 py-2 text-xs"
-                    >
-                      <span className="font-bold text-[#2D3047]">
-                        {g.nombre}{" "}
-                        <span className="text-[10px] font-normal text-[#8E94A9]">
-                          ({g.pases} pases)
-                        </span>
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <code className="text-[11px] text-[#6C7EE1]">
-                          {getGuestPersonalLink(g)}
-                        </code>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(
-                              getGuestPersonalLink(g)
-                            );
-                            showNotice(`✓ Enlace de ${g.nombre} copiado.`);
-                          }}
-                          className="rounded border border-[#6C7EE1] bg-white px-2.5 py-1 text-[10px] font-bold text-[#6C7EE1] hover:bg-[#6C7EE1]"
-                        >
-                          Copiar
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input
+                type="text"
+                readOnly
+                value={baseShareUrl}
+                className="flex-1 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-4 py-3 font-mono text-xs text-[#6C7EE1]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(baseShareUrl);
+                  showNotice("✓ Enlace general copiado al portapapeles.");
+                }}
+                className="btn-glow-red rounded-xl bg-[#6C7EE1] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white"
+              >
+                📋 Copiar Enlace General
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -2861,7 +3683,7 @@ function GestorEvento({
               </div>
               <p className="mt-1 text-xs text-[#8E94A9]">
                 Personaliza el mensaje con variables automáticas y abre WhatsApp
-                con el enlace único de cada invitado.
+                con el enlace de la invitación del evento.
               </p>
 
               <textarea
@@ -2920,9 +3742,14 @@ function GestorEvento({
                     key={t.id}
                     type="button"
                     onClick={() => setSelectedHtmlTemplate(t.id)}
+                    style={
+                      selectedHtmlTemplate === t.id
+                        ? { color: "#7486e9" }
+                        : undefined
+                    }
                     className={`rounded-xl border p-2.5 text-left text-[11px] transition ${
                       selectedHtmlTemplate === t.id
-                        ? "border-[#6C7EE1] bg-[#6C7EE1]/15 text-white"
+                        ? "border-[#6C7EE1] bg-[#6C7EE1]/15 text-[#7486e9]"
                         : "border-[#E6E9F4] bg-[#F7F8FC] text-[#8E94A9] hover:text-[#6C7EE1]"
                     }`}
                   >
@@ -3200,11 +4027,7 @@ function GestorEvento({
 
                             <div className="mt-5">
                               <a
-                                href={
-                                  previewGuestObj
-                                    ? getGuestPersonalLink(previewGuestObj)
-                                    : baseShareUrl
-                                }
+                                href={baseShareUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`inline-block rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-wider shadow-lg transition hover:opacity-90 ${activeEmailTemplate.buttonClass}`}
@@ -3215,10 +4038,7 @@ function GestorEvento({
                             </div>
 
                             <p className="mt-4 break-all font-mono text-[10px] text-gray-400">
-                              Enlace del pase:{" "}
-                              {previewGuestObj
-                                ? getGuestPersonalLink(previewGuestObj)
-                                : baseShareUrl}
+                              Enlace de la invitación: {baseShareUrl}
                             </p>
                           </div>
                         </div>
@@ -3436,9 +4256,6 @@ function GestorEvento({
           <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
             <div className="flex flex-col justify-between gap-4 border-b border-[#E6E9F4] pb-4 lg:flex-row lg:items-center">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
-                  TAB D • /events/{evento.idevento}/logistics
-                </span>
                 <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                   🪑 Distribución de Mesas / Seating Chart (Drag & Drop)
                 </h3>
@@ -3976,10 +4793,7 @@ function GestorEvento({
           {/* Columna Izquierda (7 cols): Duplicar, Pausar RSVP, Cambiar Propietario, Eliminar */}
           <div className="space-y-6 lg:col-span-7">
             <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
-                TAB E • /events/{evento.idevento}/settings
-              </span>
-              <h3 className="font-display mt-1 text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
+              <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#2D3047]">
                 ⚙️ Acciones de Control del Evento
               </h3>
 
