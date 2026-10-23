@@ -55,7 +55,7 @@ foreach ($data['files'] as $relPath => $b64Content) {
         strpos($cleanPath, 'apiproyectoeventos/') === 0 ||
         strpos($cleanPath, '.well-known/') === 0 ||
         strpos($cleanPath, 'cgi-bin/') === 0 ||
-        strpos($cleanPath, 'node_modules/') === 0 ||
+        (strpos($cleanPath, 'node_modules/') === 0 && strpos($cleanPath, 'node_modules/nodemailer/') !== 0) ||
         $cleanPath === '.env' ||
         $cleanPath === '.user.ini' ||
         $cleanPath === 'php.ini'

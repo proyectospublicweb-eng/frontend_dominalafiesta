@@ -1110,13 +1110,25 @@ function GestorEvento({
       onEventoUpdated();
 
       if (data && typeof data.enviadosCount === "number") {
-        showNotice(
-          `✓ Se enviaron ${data.enviadosCount} correo(s) HTML exitosamente desde notificaciones@recuerdalo.com.mx${
-            data.sinCorreoCount > 0
-              ? ` (${data.sinCorreoCount} sin correo registrado)`
-              : ""
-          }.`
-        );
+        if (data.enviadosCount === 0 && data.erroresCount > 0) {
+          showNotice(
+            `⚠️ No se pudo enviar el correo (${data.erroresCount} error(es)): ${
+              data.ultimoError || "Verifica la conexión SMTP"
+            }`
+          );
+        } else {
+          showNotice(
+            `✓ Se enviaron ${data.enviadosCount} correo(s) HTML exitosamente desde notificaciones@recuerdalo.com.mx${
+              data.sinCorreoCount > 0
+                ? ` (${data.sinCorreoCount} sin correo registrado)`
+                : ""
+            }${
+              data.erroresCount > 0
+                ? ` • ${data.erroresCount} con error`
+                : ""
+            }.`
+          );
+        }
       } else {
         showNotice(
           estadoFiltro === "Pendiente"
