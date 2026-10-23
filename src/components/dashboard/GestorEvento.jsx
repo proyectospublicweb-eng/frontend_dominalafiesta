@@ -560,7 +560,11 @@ function GestorEvento({
             data.evento.permitir_acompanantes ??
             true,
           mesa_regalos_habilitada: Boolean(
-            data.evento.mesa_regalos_habilitada
+            data.evento.mesa_regalos_habilitada ||
+              (data.logistica || []).some(
+                (i) =>
+                  i.categoria === "mesa_regalo_config" && i.estado === "Activo"
+              )
           ),
           recordatorio_dias: data.evento.recordatorio_dias ?? 3,
           recordatorio_activo: Boolean(data.evento.recordatorio_activo),
@@ -1656,12 +1660,16 @@ function GestorEvento({
         : giftForm.tienda;
 
     const notaClean = String(giftForm.nota || "").trim();
-    const detalleJson = JSON.stringify({
-      tienda: tiendaFinal,
-      producto: prodClean,
-      url: urlClean,
-      nota: notaClean,
-    });
+    let detalleCleanUrl = urlClean;
+    if (detalleCleanUrl.length > 255) {
+      try {
+        const uObj = new URL(detalleCleanUrl);
+        detalleCleanUrl = `${uObj.origin}${uObj.pathname}`.slice(0, 255);
+      } catch {
+        detalleCleanUrl = detalleCleanUrl.slice(0, 255);
+      }
+    }
+    const detalleJson = detalleCleanUrl;
 
     setGiftError("");
 
