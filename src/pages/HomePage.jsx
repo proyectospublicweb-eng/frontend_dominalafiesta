@@ -234,10 +234,12 @@ function HomePage() {
         <div>
           {/* Bloque Superior Redondeado en Índigo Periwinkle (#6C7EE1) estilo "Tbk" */}
           <div className="m-4 flex items-center justify-between overflow-hidden rounded-2xl bg-[#6C7EE1] shadow-md shadow-[#1E2135]/40">
-            <div className="flex items-center gap-2.5 px-5 py-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/80 bg-white/15 text-xs font-black tracking-tight text-white">
-                ✦
-              </div>
+            <div className="flex items-center gap-2.5 px-4 py-3.5">
+              <img
+                src="/logo-recuerdalo.png?v=3"
+                alt="Recuérdalo"
+                className="h-10 w-10 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm"
+              />
               <span className="text-base font-extrabold tracking-tight text-white">
                 Recuerdalo
               </span>
