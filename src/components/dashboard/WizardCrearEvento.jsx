@@ -61,6 +61,8 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
     color_acento: "#15b2f5",
     mensaje_invitacion: "",
     mesa_regalos_habilitada: false,
+    mesa_regalos_tienda: "Amazon",
+    mesa_regalos_url: "",
   });
 
   useEffect(() => {
@@ -429,14 +431,14 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
               />
             </div>
 
-            <div>
+            <div className="space-y-3">
               <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E5F1] bg-[#F7F8FC] px-4 py-3.5 text-xs transition hover:border-[#6C7EE1]">
                 <div>
                   <span className="block font-extrabold text-[#2D3047]">
                     🎁 ¿Tu evento tendrá Mesa de Regalos?
                   </span>
                   <span className="mt-0.5 block text-[11px] text-gray-500">
-                    Marca esta casilla si deseas agregar enlaces a productos de tiendas externas (Amazon, Mercado Libre, IKEA, Liverpool, etc.) en el editor del evento.
+                    Marca esta casilla si deseas agregar el enlace de tu carrito de compras o lista de regalos (Amazon, Mercado Libre, IKEA, Liverpool, etc.).
                   </span>
                 </div>
                 <input
@@ -448,6 +450,72 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                   className="h-4 w-4 shrink-0 cursor-pointer accent-[#6C7EE1]"
                 />
               </label>
+
+              {Boolean(form.mesa_regalos_habilitada) && (
+                <div className="grid grid-cols-1 gap-3 rounded-xl border border-[#6C7EE1]/30 bg-[#F7F8FC] p-4 sm:grid-cols-3">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold text-[#2D3047]">
+                      Tienda del Carrito / Lista
+                    </label>
+                    <select
+                      value={form.mesa_regalos_tienda}
+                      onChange={(e) =>
+                        updateField("mesa_regalos_tienda", e.target.value)
+                      }
+                      className="w-full rounded-xl border border-[#E2E5F1] bg-white px-3 py-2.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    >
+                      {[
+                        "Amazon",
+                        "Mercado Libre",
+                        "IKEA",
+                        "Liverpool",
+                        "Palacio de Hierro",
+                        "Sears",
+                        "Coppel",
+                        "Walmart",
+                        "Otra tienda",
+                      ].map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-[11px] font-bold text-[#2D3047]">
+                      Link del Carrito de Compras del Anfitrión (Opcional, puedes agregarlo después)
+                    </label>
+                    <input
+                      type="url"
+                      value={form.mesa_regalos_url}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const lower = val.toLowerCase();
+                        let detected = form.mesa_regalos_tienda;
+                        if (lower.includes("amazon.") || lower.includes("amzn."))
+                          detected = "Amazon";
+                        else if (
+                          lower.includes("mercadolibre.") ||
+                          lower.includes("meli.")
+                        )
+                          detected = "Mercado Libre";
+                        else if (lower.includes("ikea.")) detected = "IKEA";
+                        else if (lower.includes("liverpool."))
+                          detected = "Liverpool";
+                        else if (lower.includes("elpalaciodehierro."))
+                          detected = "Palacio de Hierro";
+                        setForm((prev) => ({
+                          ...prev,
+                          mesa_regalos_url: val,
+                          mesa_regalos_tienda: detected,
+                        }));
+                      }}
+                      placeholder="https://www.amazon.com.mx/... o link de tu carrito de Mercado Libre..."
+                      className="w-full rounded-xl border border-[#E2E5F1] bg-white px-3 py-2.5 text-xs text-[#2D3047] placeholder-gray-400 outline-none focus:border-[#6C7EE1]"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

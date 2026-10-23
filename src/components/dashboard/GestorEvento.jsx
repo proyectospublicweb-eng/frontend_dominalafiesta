@@ -520,6 +520,8 @@ function GestorEvento({
           mesa_regalos_habilitada: Boolean(
             draftEvento.mesa_regalos_habilitada
           ),
+          mesa_regalos_tienda: draftEvento.mesa_regalos_tienda || "Amazon",
+          mesa_regalos_url: draftEvento.mesa_regalos_url || "",
           recordatorio_dias: draftEvento.recordatorio_dias ?? 3,
           recordatorio_activo: Boolean(draftEvento.recordatorio_activo),
           recordatorio_mensaje:
@@ -545,6 +547,28 @@ function GestorEvento({
         const modNormalizada = normalizeModalidad(
           data.evento.modalidad_invitados
         );
+        const cfgRow = (data.logistica || []).find(
+          (i) => i.categoria === "mesa_regalo_config"
+        );
+        const legacyGiftRow = (data.logistica || []).find(
+          (i) => i.categoria === "mesa_regalo" && i.detalle
+        );
+        const tiendaConfig =
+          data.evento.mesa_regalos_tienda ||
+          (cfgRow?.titulo && cfgRow.titulo !== "Configuración Mesa de Regalos"
+            ? cfgRow.titulo
+            : "") ||
+          legacyGiftRow?.estado ||
+          "Amazon";
+        const rawUrlCfg =
+          data.evento.mesa_regalos_url ||
+          cfgRow?.detalle ||
+          (legacyGiftRow ? parseMesaRegaloItem(legacyGiftRow).url : "") ||
+          "";
+        const urlConfig = rawUrlCfg.startsWith("{")
+          ? parseMesaRegaloItem({ detalle: rawUrlCfg }).url
+          : rawUrlCfg;
+
         setInvForm({
           ...data.evento,
           fecha_evento: formatDateInput(data.evento.fecha_evento),
@@ -561,11 +585,10 @@ function GestorEvento({
             true,
           mesa_regalos_habilitada: Boolean(
             data.evento.mesa_regalos_habilitada ||
-              (data.logistica || []).some(
-                (i) =>
-                  i.categoria === "mesa_regalo_config" && i.estado === "Activo"
-              )
+              (cfgRow && cfgRow.estado === "Activo")
           ),
+          mesa_regalos_tienda: tiendaConfig,
+          mesa_regalos_url: urlConfig,
           recordatorio_dias: data.evento.recordatorio_dias ?? 3,
           recordatorio_activo: Boolean(data.evento.recordatorio_activo),
           recordatorio_mensaje:
@@ -730,7 +753,20 @@ function GestorEvento({
   // =========================================================================
   const handleSaveEvento = async (e, customPatch = null) => {
     e?.preventDefault();
-    const payload = customPatch ? { ...invForm, ...customPatch } : invForm;
+    const rawPayload = customPatch ? { ...invForm, ...customPatch } : invForm;
+    let normalizedGiftUrl = String(rawPayload.mesa_regalos_url || "").trim();
+    if (normalizedGiftUrl && !/^https?:\/\//i.test(normalizedGiftUrl)) {
+      normalizedGiftUrl = `https://${normalizedGiftUrl}`;
+    }
+    const payload = {
+      ...rawPayload,
+      mesa_regalos_tienda: String(
+        rawPayload.mesa_regalos_tienda ||
+          detectStoreFromUrl(normalizedGiftUrl) ||
+          "Amazon"
+      ).trim(),
+      mesa_regalos_url: normalizedGiftUrl,
+    };
     try {
       if (!evento.idevento) {
         const draftGifts = logistica.filter(
@@ -756,6 +792,10 @@ function GestorEvento({
         confirmar_acceso_qr:
           data.confirmar_acceso_qr ?? data.permitir_acompanantes ?? true,
         mesa_regalos_habilitada: Boolean(data.mesa_regalos_habilitada),
+        mesa_regalos_tienda:
+          data.mesa_regalos_tienda || payload.mesa_regalos_tienda || "Amazon",
+        mesa_regalos_url:
+          data.mesa_regalos_url ?? payload.mesa_regalos_url ?? "",
       });
       onEventoUpdated();
       showNotice("✓ Evento guardado correctamente.");
@@ -2381,9 +2421,10 @@ function GestorEvento({
                       🎁 ¿Tu evento tendrá Mesa de Regalos?
                     </span>
                     <span className="mt-0.5 block text-[11px] text-[#8E94A9]">
-                      Activa esta opción para agregar enlaces a productos de
-                      tiendas externas (Amazon, Mercado Libre, IKEA, Liverpool,
-                      etc.) y mostrarlos en la invitación digital.
+                      Activa esta opción para agregar un único link al carrito
+                      de compras o lista de regalos del anfitrión (Amazon,
+                      Mercado Libre, IKEA, Liverpool, etc.) y mostrarlo en tu
+                      invitación digital.
                     </span>
                   </div>
                   <input
@@ -2407,44 +2448,53 @@ function GestorEvento({
               </div>
             </div>
 
-            {/* Panel de Mesa de Regalos (se despliega cuando el check está activo) */}
+            {/* Panel de Mesa de Regalos: Link único del Carrito / Lista del Anfitrión */}
             {Boolean(invForm.mesa_regalos_habilitada) && (
               <div className="space-y-3.5 rounded-2xl border border-[#6C7EE1]/35 bg-[#F7F8FC] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
-                      🎁 MESA DE REGALOS EN TIENDAS EXTERNAS
+                      🎁 LINK DE MESA DE REGALOS / CARRITO DEL ANFITRIÓN
                     </span>
                     <h4 className="text-xs font-extrabold text-[#2D3047]">
-                      Agrega enlaces a productos de Amazon, Mercado Libre, IKEA,
-                      Liverpool, etc.
+                      Agrega el enlace del carrito de compras o lista de regalos
+                      (Amazon, Mercado Libre, IKEA, Liverpool, etc.)
                     </h4>
                   </div>
-                  <span className="rounded-full bg-[#6C7EE1]/15 px-2.5 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
-                    {mesaRegalosItems.length} regalo(s)
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
+                      String(invForm.mesa_regalos_url || "").trim()
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-[#6C7EE1]/15 text-[#6C7EE1]"
+                    }`}
+                  >
+                    {String(invForm.mesa_regalos_url || "").trim()
+                      ? "✓ Link configurado"
+                      : "Pendiente de link"}
                   </span>
                 </div>
 
-                {/* Mini formulario para agregar / editar regalo */}
-                <div
-                  className={`grid grid-cols-1 gap-2.5 rounded-xl border p-3 sm:grid-cols-2 ${
-                    editingGiftId
-                      ? "border-amber-400 bg-amber-50/60"
-                      : "border-[#DCE0F0] bg-white"
-                  }`}
-                >
+                <div className="grid grid-cols-1 gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 sm:grid-cols-3">
                   <div>
                     <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                      Tienda Externa
+                      Tienda del Carrito / Lista
                     </label>
                     <select
-                      value={giftForm.tienda}
-                      onChange={(e) =>
-                        setGiftForm((prev) => ({
-                          ...prev,
-                          tienda: e.target.value,
-                        }))
+                      value={
+                        TIENDAS_MESA_REGALOS.includes(
+                          invForm.mesa_regalos_tienda || "Amazon"
+                        )
+                          ? invForm.mesa_regalos_tienda || "Amazon"
+                          : "Otra tienda"
                       }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInvForm((prev) => ({
+                          ...prev,
+                          mesa_regalos_tienda:
+                            val === "Otra tienda" ? "Tienda Externa" : val,
+                        }));
+                      }}
                       className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                     >
                       {TIENDAS_MESA_REGALOS.map((t) => (
@@ -2455,194 +2505,171 @@ function GestorEvento({
                     </select>
                   </div>
 
-                  {giftForm.tienda === "Otra tienda" ? (
-                    <div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                      Link del Carrito de Compras o Mesa de Regalos del Anfitrión *
+                    </label>
+                    <input
+                      type="url"
+                      value={invForm.mesa_regalos_url || ""}
+                      onChange={(e) => {
+                        if (giftError) setGiftError("");
+                        const nextUrl = e.target.value;
+                        const detected = detectStoreFromUrl(nextUrl);
+                        setInvForm((prev) => ({
+                          ...prev,
+                          mesa_regalos_url: nextUrl,
+                          mesa_regalos_tienda:
+                            detected || prev.mesa_regalos_tienda || "Amazon",
+                        }));
+                      }}
+                      placeholder="https://www.amazon.com.mx/... o link del carrito de Mercado Libre..."
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    />
+                  </div>
+
+                  {!TIENDAS_MESA_REGALOS.slice(0, -1).includes(
+                    invForm.mesa_regalos_tienda || "Amazon"
+                  ) && (
+                    <div className="sm:col-span-3">
                       <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                        Nombre de la Tienda
+                        Nombre personalizado de la Tienda
                       </label>
                       <input
                         type="text"
-                        value={giftForm.tiendaCustom}
+                        value={
+                          invForm.mesa_regalos_tienda === "Otra tienda"
+                            ? ""
+                            : invForm.mesa_regalos_tienda || ""
+                        }
                         onChange={(e) =>
-                          setGiftForm((prev) => ({
+                          setInvForm((prev) => ({
                             ...prev,
-                            tiendaCustom: e.target.value,
+                            mesa_regalos_tienda: e.target.value,
                           }))
                         }
                         placeholder="Ej. Zara Home, Sephora, Costco..."
                         className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                       />
                     </div>
-                  ) : (
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                        Precio sugerido / Nota (Opcional)
-                      </label>
-                      <input
-                        type="text"
-                        value={giftForm.nota}
-                        onChange={(e) =>
-                          setGiftForm((prev) => ({
-                            ...prev,
-                            nota: e.target.value,
-                          }))
-                        }
-                        placeholder="Ej. $1,299 MXN • Color negro"
-                        className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                      />
-                    </div>
                   )}
-
-                  {giftForm.tienda === "Otra tienda" && (
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                        Precio sugerido / Nota (Opcional)
-                      </label>
-                      <input
-                        type="text"
-                        value={giftForm.nota}
-                        onChange={(e) =>
-                          setGiftForm((prev) => ({
-                            ...prev,
-                            nota: e.target.value,
-                          }))
-                        }
-                        placeholder="Ej. $1,299 MXN • Color negro"
-                        className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                      />
-                    </div>
-                  )}
-
-                  <div className="sm:col-span-2">
-                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                      Nombre del Producto o Regalo *
-                    </label>
-                    <input
-                      type="text"
-                      value={giftForm.producto}
-                      onChange={(e) => {
-                        if (giftError) setGiftError("");
-                        setGiftForm((prev) => ({
-                          ...prev,
-                          producto: e.target.value,
-                        }));
-                      }}
-                      placeholder="Ej. Cafetera Nespresso, Juego de Sábanas, Tarjeta de Regalo..."
-                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                      Enlace (URL) del Producto en la Tienda *
-                    </label>
-                    <input
-                      type="url"
-                      value={giftForm.url}
-                      onChange={(e) => {
-                        if (giftError) setGiftError("");
-                        const nextUrl = e.target.value;
-                        const detected = detectStoreFromUrl(nextUrl);
-                        setGiftForm((prev) => ({
-                          ...prev,
-                          url: nextUrl,
-                          tienda: detected || prev.tienda,
-                        }));
-                      }}
-                      placeholder="https://www.amazon.com.mx/... o https://articulo.mercadolibre.com.mx/..."
-                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                    />
-                  </div>
 
                   {giftError && (
-                    <p className="sm:col-span-2 text-[11px] font-bold text-rose-600">
+                    <p className="sm:col-span-3 text-[11px] font-bold text-rose-600">
                       ⚠️ {giftError}
                     </p>
                   )}
 
-                  <div className="sm:col-span-2 flex flex-col-reverse items-stretch justify-end gap-2 pt-1 sm:flex-row sm:items-center">
-                    {editingGiftId && (
+                  <div className="sm:col-span-3 flex flex-col-reverse items-stretch justify-end gap-2 pt-1 sm:flex-row sm:items-center">
+                    {String(invForm.mesa_regalos_url || "").trim() && (
                       <button
                         type="button"
-                        onClick={handleCancelEditGift}
-                        className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-center text-[11px] font-bold text-[#5B617A] transition hover:bg-gray-100 sm:w-auto"
+                        onClick={async () => {
+                          setGiftError("");
+                          setInvForm((prev) => ({
+                            ...prev,
+                            mesa_regalos_url: "",
+                          }));
+                          if (evento.idevento) {
+                            await handleSaveEvento(null, {
+                              mesa_regalos_url: "",
+                            });
+                          }
+                        }}
+                        className="w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-center text-[11px] font-bold text-rose-600 transition hover:bg-rose-100 sm:w-auto"
                       >
-                        Cancelar
+                        🗑️ Quitar Link
                       </button>
                     )}
                     <button
                       type="button"
-                      onClick={handleSaveGiftItem}
+                      onClick={async () => {
+                        let urlClean = String(
+                          invForm.mesa_regalos_url || ""
+                        ).trim();
+                        if (!urlClean) {
+                          setGiftError(
+                            "Por favor pega el enlace (URL) del carrito de compras o lista de regalos."
+                          );
+                          return;
+                        }
+                        if (!/^https?:\/\//i.test(urlClean)) {
+                          urlClean = `https://${urlClean}`;
+                        }
+                        const tiendaFinal =
+                          detectStoreFromUrl(urlClean) ||
+                          invForm.mesa_regalos_tienda ||
+                          "Amazon";
+                        setGiftError("");
+                        setInvForm((prev) => ({
+                          ...prev,
+                          mesa_regalos_url: urlClean,
+                          mesa_regalos_tienda: tiendaFinal,
+                        }));
+                        await handleSaveEvento(null, {
+                          mesa_regalos_habilitada: true,
+                          mesa_regalos_tienda: tiendaFinal,
+                          mesa_regalos_url: urlClean,
+                        });
+                      }}
                       className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-center text-[11px] font-extrabold text-white shadow-2xs transition hover:bg-[#5A6CD0] sm:w-auto sm:py-2"
                     >
-                      {editingGiftId
-                        ? "💾 Actualizar Regalo"
-                        : "➕ Agregar a Mesa de Regalos"}
+                      💾 Guardar Link del Carrito
                     </button>
                   </div>
                 </div>
 
-                {/* Lista de productos agregados a la Mesa de Regalos */}
-                {mesaRegalosItems.length > 0 ? (
-                  <div className="space-y-2">
-                    {mesaRegalosItems.map((gift) => {
-                      const meta = getTiendaMeta(gift.tienda);
-                      return (
-                        <div
-                          key={gift.iditem}
-                          className="flex min-w-0 flex-col justify-between gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 shadow-2xs sm:flex-row sm:items-center"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span
-                                className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-extrabold ${meta.lightBadgeClass}`}
-                              >
-                                {meta.icon} {gift.tienda}
-                              </span>
-                              <strong className="min-w-0 max-w-full truncate text-xs font-extrabold text-[#2D3047]">
-                                {gift.producto}
-                              </strong>
-                            </div>
-                            {gift.nota && (
-                              <p className="mt-0.5 truncate text-[11px] font-medium text-[#5B617A]">
-                                {gift.nota}
-                              </p>
-                            )}
-                            <a
-                              href={gift.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-0.5 block max-w-full truncate font-mono text-[10px] font-semibold text-[#6C7EE1] hover:underline"
+                {/* Vista previa del link configurado */}
+                {String(invForm.mesa_regalos_url || "").trim() ? (
+                  (() => {
+                    const tiendaActual =
+                      invForm.mesa_regalos_tienda ||
+                      detectStoreFromUrl(invForm.mesa_regalos_url) ||
+                      "Amazon";
+                    const meta = getTiendaMeta(tiendaActual);
+                    const hrefUrl = /^https?:\/\//i.test(
+                      invForm.mesa_regalos_url.trim()
+                    )
+                      ? invForm.mesa_regalos_url.trim()
+                      : `https://${invForm.mesa_regalos_url.trim()}`;
+                    return (
+                      <div className="flex min-w-0 flex-col justify-between gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 shadow-2xs sm:flex-row sm:items-center">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-extrabold ${meta.lightBadgeClass}`}
                             >
-                              {gift.url} ↗
-                            </a>
+                              {meta.icon} {tiendaActual}
+                            </span>
+                            <strong className="min-w-0 max-w-full truncate text-xs font-extrabold text-[#2D3047]">
+                              Carrito / Mesa de Regalos del Anfitrión
+                            </strong>
                           </div>
-
-                          <div className="flex w-full shrink-0 items-center justify-end gap-1.5 border-t border-[#F0F2F8] pt-2 sm:w-auto sm:border-t-0 sm:pt-0">
-                            <button
-                              type="button"
-                              onClick={() => handleStartEditGift(gift)}
-                              className="flex-1 rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-1.5 text-center text-[10px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1] sm:flex-none sm:py-1"
-                            >
-                              ✏️ Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteLogistica(gift.iditem)}
-                              className="flex-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-center text-[10px] font-bold text-rose-600 transition hover:bg-rose-100 sm:flex-none sm:py-1"
-                            >
-                              🗑️ Quitar
-                            </button>
-                          </div>
+                          <a
+                            href={hrefUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 block max-w-full truncate font-mono text-[10px] font-semibold text-[#6C7EE1] hover:underline"
+                          >
+                            {hrefUrl} ↗
+                          </a>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <a
+                          href={hrefUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full shrink-0 rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-1.5 text-center text-[10px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1] sm:w-auto"
+                        >
+                          Probar Link ↗
+                        </a>
+                      </div>
+                    );
+                  })()
                 ) : (
                   <p className="rounded-xl border border-dashed border-[#DCE0F0] bg-white/70 p-3 text-center text-[11px] text-[#8E94A9]">
-                    Aún no has agregado productos. Pega enlaces de Amazon,
-                    Mercado Libre, IKEA o cualquier tienda para que tus
-                    invitados puedan ver tu mesa de regalos.
+                    Pega aquí el enlace único de tu carrito de compras o lista
+                    de regalos (por ejemplo de Amazon o Mercado Libre) para que
+                    tus invitados accedan directamente desde la invitación.
                   </p>
                 )}
               </div>
@@ -2918,58 +2945,57 @@ function GestorEvento({
                       </div>
 
                       {/* Mesa de Regalos en la Tarjeta Móvil */}
-                      {Boolean(invForm.mesa_regalos_habilitada) && (
-                        <div className="mt-3 rounded-xl border border-amber-400/35 bg-black/40 p-3 text-left">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
-                              🎁 MESA DE REGALOS
-                            </span>
-                            <span className="text-[9px] text-gray-400">
-                              {mesaRegalosItems.length} opción(es)
-                            </span>
-                          </div>
-                          {mesaRegalosItems.length > 0 ? (
-                            <div className="mt-2 space-y-1.5">
-                              {mesaRegalosItems.map((gift) => {
-                                const meta = getTiendaMeta(gift.tienda);
-                                return (
-                                  <a
-                                    key={gift.iditem}
-                                    href={gift.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-[11px] transition hover:border-amber-400/50 hover:bg-white/10"
-                                  >
-                                    <div className="min-w-0 flex-1">
-                                      <span
-                                        className={`inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold ${meta.badgeClass}`}
-                                      >
-                                        {meta.icon} {gift.tienda}
-                                      </span>
-                                      <p className="mt-0.5 truncate font-bold text-white">
-                                        {gift.producto}
-                                      </p>
-                                      {gift.nota && (
-                                        <p className="truncate text-[10px] text-gray-300">
-                                          {gift.nota}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <span className="shrink-0 rounded-md bg-amber-400/20 px-2 py-1 text-[10px] font-extrabold text-amber-300">
-                                      Ver ↗
-                                    </span>
-                                  </a>
-                                );
-                              })}
+                      {Boolean(invForm.mesa_regalos_habilitada) &&
+                        (() => {
+                          const rawUrl = String(
+                            invForm.mesa_regalos_url ||
+                              mesaRegalosItems[0]?.url ||
+                              ""
+                          ).trim();
+                          const hrefUrl =
+                            rawUrl && !/^https?:\/\//i.test(rawUrl)
+                              ? `https://${rawUrl}`
+                              : rawUrl;
+                          const tiendaActual =
+                            invForm.mesa_regalos_tienda ||
+                            detectStoreFromUrl(hrefUrl) ||
+                            mesaRegalosItems[0]?.tienda ||
+                            "Amazon";
+                          const meta = getTiendaMeta(tiendaActual);
+                          return (
+                            <div className="mt-3 rounded-xl border border-amber-400/35 bg-black/40 p-3 text-left">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                                  🎁 MESA DE REGALOS
+                                </span>
+                                <span
+                                  className={`inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold ${meta.badgeClass}`}
+                                >
+                                  {meta.icon} {tiendaActual}
+                                </span>
+                              </div>
+                              {hrefUrl ? (
+                                <a
+                                  href={hrefUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-amber-400/40 bg-amber-400/15 px-3 py-2 text-[11px] font-extrabold text-amber-200 transition hover:bg-amber-400/25"
+                                >
+                                  <span className="truncate">
+                                    🛒 Ver Carrito / Lista en {tiendaActual}
+                                  </span>
+                                  <span className="shrink-0">Abrir ↗</span>
+                                </a>
+                              ) : (
+                                <p className="mt-1.5 text-[10px] text-gray-400">
+                                  Pega el link de tu carrito de compras (Amazon,
+                                  Mercado Libre, etc.) en el editor para
+                                  mostrarlo aquí.
+                                </p>
+                              )}
                             </div>
-                          ) : (
-                            <p className="mt-1.5 text-[10px] text-gray-400">
-                              Agrega enlaces de Amazon, Mercado Libre o IKEA en
-                              el editor para mostrarlos aquí.
-                            </p>
-                          )}
-                        </div>
-                      )}
+                          );
+                        })()}
 
                       <button
                         type="button"
@@ -3121,58 +3147,60 @@ function GestorEvento({
                         </div>
 
                         {/* Mesa de Regalos en la Tarjeta de Escritorio */}
-                        {Boolean(invForm.mesa_regalos_habilitada) && (
-                          <div className="mt-4 rounded-xl border border-amber-400/35 bg-black/40 p-3.5 text-left">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
-                                🎁 MESA DE REGALOS SUGERIDOS
-                              </span>
-                              <span className="text-[10px] text-gray-400">
-                                {mesaRegalosItems.length} producto(s)
-                              </span>
-                            </div>
-                            {mesaRegalosItems.length > 0 ? (
-                              <div className="mt-2.5 grid grid-cols-1 gap-2 2xl:grid-cols-2">
-                                {mesaRegalosItems.map((gift) => {
-                                  const meta = getTiendaMeta(gift.tienda);
-                                  return (
-                                    <a
-                                      key={gift.iditem}
-                                      href={gift.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs transition hover:border-amber-400/50 hover:bg-white/10"
-                                    >
-                                      <div className="min-w-0 flex-1">
-                                        <span
-                                          className={`inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold ${meta.badgeClass}`}
-                                        >
-                                          {meta.icon} {gift.tienda}
-                                        </span>
-                                        <p className="mt-1 truncate font-bold text-white">
-                                          {gift.producto}
-                                        </p>
-                                        {gift.nota && (
-                                          <p className="truncate text-[10px] text-gray-300">
-                                            {gift.nota}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <span className="shrink-0 rounded-md bg-amber-400/20 px-2 py-1 text-[10px] font-extrabold text-amber-300">
-                                        Ir ↗
-                                      </span>
-                                    </a>
-                                  );
-                                })}
+                        {Boolean(invForm.mesa_regalos_habilitada) &&
+                          (() => {
+                            const rawUrl = String(
+                              invForm.mesa_regalos_url ||
+                                mesaRegalosItems[0]?.url ||
+                                ""
+                            ).trim();
+                            const hrefUrl =
+                              rawUrl && !/^https?:\/\//i.test(rawUrl)
+                                ? `https://${rawUrl}`
+                                : rawUrl;
+                            const tiendaActual =
+                              invForm.mesa_regalos_tienda ||
+                              detectStoreFromUrl(hrefUrl) ||
+                              mesaRegalosItems[0]?.tienda ||
+                              "Amazon";
+                            const meta = getTiendaMeta(tiendaActual);
+                            return (
+                              <div className="mt-4 rounded-xl border border-amber-400/35 bg-black/40 p-3.5 text-left">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                                    🎁 MESA DE REGALOS SUGERIDOS
+                                  </span>
+                                  <span
+                                    className={`inline-block rounded border px-2 py-0.5 text-[10px] font-bold ${meta.badgeClass}`}
+                                  >
+                                    {meta.icon} {tiendaActual}
+                                  </span>
+                                </div>
+                                {hrefUrl ? (
+                                  <a
+                                    href={hrefUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="mt-2.5 flex items-center justify-between gap-3 rounded-lg border border-amber-400/40 bg-amber-400/15 px-3.5 py-2.5 text-xs font-extrabold text-amber-200 transition hover:bg-amber-400/25"
+                                  >
+                                    <span className="truncate">
+                                      🛒 Ver Carrito de Compras / Mesa de Regalos en{" "}
+                                      {tiendaActual}
+                                    </span>
+                                    <span className="shrink-0 rounded-md bg-amber-400 px-2.5 py-1 text-[10px] font-extrabold text-[#171F39]">
+                                      Abrir Carrito ↗
+                                    </span>
+                                  </a>
+                                ) : (
+                                  <p className="mt-1.5 text-xs text-gray-400">
+                                    Pega el link de tu carrito de compras
+                                    (Amazon, Mercado Libre, IKEA, etc.) en el
+                                    editor para visualizarlo aquí.
+                                  </p>
+                                )}
                               </div>
-                            ) : (
-                              <p className="mt-1.5 text-xs text-gray-400">
-                                Agrega enlaces de Amazon, Mercado Libre, IKEA,
-                                etc. en el editor para visualizarlos aquí.
-                              </p>
-                            )}
-                          </div>
-                        )}
+                            );
+                          })()}
                       </div>
 
                       <div className="mt-6 flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:gap-3">
