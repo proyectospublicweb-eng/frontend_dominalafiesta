@@ -2105,7 +2105,7 @@ function GestorEvento({
           TAB A: 📇 DISEÑO E INVITACIÓN VIRTUAL (/events/[id]/invitation)
          ===================================================================== */}
       {currentTab === "invitation" && (
-        <div className="grid grid-cols-1 gap-6 sm:gap-8 xl:grid-cols-12">
+        <div className="grid grid-cols-1 items-start gap-6 sm:gap-8 xl:grid-cols-12">
           {/* Editor Rápido (Columna Izquierda: 5 cols) */}
           <form
             onSubmit={handleSaveEvento}
@@ -2758,7 +2758,7 @@ function GestorEvento({
           </form>
 
           {/* Vista Previa en Vivo: Móvil y Escritorio (Columna Derecha: 7 cols) */}
-          <div className="flex min-w-0 flex-col rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6 xl:col-span-7">
+          <div className="flex min-w-0 flex-col self-start rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6 xl:col-span-7">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E9F4] pb-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6C7EE1]">
@@ -2797,7 +2797,7 @@ function GestorEvento({
             </div>
 
             {/* Contenedor del Simulador */}
-            <div className="mt-6 flex flex-1 items-center justify-center">
+            <div className="mt-4 flex items-start justify-center">
               {previewDevice === "mobile" ? (
                 /* SIMULADOR DE PANTALLA MÓVIL */
                 <div className="w-full max-w-[360px] rounded-[2.6rem] border-[6px] border-white/15 bg-[#0F1A45] p-3 shadow-[0_0_50px_rgba(0,0,0,0.85)]">
