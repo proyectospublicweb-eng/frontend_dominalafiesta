@@ -403,7 +403,7 @@ function InvitacionPublicaPage() {
               </div>
             </div>
 
-            {/* Datos de Fecha, Lugar y Dress Code */}
+            {/* Datos de Fecha, Lugar y Código de Vestimenta */}
             <div className="mt-4 space-y-2 rounded-2xl border border-white/10 bg-black/30 p-4 text-left text-xs text-gray-200">
               <p>
                 📅 <strong>Fecha:</strong> {fechaStr}

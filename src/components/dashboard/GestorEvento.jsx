@@ -2212,7 +2212,7 @@ function GestorEvento({
                           </p>
                         )}
                         <p>
-                          👔 <strong>Dress Code:</strong>{" "}
+                          👔 <strong>Código de Vestimenta:</strong>{" "}
                           {invForm.codigo_vestimenta}
                         </p>
                       </div>
