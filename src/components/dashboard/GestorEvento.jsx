@@ -291,6 +291,10 @@ function GestorEvento({
     adultos: 0,
     ninos: 0,
   });
+  const [editingCustomLinkId, setEditingCustomLinkId] = useState(null);
+  const [customLinkError, setCustomLinkError] = useState("");
+  const [showConfirmCreateLinkModal, setShowConfirmCreateLinkModal] =
+    useState(false);
 
   // Tab B: Lista de Invitados, Filtros y Modal/Panel de Alta Individual o CSV
   const [rsvpFilter, setRsvpFilter] = useState("Todos");
@@ -316,6 +320,8 @@ function GestorEvento({
   const [whatsappMsg, setWhatsappMsg] = useState(
     "¡Hola {nombre}! 🎉 Estás cordialmente invitado(a) a {evento} el día {fecha} a las {hora} hrs en {lugar}. Confirma tu asistencia en la invitación virtual: {enlace}"
   );
+  const [selectedWhatsappLinkId, setSelectedWhatsappLinkId] =
+    useState("principal");
   const [broadcastChannel, setBroadcastChannel] = useState("Email HTML");
   const [selectedHtmlTemplate, setSelectedHtmlTemplate] = useState("neon-vip");
   const [showHtmlPreviewModal, setShowHtmlPreviewModal] = useState(false);
@@ -501,6 +507,62 @@ function GestorEvento({
     return `${baseShareUrl}?${params.toString()}`;
   };
 
+  const customLinksItems = logistica
+    .filter((i) => i.categoria === "link_invitacion")
+    .map((item) => {
+      let parsed = {};
+      try {
+        parsed = JSON.parse(item.detalle || "{}");
+      } catch {
+        parsed = {};
+      }
+      const modalidad =
+        parsed.modalidad ||
+        item.estado ||
+        invForm.modalidad_invitados ||
+        "Adultos y Niños";
+      const soloAd = isSoloAdultosMod(modalidad);
+      const soloNi = isSoloNinosMod(modalidad);
+      const adultos = soloNi
+        ? 0
+        : Math.max(
+            0,
+            Number(parsed.adultos ?? item.capacidad_mesa ?? 0) || 0
+          );
+      const ninos = soloAd
+        ? 0
+        : Math.max(
+            0,
+            Number(parsed.ninos ?? item.hora_itinerario ?? 0) || 0
+          );
+      return {
+        iditem: item.iditem,
+        etiqueta: item.titulo || "Link Personalizado",
+        modalidad,
+        adultos,
+        ninos,
+        url: buildCustomInviteUrl({ modalidad, adultos, ninos }),
+      };
+    });
+
+  const allAvailableLinks = [
+    {
+      iditem: "principal",
+      etiqueta: "Link General del Evento",
+      modalidad: invForm.modalidad_invitados || "Adultos y niños",
+      adultos: 0,
+      ninos: 0,
+      url: baseShareUrl,
+      isPrincipal: true,
+    },
+    ...customLinksItems,
+  ];
+
+  const selectedWhatsappLinkObj =
+    allAvailableLinks.find(
+      (l) => String(l.iditem) === String(selectedWhatsappLinkId)
+    ) || allAvailableLinks[0];
+
   // Días restantes para el evento
   const diasParaEvento = Math.max(
     0,
@@ -532,6 +594,8 @@ function GestorEvento({
       setInvForm({
         ...data,
         fecha_evento: formatDateInput(data.fecha_evento),
+        confirmar_acceso_qr:
+          data.confirmar_acceso_qr ?? data.permitir_acompanantes ?? true,
       });
       onEventoUpdated();
       showNotice("✓ Evento guardado correctamente.");
@@ -823,8 +887,8 @@ function GestorEvento({
   // =========================================================================
   // HANDLERS: DIFUSIÓN Y RECORDATORIOS (TAB C)
   // =========================================================================
-  const formatGuestMessage = (templateStr, guest) => {
-    const link = baseShareUrl;
+  const formatGuestMessage = (templateStr, guest, customUrl = null) => {
+    const link = customUrl || baseShareUrl;
     return String(templateStr || "")
       .replaceAll("{nombre}", guest?.nombre || "Invitado Especial")
       .replaceAll("{evento}", evento.nombre)
@@ -904,7 +968,11 @@ function GestorEvento({
   };
 
   const handleSendWhatsApp = async (guest) => {
-    const text = formatGuestMessage(whatsappMsg, guest);
+    const text = formatGuestMessage(
+      whatsappMsg,
+      guest,
+      selectedWhatsappLinkObj?.url || baseShareUrl
+    );
     const cleanPhone = String(guest.telefono || "").replace(/\D/g, "");
     const waUrl = cleanPhone
       ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
@@ -1036,6 +1104,15 @@ function GestorEvento({
   };
 
   const handleDeleteLogistica = async (idItem) => {
+    if (editingCustomLinkId === idItem) {
+      setEditingCustomLinkId(null);
+      setCustomLinkForm((prev) => ({
+        ...prev,
+        etiqueta: "",
+        adultos: 0,
+        ninos: 0,
+      }));
+    }
     if (String(idItem).startsWith("temp-")) {
       setDetalle((prev) => ({
         ...prev,
@@ -1054,8 +1131,49 @@ function GestorEvento({
     }
   };
 
+  const handleStartEditCustomLink = (item) => {
+    setEditingCustomLinkId(item.iditem);
+    setCustomLinkError("");
+    setCustomLinkForm({
+      etiqueta: item.etiqueta || "",
+      modalidad: item.modalidad || "Adultos y Niños",
+      adultos: item.adultos ?? 0,
+      ninos: item.ninos ?? 0,
+    });
+  };
+
+  const handleCancelEditCustomLink = () => {
+    setEditingCustomLinkId(null);
+    setCustomLinkError("");
+    setCustomLinkForm((prev) => ({
+      ...prev,
+      etiqueta: "",
+      adultos: 0,
+      ninos: 0,
+    }));
+  };
+
   const handleCreateCustomLink = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
+    if (!customLinkForm.etiqueta.trim()) {
+      setCustomLinkError("El campo 'Identificador del Link' es obligatorio.");
+      showNotice(
+        "⚠️ Por favor ingresa el Identificador del Link antes de continuar."
+      );
+      return;
+    }
+    setCustomLinkError("");
+
+    if (!editingCustomLinkId) {
+      setShowConfirmCreateLinkModal(true);
+      return;
+    }
+
+    await executeSaveCustomLink();
+  };
+
+  const executeSaveCustomLink = async () => {
+    setShowConfirmCreateLinkModal(false);
     const mod = customLinkForm.modalidad || "Adultos y Niños";
     const numAdultos = isSoloNinosMod(mod)
       ? 0
@@ -1064,24 +1182,75 @@ function GestorEvento({
       ? 0
       : Math.max(0, parseInt(customLinkForm.ninos, 10) || 0);
 
-    const autoLabelParts = [mod];
-    if (!isSoloNinosMod(mod)) {
-      autoLabelParts.push(
-        numAdultos > 0 ? `${numAdultos} Adulto(s)` : "Adultos libre"
-      );
-    }
-    if (!isSoloAdultosMod(mod)) {
-      autoLabelParts.push(
-        numNinos > 0 ? `${numNinos} Niño(s)` : "Niños libre"
-      );
-    }
-    const tituloFinal =
-      customLinkForm.etiqueta.trim() || autoLabelParts.join(" • ");
+    const tituloFinal = customLinkForm.etiqueta.trim();
     const detalleJson = JSON.stringify({
       modalidad: mod,
       adultos: numAdultos,
       ninos: numNinos,
     });
+
+    if (editingCustomLinkId) {
+      if (
+        !evento.idevento ||
+        String(editingCustomLinkId).startsWith("temp-")
+      ) {
+        setDetalle((prev) => ({
+          ...prev,
+          logistica: prev.logistica.map((i) =>
+            i.iditem === editingCustomLinkId
+              ? {
+                  ...i,
+                  titulo: tituloFinal,
+                  detalle: detalleJson,
+                  estado: mod,
+                  capacidad_mesa: numAdultos,
+                  hora_itinerario: String(numNinos),
+                }
+              : i
+          ),
+        }));
+        setEditingCustomLinkId(null);
+        setCustomLinkForm((prev) => ({
+          ...prev,
+          etiqueta: "",
+          adultos: 0,
+          ninos: 0,
+        }));
+        showNotice("✓ Link actualizado correctamente.");
+        return;
+      }
+
+      try {
+        const { data } = await updateLogisticaRequest(
+          evento.idevento,
+          editingCustomLinkId,
+          {
+            titulo: tituloFinal,
+            detalle: detalleJson,
+            estado: mod,
+            capacidad_mesa: numAdultos,
+            hora_itinerario: String(numNinos),
+          }
+        );
+        setDetalle((prev) => ({
+          ...prev,
+          logistica: prev.logistica.map((i) =>
+            i.iditem === editingCustomLinkId ? data : i
+          ),
+        }));
+        setEditingCustomLinkId(null);
+        setCustomLinkForm((prev) => ({
+          ...prev,
+          etiqueta: "",
+          adultos: 0,
+          ninos: 0,
+        }));
+        showNotice("✓ Link de invitación actualizado correctamente.");
+      } catch {
+        showNotice("Error al actualizar el link de invitación");
+      }
+      return;
+    }
 
     if (!evento.idevento) {
       const tempItem = {
@@ -1295,43 +1464,6 @@ function GestorEvento({
         String(b.hora_itinerario || b.titulo)
       )
   );
-  const customLinksItems = logistica
-    .filter((i) => i.categoria === "link_invitacion")
-    .map((item) => {
-      let parsed = {};
-      try {
-        parsed = JSON.parse(item.detalle || "{}");
-      } catch {
-        parsed = {};
-      }
-      const modalidad =
-        parsed.modalidad ||
-        item.estado ||
-        invForm.modalidad_invitados ||
-        "Adultos y Niños";
-      const soloAd = isSoloAdultosMod(modalidad);
-      const soloNi = isSoloNinosMod(modalidad);
-      const adultos = soloNi
-        ? 0
-        : Math.max(
-            0,
-            Number(parsed.adultos ?? item.capacidad_mesa ?? 0) || 0
-          );
-      const ninos = soloAd
-        ? 0
-        : Math.max(
-            0,
-            Number(parsed.ninos ?? item.hora_itinerario ?? 0) || 0
-          );
-      return {
-        iditem: item.iditem,
-        etiqueta: item.titulo || "Link Personalizado",
-        modalidad,
-        adultos,
-        ninos,
-        url: buildCustomInviteUrl({ modalidad, adultos, ninos }),
-      };
-    });
 
   // QR SVG Download handler
   const qrCodeValue = `${window.location.origin}/checkin/${evento.idevento}?code=${
@@ -1794,13 +1926,19 @@ function GestorEvento({
                         invForm.permitir_acompanantes ??
                         true
                     )}
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const checked = e.target.checked;
                       setInvForm((prev) => ({
                         ...prev,
                         confirmar_acceso_qr: checked,
                         permitir_acompanantes: checked,
                       }));
+                      if (evento.idevento) {
+                        await handleSaveEvento(null, {
+                          confirmar_acceso_qr: checked,
+                          permitir_acompanantes: checked,
+                        });
+                      }
                     }}
                     className="h-4 w-4 shrink-0 cursor-pointer accent-[#6C7EE1]"
                   />
@@ -2302,30 +2440,44 @@ function GestorEvento({
               </div>
             </div>
 
-            {/* Formulario para crear un nuevo link diferenciado */}
+            {/* Formulario para crear o editar un link diferenciado */}
             <form
               onSubmit={handleCreateCustomLink}
-              className="mt-5 grid grid-cols-1 items-end gap-4 rounded-2xl border border-[#E6E9F4] bg-[#F8F9FD] p-5 md:grid-cols-12"
+              className={`mt-5 grid grid-cols-1 items-end gap-4 rounded-2xl border p-4 transition sm:grid-cols-2 sm:p-5 lg:grid-cols-12 ${
+                editingCustomLinkId
+                  ? "border-amber-400 bg-amber-50/50"
+                  : "border-[#E6E9F4] bg-[#F8F9FD]"
+              }`}
             >
-              <div className="md:col-span-3">
+              <div className="sm:col-span-1 lg:col-span-3">
                 <label className="mb-1.5 block text-xs font-bold text-[#2D3047]">
-                  Referencia / Etiqueta (Opcional)
+                  Identificador del Link <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={customLinkForm.etiqueta}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    if (customLinkError) setCustomLinkError("");
                     setCustomLinkForm((p) => ({
                       ...p,
                       etiqueta: e.target.value,
-                    }))
-                  }
-                  placeholder="Ej. Parejas, Familia con niños..."
-                  className="w-full rounded-xl border border-[#E6E9F4] bg-white px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    }));
+                  }}
+                  placeholder="Ej. Familia Pérez, Amigos trabajo..."
+                  className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-[#2D3047] outline-none transition ${
+                    customLinkError
+                      ? "border-rose-500 ring-2 ring-rose-500/20"
+                      : "border-[#E6E9F4] focus:border-[#6C7EE1]"
+                  }`}
                 />
+                {customLinkError && (
+                  <p className="mt-1 text-[11px] font-semibold text-rose-600">
+                    {customLinkError}
+                  </p>
+                )}
               </div>
 
-              <div className="md:col-span-3">
+              <div className="sm:col-span-1 lg:col-span-3">
                 <label className="mb-1.5 block text-xs font-bold text-[#2D3047]">
                   Modalidad de Asistencia
                 </label>
@@ -2350,8 +2502,8 @@ function GestorEvento({
                 </select>
               </div>
 
-              <div className="md:col-span-2">
-                <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[#2D3047]">
+              <div className="sm:col-span-1 lg:col-span-2">
+                <label className="mb-1.5 flex flex-wrap items-center justify-between gap-1 text-xs font-bold text-[#2D3047]">
                   <span>Pases Adultos</span>
                   {isSoloNinosMod(customLinkForm.modalidad) ? (
                     <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-600">
@@ -2387,8 +2539,8 @@ function GestorEvento({
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[#2D3047]">
+              <div className="sm:col-span-1 lg:col-span-2">
+                <label className="mb-1.5 flex flex-wrap items-center justify-between gap-1 text-xs font-bold text-[#2D3047]">
                   <span>Pases Niños</span>
                   {isSoloAdultosMod(customLinkForm.modalidad) ? (
                     <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-600">
@@ -2424,19 +2576,38 @@ function GestorEvento({
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <button
-                  type="submit"
-                  className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0]"
-                >
-                  ＋ Crear Link
-                </button>
+              <div className="sm:col-span-2 lg:col-span-2">
+                {editingCustomLinkId ? (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="submit"
+                      className="flex-1 cursor-pointer rounded-xl bg-amber-500 px-3 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-amber-600"
+                    >
+                      💾 Guardar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEditCustomLink}
+                      title="Cancelar edición"
+                      className="cursor-pointer rounded-xl border border-[#E6E9F4] bg-white px-2.5 py-2.5 text-xs font-bold text-[#8E94A9] transition hover:border-rose-400 hover:text-rose-500"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="submit"
+                    className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0]"
+                  >
+                    ＋ Crear Link
+                  </button>
+                )}
               </div>
             </form>
 
             {/* Tabla de Links Generados */}
             <div className="mt-6 overflow-x-auto rounded-2xl border border-[#E6E9F4]">
-              <table className="w-full border-collapse text-left text-xs">
+              <table className="min-w-[780px] w-full border-collapse text-left text-xs">
                 <thead
                   style={{ backgroundColor: "#fde68a", color: "#111212" }}
                 >
@@ -2444,7 +2615,7 @@ function GestorEvento({
                     className="border-b border-[#E6E9F4] bg-[#fde68a] text-[11px] font-bold uppercase tracking-wider text-[#111212]"
                     style={{ backgroundColor: "#fde68a", color: "#111212" }}
                   >
-                    <th className="px-4 py-3 text-[#111212]">Referencia</th>
+                    <th className="px-4 py-3 text-[#111212]">Identificador del Link</th>
                     <th className="px-4 py-3 text-[#111212]">Modalidad de Asistencia</th>
                     <th className="px-4 py-3 text-[#111212]">Pases Adultos</th>
                     <th className="px-4 py-3 text-[#111212]">Pases Niños</th>
@@ -2548,7 +2719,11 @@ function GestorEvento({
                     return (
                       <tr
                         key={item.iditem}
-                        className="transition hover:bg-[#F8F9FD]"
+                        className={`transition ${
+                          editingCustomLinkId === item.iditem
+                            ? "bg-amber-50/70"
+                            : "hover:bg-[#F8F9FD]"
+                        }`}
                       >
                         <td className="px-4 py-3.5 font-bold text-[#2D3047]">
                           {item.etiqueta}
@@ -2603,6 +2778,14 @@ function GestorEvento({
                           <div className="flex flex-wrap items-center justify-end gap-1.5">
                             <button
                               type="button"
+                              onClick={() => handleStartEditCustomLink(item)}
+                              title="Editar este link"
+                              className="cursor-pointer rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[11px] font-bold text-amber-700 transition hover:bg-amber-500 hover:text-white"
+                            >
+                              ✏️ Editar
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => {
                                 navigator.clipboard?.writeText(item.url);
                                 showNotice(
@@ -2643,6 +2826,91 @@ function GestorEvento({
                 </tbody>
               </table>
             </div>
+
+            {/* Modal de Confirmación al Crear Link */}
+            {showConfirmCreateLinkModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F1A45]/60 p-4 backdrop-blur-xs">
+                <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[#E6E9F4] bg-white p-5 shadow-2xl sm:p-6">
+                  <div className="flex items-start justify-between gap-3 border-b border-[#E6E9F4] pb-3.5">
+                    <div>
+                      <h3 className="text-base font-extrabold text-[#2D3047]">
+                        🔗 ¿Confirmas crear este link de invitación?
+                      </h3>
+                      <p className="mt-1 text-xs text-[#8E94A9]">
+                        Verifica los datos del link antes de agregarlo a la tabla:
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmCreateLinkModal(false)}
+                      className="cursor-pointer rounded-lg border border-[#E6E9F4] px-2.5 py-1 text-xs font-bold text-[#8E94A9] hover:border-rose-400 hover:text-rose-500"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="mt-4 space-y-2.5 rounded-xl border border-[#E6E9F4] bg-[#F8F9FD] p-3.5 text-xs sm:p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-semibold text-[#8E94A9]">
+                        Identificador del Link:
+                      </span>
+                      <span className="font-extrabold text-[#2D3047]">
+                        {customLinkForm.etiqueta.trim()}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-semibold text-[#8E94A9]">
+                        Modalidad de Asistencia:
+                      </span>
+                      <span className="rounded-full border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2.5 py-0.5 font-bold text-[#6C7EE1]">
+                        🎟️ {customLinkForm.modalidad}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-semibold text-[#8E94A9]">
+                        Pases Adultos:
+                      </span>
+                      <span className="font-bold text-[#2D3047]">
+                        {isSoloNinosMod(customLinkForm.modalidad)
+                          ? "🚫 No aplica (0)"
+                          : Number(customLinkForm.adultos) > 0
+                          ? `🔒 ${customLinkForm.adultos} Adulto(s) (Bloqueado)`
+                          : "🔓 0 (Libre)"}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-semibold text-[#8E94A9]">
+                        Pases Niños:
+                      </span>
+                      <span className="font-bold text-[#2D3047]">
+                        {isSoloAdultosMod(customLinkForm.modalidad)
+                          ? "🚫 No aplica (0)"
+                          : Number(customLinkForm.ninos) > 0
+                          ? `🔒 ${customLinkForm.ninos} Niño(s) (Bloqueado)`
+                          : "🔓 0 (Libre)"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-col-reverse items-stretch justify-end gap-2.5 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmCreateLinkModal(false)}
+                      className="cursor-pointer rounded-xl border border-[#E6E9F4] bg-white px-4 py-2.5 text-xs font-bold text-[#8E94A9] transition hover:border-[#2D3047] hover:text-[#2D3047]"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={executeSaveCustomLink}
+                      className="cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0]"
+                    >
+                      ✓ Sí, Crear Link
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -3396,7 +3664,7 @@ function GestorEvento({
             {/* Modal para Editar Invitado */}
             {editingGuest && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-xs">
-                <div className="w-full max-w-xl rounded-3xl border border-[#DCE0F0] bg-white p-6 shadow-2xl">
+                <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-[#DCE0F0] bg-white p-5 shadow-2xl sm:p-6">
                   <div className="flex items-center justify-between border-b border-[#E6E9F4] pb-3.5">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[#6C7EE1]">
@@ -3672,9 +3940,9 @@ function GestorEvento({
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* 2. Módulo WhatsApp */}
-            <div className="rounded-2xl border border-emerald-500/30 bg-white border border-[#E6E9F4] shadow-xs p-6">
-              <div className="flex items-center justify-between">
-                <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-[#18A97E]">
+            <div className="rounded-2xl border border-emerald-500/30 bg-white border border-[#E6E9F4] shadow-xs p-4 sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="font-display text-xl font-bold uppercase tracking-wide text-[#18A97E] sm:text-2xl">
                   📲 Módulo WhatsApp Directo
                 </h4>
                 <span className="rounded-full bg-emerald-500/15 px-3 py-0.5 text-[10px] font-bold text-[#18A97E]">
@@ -3686,21 +3954,104 @@ function GestorEvento({
                 con el enlace de la invitación del evento.
               </p>
 
+              {/* Selector de Link Creado para Enviar por WhatsApp */}
+              <div className="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-50/40 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#2D3047]">
+                    🔗 Selecciona el Link a Enviar ({allAvailableLinks.length}{" "}
+                    disponible{allAvailableLinks.length === 1 ? "" : "s"}):
+                  </label>
+                  <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-[#18A97E]">
+                    Activo: {selectedWhatsappLinkObj.etiqueta}
+                  </span>
+                </div>
+
+                <div
+                  className={`mt-2 space-y-1.5 pr-1 ${
+                    allAvailableLinks.length > 5
+                      ? "max-h-[395px] overflow-y-auto"
+                      : ""
+                  }`}
+                >
+                  {allAvailableLinks.map((lnk) => {
+                    const isSelected =
+                      String(selectedWhatsappLinkObj.iditem) ===
+                      String(lnk.iditem);
+                    const soloAd = isSoloAdultosMod(lnk.modalidad);
+                    const soloNi = isSoloNinosMod(lnk.modalidad);
+                    return (
+                      <div
+                        key={lnk.iditem}
+                        onClick={() => setSelectedWhatsappLinkId(lnk.iditem)}
+                        className={`flex cursor-pointer flex-col justify-between gap-2 rounded-xl border px-3 py-2 text-xs transition sm:flex-row sm:items-center ${
+                          isSelected
+                            ? "border-[#18A97E] bg-white shadow-xs ring-2 ring-[#18A97E]/20"
+                            : "border-[#E6E9F4] bg-white/70 hover:border-emerald-400 hover:bg-white"
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-extrabold text-[#2D3047]">
+                              {lnk.isPrincipal ? "⭐ " : "🔗 "}
+                              {lnk.etiqueta}
+                            </span>
+                            <span className="rounded-full border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2 py-0.5 text-[10px] font-bold text-[#6C7EE1]">
+                              🎟️ {lnk.modalidad}
+                            </span>
+                            {!soloNi && (
+                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-[#5B617A]">
+                                Adultos:{" "}
+                                {lnk.adultos > 0
+                                  ? `🔒 ${lnk.adultos}`
+                                  : "🔓 Libre"}
+                              </span>
+                            )}
+                            {!soloAd && (
+                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-[#5B617A]">
+                                Niños:{" "}
+                                {lnk.ninos > 0
+                                  ? `🔒 ${lnk.ninos}`
+                                  : "🔓 Libre"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 truncate font-mono text-[10px] text-[#6C7EE1]">
+                            {lnk.url}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`self-start shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-extrabold uppercase sm:self-center ${
+                            isSelected
+                              ? "bg-[#18A97E] text-white"
+                              : "border border-[#DCE0F0] bg-[#F7F8FC] text-[#8E94A9]"
+                          }`}
+                        >
+                          {isSelected ? "✓ Seleccionado" : "Seleccionar"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <textarea
                 rows={3}
                 value={whatsappMsg}
                 onChange={(e) => setWhatsappMsg(e.target.value)}
-                className="mt-3 w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-3 text-xs text-[#2D3047] outline-none focus:border-emerald-400"
+                className="hidden mt-3 w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-3 text-xs text-[#2D3047] outline-none focus:border-emerald-400"
               />
 
               <div className="mt-4 max-h-64 space-y-2 overflow-y-auto pr-1">
                 {invitados.map((g) => (
                   <div
                     key={g.idinvitado}
-                    className="flex items-center justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] px-3.5 py-2.5 text-xs"
+                    className="flex flex-col gap-2 rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div>
-                      <p className="font-bold text-[#2D3047]">{g.nombre}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-[#2D3047]">
+                        {g.nombre}
+                      </p>
                       <p className="text-[10px] text-[#8E94A9]">
                         {g.telefono || "Sin número"} •{" "}
                         {g.invitacion_enviada
@@ -3711,7 +4062,7 @@ function GestorEvento({
                     <button
                       type="button"
                       onClick={() => handleSendWhatsApp(g)}
-                      className="rounded-xl bg-emerald-600 px-3.5 py-2 text-[11px] font-bold text-white transition hover:bg-emerald-500"
+                      className="w-full shrink-0 rounded-xl bg-emerald-600 px-3.5 py-2 text-center text-[11px] font-bold text-white transition hover:bg-emerald-500 sm:w-auto"
                     >
                       📲 Enviar WhatsApp
                     </button>
@@ -3721,9 +4072,9 @@ function GestorEvento({
             </div>
 
             {/* 3. Módulo Email / SMS Masivo con Plantillas HTML */}
-            <div className="rounded-2xl border border-[#6C7EE1]/30 bg-white border border-[#E6E9F4] shadow-xs p-6">
-              <div className="flex items-center justify-between">
-                <h4 className="font-display text-2xl font-bold uppercase tracking-wide text-[#6C7EE1]">
+            <div className="rounded-2xl border border-[#6C7EE1]/30 bg-white border border-[#E6E9F4] shadow-xs p-4 sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="font-display text-xl font-bold uppercase tracking-wide text-[#6C7EE1] sm:text-2xl">
                   ✉️ Módulo Email HTML / SMS Masivo
                 </h4>
                 <select
@@ -3736,7 +4087,7 @@ function GestorEvento({
                 </select>
               </div>
 
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {EMAIL_HTML_TEMPLATES.map((t) => (
                   <button
                     key={t.id}
@@ -3791,7 +4142,10 @@ function GestorEvento({
                   >
                     {activeEmailTemplate.badge}
                   </p>
-                  <p className="font-display mt-1 text-2xl font-bold uppercase text-[#2D3047]">
+                  <p
+                    className="font-display mt-1 text-2xl font-bold uppercase text-white"
+                    style={{ color: "#ffffff" }}
+                  >
                     {evento.nombre}
                   </p>
                   <p className="mt-1 text-xs text-[#5B617A]">

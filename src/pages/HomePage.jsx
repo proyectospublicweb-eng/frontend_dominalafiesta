@@ -545,16 +545,16 @@ function HomePage() {
                         return (
                           <div
                             key={ev.idevento}
-                            className="flex flex-col justify-between gap-8 py-11 transition hover:bg-[#FAFBFD] 2xl:flex-row 2xl:items-center"
+                            className="flex flex-col justify-between gap-6 py-7 transition hover:bg-[#FAFBFD] 2xl:flex-row 2xl:items-center"
                           >
                             {/* Izquierda: Miniatura gráfica + Título y Detalles */}
-                            <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
-                              {/* Miniatura estilo banner (h-48 sm:w-96) */}
+                            <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
+                              {/* Miniatura estilo banner (reducida un 30%) */}
                               <div
                                 onClick={() =>
                                   openEventManager(ev.idevento, "invitation")
                                 }
-                                className={`relative flex h-48 w-full shrink-0 cursor-pointer flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br p-7 shadow-md transition hover:scale-[1.01] sm:w-96 ${thumbGrad} ${
+                                className={`relative flex h-[134px] w-full shrink-0 cursor-pointer flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br p-5 shadow-md transition hover:scale-[1.01] sm:w-[268px] ${thumbGrad} ${
                                   isLightThumb
                                     ? "border border-[#C9EFE3] text-[#2D3047]"
                                     : "text-white"
@@ -562,7 +562,7 @@ function HomePage() {
                               >
                                 <div className="flex items-center justify-between">
                                   <span
-                                    className={`rounded-xl px-4 py-1.5 text-sm font-extrabold uppercase ${
+                                    className={`rounded-lg px-2.5 py-1 text-xs font-extrabold uppercase ${
                                       isLightThumb
                                         ? "bg-[#6C7EE1] text-white"
                                         : "bg-white/20 text-white"
@@ -570,34 +570,20 @@ function HomePage() {
                                   >
                                     {ev.tipo_evento}
                                   </span>
-                                  <span className="font-mono text-sm font-bold opacity-85">
-                                    #{ev.idevento}
-                                  </span>
                                 </div>
-                                <div className="truncate text-2xl font-black tracking-tight">
+                                <div className="truncate text-lg font-black tracking-tight">
                                   {ev.nombre}
                                 </div>
-                                <div className="text-sm font-semibold opacity-95">
+                                <div className="text-xs font-semibold opacity-95">
                                   📅 {fechaStr} • ⏰ {ev.hora_evento} hrs
                                 </div>
                               </div>
 
                               {/* Información Central Ampliada */}
-                              <div className="space-y-4">
-                                <div className="flex flex-wrap items-center gap-4">
-                                  <h3
-                                    onClick={() =>
-                                      openEventManager(
-                                        ev.idevento,
-                                        "invitation"
-                                      )
-                                    }
-                                    className="cursor-pointer text-2xl font-extrabold text-[#2D3047] hover:text-[#6C7EE1] sm:text-3xl"
-                                  >
-                                    {ev.nombre}
-                                  </h3>
+                              <div className="space-y-3 sm:space-y-4">
+                                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                                   <span
-                                    className={`rounded-full px-4 py-1.5 text-sm font-bold ${
+                                    className={`rounded-full px-3.5 py-1 text-xs font-bold sm:px-4 sm:py-1.5 sm:text-sm ${
                                       ev.rsvp_habilitado !== false
                                         ? "bg-[#E4F9F3] text-[#18A97E]"
                                         : "bg-[#FFF0EF] text-[#F26B61]"
@@ -609,25 +595,20 @@ function HomePage() {
                                   </span>
                                 </div>
 
-                                <p className="text-base text-[#8E94A9] sm:text-lg">
-                                  📍 {ev.lugar || "Salón por definir"} &nbsp;•&nbsp; 📅{" "}
-                                  {fechaStr} a las {ev.hora_evento} hrs
-                                </p>
-
-                                <div className="flex flex-wrap items-center gap-4 pt-1 text-sm sm:text-base">
-                                  <span className="rounded-xl bg-[#F0F2F8] px-4 py-2.5 text-[#6E7491]">
+                                <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs sm:gap-4 sm:text-sm md:text-base">
+                                  <span className="rounded-xl bg-[#F0F2F8] px-3 py-2 text-[#6E7491] sm:px-4 sm:py-2.5">
                                     👥 Invitados:{" "}
                                     <strong className="text-[#2D3047]">
                                       {ev.total_invitados || 0}
                                     </strong>
                                   </span>
-                                  <span className="rounded-xl bg-[#ECEFFA] px-4 py-2.5 text-[#6C7EE1]">
+                                  <span className="rounded-xl bg-[#ECEFFA] px-3 py-2 text-[#6C7EE1] sm:px-4 sm:py-2.5">
                                     ✅ Confirmados:{" "}
                                     <strong>
                                       {ev.pases_confirmados || 0}/{ev.capacidad}
                                     </strong>
                                   </span>
-                                  <span className="rounded-xl bg-[#FFF0EF] px-4 py-2.5 text-[#F26B61]">
+                                  <span className="rounded-xl bg-[#FFF0EF] px-3 py-2 text-[#F26B61] sm:px-4 sm:py-2.5">
                                     ⏳ Pendientes:{" "}
                                     <strong className="text-[#2D3047]">
                                       {ev.pendientes || 0}

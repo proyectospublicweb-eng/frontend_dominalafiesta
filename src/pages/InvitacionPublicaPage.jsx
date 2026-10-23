@@ -305,6 +305,9 @@ function InvitacionPublicaPage() {
           : Number(form.ninos || 0),
         nota_alimentacion: form.nota_alimentacion.trim(),
       });
+      if (data.evento) {
+        setEvento(data.evento);
+      }
       setInvitado(data.invitado);
       setFeedbackMsg(data.message);
       setShowRsvpForm(false);
@@ -672,9 +675,9 @@ function InvitacionPublicaPage() {
 
                 {form.estado_rsvp === "Confirmado" && (
                   <>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div>
-                        <label className="mb-1 flex items-center justify-between text-xs font-semibold text-gray-300">
+                        <label className="mb-1 flex flex-wrap items-center justify-between gap-1 text-xs font-semibold text-gray-300">
                           <span>Adultos</span>
                           {soloNinos ? (
                             <span className="text-[10px] font-bold text-gray-400">
@@ -712,7 +715,7 @@ function InvitacionPublicaPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-1 flex items-center justify-between text-xs font-semibold text-gray-300">
+                        <label className="mb-1 flex flex-wrap items-center justify-between gap-1 text-xs font-semibold text-gray-300">
                           <span>Niños</span>
                           {soloAdultos ? (
                             <span className="text-[10px] font-bold text-gray-400">
