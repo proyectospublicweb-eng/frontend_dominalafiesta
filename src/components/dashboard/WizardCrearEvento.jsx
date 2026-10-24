@@ -307,7 +307,8 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-extrabold text-[#2D3047]">
-                2. Ubicación, Aforo y Presupuesto
+                2. Ubicación y Aforo
+                <span className="hidden">, Aforo y Presupuesto</span>
               </h2>
               <p className="mt-1 text-xs text-gray-500">
                 Indica dónde se realizará el evento y el número estimado de invitados.
@@ -341,7 +342,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
                   Capacidad Estimada (Invitados)
                 </label>
@@ -354,7 +355,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                 />
               </div>
 
-              <div>
+              <div className="hidden">
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
                   Presupuesto Meta Estimado ($ MXN - Opcional)
                 </label>
@@ -571,10 +572,16 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                   )}
                 </div>
                 <div>
-                  <span className="block text-gray-400">AFORO Y PRESUPUESTO</span>
+                  <span className="block text-gray-400">
+                    AFORO ESTIMADO
+                    <span className="hidden"> Y PRESUPUESTO</span>
+                  </span>
                   <strong className="text-sm text-white">
-                    {form.capacidad} invitados • $
-                    {Number(form.presupuesto_meta || 0).toLocaleString()}
+                    {form.capacidad} invitados
+                    <span className="hidden">
+                      {" "}
+                      • ${Number(form.presupuesto_meta || 0).toLocaleString()}
+                    </span>
                   </strong>
                 </div>
               </div>

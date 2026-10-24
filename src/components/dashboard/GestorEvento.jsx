@@ -626,8 +626,8 @@ function GestorEvento({
         </h2>
         <p className="mt-2 text-sm text-[#8E94A9]">
           Crea tu primer evento en el Wizard paso a paso para acceder al Gestor
-          del Evento Activo (Diseño Virtual, Invitados y Confirmaciones, Difusión, Seating
-          Chart y Código QR).
+          del Evento Activo (Diseño Virtual, Invitados y Confirmaciones, Difusión
+          <span className="hidden">, Seating Chart</span> y Código QR).
         </p>
         <button
           type="button"
@@ -4358,7 +4358,7 @@ function GestorEvento({
                                 <option value="VIP">VIP</option>
                                 <option value="Trabajo">Trabajo</option>
                               </select>
-                              <span className="text-[10px] font-semibold text-[#64748B]">
+                              <span className="hidden text-[10px] font-semibold text-[#64748B]">
                                 🪑 {g.mesa_asignada || "Sin asignar"}
                               </span>
                             </div>
@@ -6384,8 +6384,9 @@ function GestorEvento({
                       📑 Duplicar Evento
                     </h4>
                     <p className="mt-1 text-xs text-[#8E94A9]">
-                      Crea una copia exacta del diseño de invitación, mesas,
-                      cronograma y presupuesto para otra fecha.
+                      Crea una copia exacta del diseño de invitación
+                      <span className="hidden">, mesas, cronograma y presupuesto</span>{" "}
+                      y configuración para otra fecha.
                     </p>
                   </div>
                   <button
@@ -6450,7 +6451,8 @@ function GestorEvento({
               </h4>
               <p className="mt-1 text-xs text-[#8E94A9]">
                 Esta acción eliminará permanentemente el evento, su lista de
-                invitados, mesas y registros asociados.
+                invitados<span className="hidden">, mesas</span> y registros
+                asociados.
               </p>
               <button
                 type="button"

@@ -258,8 +258,36 @@ function HomePage() {
             </div>
           </div>
 
+          {/* Tarjeta con el correo del usuario y cierre de sesión debajo del logo */}
+          <div className="mx-4 mb-4 rounded-2xl bg-[#23263A] p-3.5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#6C7EE1] text-xs font-bold text-white shadow-xs">
+                {String(user?.username || "U")
+                  .slice(0, 1)
+                  .toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-bold text-white">
+                  {user?.username || "Organizador"}
+                </p>
+                <p className="truncate text-[10px] text-[#8E94B2]">
+                  {user?.correoRegistro}
+                </p>
+              </div>
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#4CE0B3]" />
+            </div>
+
+            <button
+              type="button"
+              onClick={logout}
+              className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#6C7EE1] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#5A6CD0]"
+            >
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+
           {/* Navegación Principal */}
-          <nav className="mt-4 space-y-1.5 px-4">
+          <nav className="mt-2 space-y-1.5 px-4">
             {/* 1. Resumen / Mis Eventos */}
             <button
               type="button"
@@ -328,36 +356,6 @@ function HomePage() {
               </span>
             </button>
           </nav>
-        </div>
-
-        {/* Parte inferior del Sidebar: Ilustración decorativa + Cuenta y Cerrar Sesión */}
-        <div className="p-4">
-          <div className="mb-3 rounded-2xl bg-[#23263A] p-3.5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#6C7EE1] text-xs font-bold text-white shadow-xs">
-                {String(user?.username || "U")
-                  .slice(0, 1)
-                  .toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold text-white">
-                  {user?.username || "Organizador"}
-                </p>
-                <p className="truncate text-[10px] text-[#8E94B2]">
-                  {user?.correoRegistro}
-                </p>
-              </div>
-              <span className="h-2.5 w-2.5 rounded-full bg-[#4CE0B3]" />
-            </div>
-
-            <button
-              type="button"
-              onClick={logout}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6C7EE1] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#5A6CD0]"
-            >
-              <span>Cerrar Sesión</span>
-            </button>
-          </div>
         </div>
       </aside>
 
@@ -908,7 +906,9 @@ function HomePage() {
                 <strong className="text-[#2D3047]">
                   &ldquo;{eventoToDelete.nombre}&rdquo;
                 </strong>{" "}
-                y toda su lista de invitados, mesas y presupuesto asociados.
+                y toda su lista de invitados
+                <span className="hidden">, mesas y presupuesto</span>{" "}
+                y registros asociados.
               </p>
             </div>
 

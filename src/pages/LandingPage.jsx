@@ -57,7 +57,8 @@ const GUARANTEES = [
   {
     icon: "⚡",
     title: "Sincronización en Tiempo Real",
-    desc: "Cada vez que un invitado confirma o actualiza sus pases, tus métricas y mesas se actualizan al segundo.",
+    // Original con mesas: "Cada vez que un invitado confirma o actualiza sus pases, tus métricas y mesas se actualizan al segundo."
+    desc: "Cada vez que un invitado confirma o actualiza sus pases, tus métricas y confirmaciones se actualizan al segundo.",
     badgeBg: "from-[#35E2B4] to-[#12B886]",
     glow: "shadow-[#35E2B4]/35",
   },
@@ -109,8 +110,9 @@ const HOW_IT_WORKS = [
   {
     num: "3",
     icon: "🔳",
-    title: "Organiza mesas, presupuesto y recepción QR",
-    desc: "Asigna lugares en el mapa de mesas, controla tus gastos con proveedores y recibe a tus invitados con código QR.",
+    // Original con mesas: title: "Organiza mesas, presupuesto y recepción QR", desc: "Asigna lugares en el mapa de mesas, controla tus gastos con proveedores y recibe a tus invitados con código QR."
+    title: "Controla confirmaciones y recepción QR",
+    desc: "Supervisa tu lista de asistencia en tiempo real y recibe a tus invitados en puerta con validación de código QR.",
     iconBg: "from-[#FFB86C] to-[#FF6B9E]",
   },
 ];
@@ -296,8 +298,9 @@ function LandingPage() {
               <p className="mx-auto mt-4 max-w-lg text-xs leading-relaxed font-medium text-[#3E3C66] sm:mt-5 sm:text-sm lg:mx-0">
                 Olvídate de las hojas de cálculo desordenadas y las
                 confirmaciones perdidas por chat. Centraliza el diseño de tu
-                invitación, tu lista de invitados, el mapa de mesas y el
-                presupuesto en un solo panel.
+                invitación, tu lista de invitados
+                <span className="hidden">, el mapa de mesas y el presupuesto</span>{" "}
+                y el control de accesos QR en un solo panel.
               </p>
 
               {/* Botones CTA: Píldora Oscura (#17162E) + Enlace secundario */}
@@ -514,6 +517,7 @@ function LandingPage() {
                   sub: "Organización clara por grupos y zonas",
                   bg: "from-[#35E2B4] to-[#12B886]",
                   icon: "🪑",
+                  hidden: true,
                 },
                 {
                   label: "Difusión por WhatsApp",
@@ -526,6 +530,7 @@ function LandingPage() {
                   sub: "Anticipos, proveedores y liquidaciones",
                   bg: "from-[#FFB84D] to-[#FF7B39]",
                   icon: "💰",
+                  hidden: true,
                 },
                 {
                   label: "Recepción con Código QR",
@@ -540,7 +545,12 @@ function LandingPage() {
                   icon: "✓",
                 },
               ].map((item) => (
-                <div key={item.label} className="flex items-center gap-3.5">
+                <div
+                  key={item.label}
+                  className={`${
+                    item.hidden ? "hidden" : "flex"
+                  } items-center gap-3.5`}
+                >
                   <div
                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${item.bg} text-base font-extrabold text-white shadow-lg`}
                   >
@@ -898,8 +908,9 @@ function LandingPage() {
                 </div>
                 <p className="mt-3 max-w-xs text-xs font-medium leading-relaxed text-[#2D2A5A]">
                   Tu plataforma integral para crear invitaciones interactivas,
-                  confirmar asistencia, asignar mesas y controlar el acceso
-                  con código QR.
+                  confirmar asistencia,{" "}
+                  <span className="hidden">asignar mesas y </span>controlar el
+                  acceso con código QR.
                 </p>
               </div>
 
@@ -938,7 +949,7 @@ function LandingPage() {
                 <ul className="mt-3 space-y-2 text-xs font-semibold text-[#2D2A5A]">
                   <li>Invitación Digital</li>
                   <li>Control de Asistencia</li>
-                  <li>Seating Chart</li>
+                  <li className="hidden">Seating Chart</li>
                   <li>Código QR SVG</li>
                 </ul>
               </div>

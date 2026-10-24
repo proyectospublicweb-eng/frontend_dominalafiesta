@@ -632,10 +632,14 @@ function InvitacionPublicaPage() {
                 <p className="text-xs text-gray-400">
                   Pases confirmados:{" "}
                   <strong className="text-[#15B2F5]">{invitado.pases}</strong> (
-                  {invitado.adultos} adultos, {invitado.ninos} niños) • Mesa:{" "}
-                  <strong className="text-white">
-                    {invitado.mesa_asignada || "Por asignar"}
-                  </strong>
+                  {invitado.adultos} adultos, {invitado.ninos} niños)
+                  <span className="hidden">
+                    {" "}
+                    • Mesa:{" "}
+                    <strong className="text-white">
+                      {invitado.mesa_asignada || "Por asignar"}
+                    </strong>
+                  </span>
                 </p>
 
                 {/* Código QR del Pase del Invitado (condicional según "¿Confirmar Acceso el día del evento?") */}
