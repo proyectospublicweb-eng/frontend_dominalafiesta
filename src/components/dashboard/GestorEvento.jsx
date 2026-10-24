@@ -20,6 +20,7 @@ import {
   deletePresupuestoRequest,
 } from "../../api/eventos.js";
 import { GESTOR_TABS, normalizeGestorTab } from "./gestorTabs.js";
+import { useGoogleMapsLocation } from "../../utils/googleMaps.js";
 
 const PLANTILLAS = [
   {
@@ -617,6 +618,10 @@ function GestorEvento({
   }, [selectedEventoId, draftEvento]);
 
   const csvPreviewRows = useMemo(() => parseCsvRows(csvText), [csvText]);
+  const mapLocation = useGoogleMapsLocation(
+    invForm?.lugar,
+    invForm?.direccion
+  );
 
   if ((!eventos || eventos.length === 0) && !draftEvento) {
     return (
@@ -653,7 +658,6 @@ function GestorEvento({
   const { evento, invitados, logistica, presupuesto } = detalle;
   const tpl =
     PLANTILLAS.find((p) => p.id === invForm.plantilla_tema) || PLANTILLAS[0];
-  const mapLocation = getGoogleMapsUrls(invForm.lugar, invForm.direccion);
 
   const eventoSlug =
     String(invForm?.nombre || evento?.nombre || "evento")

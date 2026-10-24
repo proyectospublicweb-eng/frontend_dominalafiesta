@@ -4,6 +4,7 @@ import {
   getInvitacionPublicaRequest,
   confirmarRsvpPublicoRequest,
 } from "../api/eventos.js";
+import { useGoogleMapsLocation } from "../utils/googleMaps.js";
 
 const PLANTILLAS = [
   {
@@ -306,6 +307,7 @@ function InvitacionPublicaPage() {
       ),
     [evento?.idevento, invitado?.token_invitacion, form.nombre]
   );
+  const mapLocation = useGoogleMapsLocation(evento?.lugar, evento?.direccion);
 
   if (loading) {
     return (
@@ -336,7 +338,6 @@ function InvitacionPublicaPage() {
 
   const tpl =
     PLANTILLAS.find((p) => p.id === evento.plantilla_tema) || PLANTILLAS[0];
-  const mapLocation = getGoogleMapsUrls(evento.lugar, evento.direccion);
   const fechaStr = formatDateInput(evento.fecha_evento);
   const diasParaEvento = Math.max(
     0,

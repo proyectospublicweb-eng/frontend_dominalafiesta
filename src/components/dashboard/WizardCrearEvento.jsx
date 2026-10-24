@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useGoogleMapsLocation } from "../../utils/googleMaps.js";
 
 const TIPOS_EVENTO = [
   "Fiesta Privada",
@@ -44,6 +45,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [gpsNotice, setGpsNotice] = useState("");
 
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
@@ -145,6 +147,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
 
   const selectedTemplate =
     PLANTILLAS.find((p) => p.id === form.plantilla_tema) || PLANTILLAS[0];
+  const mapLocation = useGoogleMapsLocation(form.lugar, form.direccion);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -316,30 +319,103 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
             </div>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
-                  Nombre del Salón / Jardín / Recinto *
-                </label>
-                <input
-                  type="text"
-                  value={form.lugar}
-                  onChange={(e) => updateField("lugar", e.target.value)}
-                  placeholder="Ej. Terraza Imperial, Gran Salón VIP..."
-                  className="w-full rounded-xl border border-[#E2E5F1] bg-[#F7F8FC] px-4 py-3 text-sm text-[#2D3047] placeholder-gray-400 outline-none transition focus:border-[#6C7EE1] focus:bg-white"
-                />
-              </div>
+              {/* Configuración de Ubicación del Evento con Google Maps (mismo bloque que Editor Rápido) */}
+              <div className="space-y-3 rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-4 sm:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
+                      📍 UBICACIÓN EN LA TARJETA DE INVITACIÓN
+                    </span>
+                    <h4 className="text-xs font-extrabold text-[#2D3047]">
+                      Configurar Salón / Dirección con Google Maps
+                    </h4>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!navigator.geolocation) {
+                          setGpsNotice(
+                            "Tu navegador no soporta geolocalización."
+                          );
+                          return;
+                        }
+                        navigator.geolocation.getCurrentPosition(
+                          (pos) => {
+                            const coords = `${pos.coords.latitude.toFixed(
+                              6
+                            )}, ${pos.coords.longitude.toFixed(6)}`;
+                            updateField("direccion", coords);
+                            setGpsNotice(
+                              "✓ Coordenadas GPS aplicadas al mapa de la invitación."
+                            );
+                          },
+                          () => {
+                            setGpsNotice(
+                              "No se pudo obtener el GPS. Escribe la dirección o pega el enlace de Google Maps."
+                            );
+                          }
+                        );
+                      }}
+                      className="cursor-pointer rounded-lg border border-[#DCE0F0] bg-white px-2.5 py-1 text-[10px] font-bold text-[#2D3047] shadow-2xs transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                    >
+                      🎯 Usar mi GPS
+                    </button>
+                    <a
+                      href={mapLocation.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg bg-[#6C7EE1]/15 px-2.5 py-1 text-[10px] font-bold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
+                    >
+                      🗺️ Abrir Google Maps ↗
+                    </a>
+                  </div>
+                </div>
 
-              <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
-                  Dirección Completa
-                </label>
-                <input
-                  type="text"
-                  value={form.direccion}
-                  onChange={(e) => updateField("direccion", e.target.value)}
-                  placeholder="Calle, número, colonia y ciudad"
-                  className="w-full rounded-xl border border-[#E2E5F1] bg-[#F7F8FC] px-4 py-3 text-sm text-[#2D3047] placeholder-gray-400 outline-none transition focus:border-[#6C7EE1] focus:bg-white"
-                />
+                {gpsNotice && (
+                  <p className="text-[11px] font-bold text-[#6C7EE1]">
+                    {gpsNotice}
+                  </p>
+                )}
+
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                      Nombre del Salón, Jardín o Recinto *
+                    </label>
+                    <input
+                      type="text"
+                      value={form.lugar}
+                      onChange={(e) => updateField("lugar", e.target.value)}
+                      placeholder="Ej. Salón Jardín Imperial / Hacienda Los Morales"
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-[11px] font-extrabold text-[#D9483B]">
+                      Dirección Exacta, Coordenadas o Enlace de Google Maps
+                    </label>
+                    <input
+                      type="text"
+                      value={form.direccion}
+                      onChange={(e) => updateField("direccion", e.target.value)}
+                      placeholder="Ej. Av. Paseo de la Reforma 500, CDMX o pega el link de Google Maps"
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-semibold text-[#0F172A] placeholder:font-normal placeholder:text-[#64748B] outline-none focus:border-[#6C7EE1]"
+                    />
+                  </div>
+                </div>
+
+                {/* Mapa Interactivo de Google Maps en Vivo */}
+                <div className="overflow-hidden rounded-xl border border-[#DCE0F0] bg-white shadow-2xs">
+                  <iframe
+                    title="Vista previa de ubicación en Google Maps"
+                    src={mapLocation.embedUrl}
+                    className="h-44 w-full border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
               </div>
 
               <div className="sm:col-span-2">
