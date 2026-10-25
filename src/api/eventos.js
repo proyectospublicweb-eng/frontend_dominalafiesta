@@ -75,3 +75,7 @@ export const getInvitacionPublicaRequest = (idEvento, guestToken = "") =>
 export const confirmarRsvpPublicoRequest = (idEvento, payload) =>
   instanceAxios.post(`/rsvp/${idEvento}`, payload);
 
+export const getCatalogosEstadosMunicipiosRequest = () =>
+  instanceAxios.get("/catalogos/estados-municipios");
+
+

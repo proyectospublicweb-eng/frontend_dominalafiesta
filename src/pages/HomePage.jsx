@@ -113,8 +113,12 @@ function HomePage() {
 
   // Preparar borrador de evento desde el Wizard y redirigir al Gestor para guardarlo con "Guardar Evento"
   const handleCreateEvento = async (formData) => {
+    const esNinguno =
+      !formData.estado_evento || formData.estado_evento === "Ningúno";
     setDraftEvento({
       ...formData,
+      estado_evento: esNinguno ? "Ningúno" : formData.estado_evento,
+      municipio: esNinguno ? "Ningúno" : formData.municipio || "Ningúno",
       color_secundario: formData.color_secundario || "#6C7EE1",
       imagen_portada: formData.imagen_portada || "",
       texto_boton_rsvp: formData.texto_boton_rsvp || "Confirmar Asistencia",

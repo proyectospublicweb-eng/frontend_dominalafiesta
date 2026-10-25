@@ -21,6 +21,7 @@ import {
 } from "../../api/eventos.js";
 import { GESTOR_TABS, normalizeGestorTab } from "./gestorTabs.js";
 import { useGoogleMapsLocation } from "../../utils/googleMaps.js";
+import catalogosMexico from "../../utils/catalogosMexico.json";
 
 const PLANTILLAS = [
   {
@@ -501,9 +502,15 @@ function GestorEvento({
     let active = true;
     async function fetchDetail() {
       if (!selectedEventoId && draftEvento) {
+        const esNingunoDraft =
+          !draftEvento.estado_evento || draftEvento.estado_evento === "Ningúno";
         const draftObj = {
           ...draftEvento,
           idevento: null,
+          estado_evento: esNingunoDraft ? "Ningúno" : draftEvento.estado_evento,
+          municipio: esNingunoDraft
+            ? "Ningúno"
+            : draftEvento.municipio || "Ningúno",
           fecha_evento: formatDateInput(draftEvento.fecha_evento),
           color_secundario: draftEvento.color_secundario || "#6C7EE1",
           imagen_portada: draftEvento.imagen_portada || "",
@@ -570,8 +577,21 @@ function GestorEvento({
           ? parseMesaRegaloItem({ detalle: rawUrlCfg }).url
           : rawUrlCfg;
 
+        const ubicRow = (data.logistica || []).find(
+          (i) => i.categoria === "ubicacion_config"
+        );
+        const estadoConfig =
+          data.evento.estado_evento || ubicRow?.titulo || "Ningúno";
+        const esNingunoCfg =
+          !estadoConfig || /^ning[uú]no$/i.test(estadoConfig);
+        const municipioConfig = esNingunoCfg
+          ? "Ningúno"
+          : data.evento.municipio || ubicRow?.detalle || "Ningúno";
+
         setInvForm({
           ...data.evento,
+          estado_evento: esNingunoCfg ? "Ningúno" : estadoConfig,
+          municipio: municipioConfig,
           fecha_evento: formatDateInput(data.evento.fecha_evento),
           color_secundario: data.evento.color_secundario || "#6C7EE1",
           imagen_portada: data.evento.imagen_portada || "",
@@ -762,8 +782,12 @@ function GestorEvento({
     if (normalizedGiftUrl && !/^https?:\/\//i.test(normalizedGiftUrl)) {
       normalizedGiftUrl = `https://${normalizedGiftUrl}`;
     }
+    const esNinguno =
+      !rawPayload.estado_evento || rawPayload.estado_evento === "Ningúno";
     const payload = {
       ...rawPayload,
+      estado_evento: esNinguno ? "Ningúno" : rawPayload.estado_evento,
+      municipio: esNinguno ? "Ningúno" : rawPayload.municipio || "Ningúno",
       mesa_regalos_tienda: String(
         rawPayload.mesa_regalos_tienda ||
           detectStoreFromUrl(normalizedGiftUrl) ||
@@ -792,6 +816,8 @@ function GestorEvento({
       setDetalle((prev) => ({ ...prev, evento: data }));
       setInvForm({
         ...data,
+        estado_evento: data.estado_evento || payload.estado_evento || "Ningúno",
+        municipio: data.municipio || payload.municipio || "Ningúno",
         fecha_evento: formatDateInput(data.fecha_evento),
         confirmar_acceso_qr:
           data.confirmar_acceso_qr ?? data.permitir_acompanantes ?? true,
@@ -2734,6 +2760,90 @@ function GestorEvento({
               </div>
 
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <label className="mb-1 block text-[8.5px] font-bold uppercase tracking-wider text-[#5B617A]">
+                    Estado
+                  </label>
+                  <select
+                    value={invForm.estado_evento || "Ningúno"}
+                    onChange={(e) => {
+                      const nuevoEstado = e.target.value;
+                      if (nuevoEstado === "Ningúno") {
+                        setInvForm((prev) => ({
+                          ...prev,
+                          estado_evento: "Ningúno",
+                          municipio: "Ningúno",
+                        }));
+                      } else {
+                        const listaMun =
+                          catalogosMexico.municipiosPorEstado?.[nuevoEstado] ||
+                          [];
+                        setInvForm((prev) => ({
+                          ...prev,
+                          estado_evento: nuevoEstado,
+                          municipio: listaMun[0] || "Ningúno",
+                        }));
+                      }
+                    }}
+                    className="h-[26px] w-full max-w-full truncate rounded-lg border border-[#DCE0F0] bg-[#f7f8fc] px-2.5 py-0.5 text-[9px] font-semibold leading-tight text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                  >
+                    <option value="Ningúno" className="text-[9px]">
+                      Ningúno
+                    </option>
+                    {(catalogosMexico.estados || []).map((est) => (
+                      <option
+                        key={est.key}
+                        value={est.nombre}
+                        className="text-[9px]"
+                      >
+                        {est.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="min-w-0">
+                  <label className="mb-1 block text-[8.5px] font-bold uppercase tracking-wider text-[#5B617A]">
+                    Municipio
+                  </label>
+                  <select
+                    value={
+                      !invForm.estado_evento ||
+                      invForm.estado_evento === "Ningúno"
+                        ? "Ningúno"
+                        : invForm.municipio || "Ningúno"
+                    }
+                    disabled={
+                      !invForm.estado_evento ||
+                      invForm.estado_evento === "Ningúno"
+                    }
+                    onChange={(e) =>
+                      setInvForm((prev) => ({
+                        ...prev,
+                        municipio: e.target.value,
+                      }))
+                    }
+                    className="h-[26px] w-full max-w-full truncate rounded-lg border border-[#DCE0F0] bg-[#f7f8fc] px-2.5 py-0.5 text-[9px] font-semibold leading-tight text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#f7f8fc]/75 disabled:text-[#2D3047]/50"
+                  >
+                    {!invForm.estado_evento ||
+                    invForm.estado_evento === "Ningúno" ? (
+                      <option value="Ningúno" className="text-[9px]">
+                        Ningúno
+                      </option>
+                    ) : (
+                      (
+                        catalogosMexico.municipiosPorEstado?.[
+                          invForm.estado_evento
+                        ] || []
+                      ).map((mun) => (
+                        <option key={mun} value={mun} className="text-[9px]">
+                          {mun}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+
                 <div className="sm:col-span-2">
                   <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
                     Nombre del Salón, Jardín o Recinto

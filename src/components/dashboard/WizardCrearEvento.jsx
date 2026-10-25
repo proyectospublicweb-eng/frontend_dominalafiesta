@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useGoogleMapsLocation } from "../../utils/googleMaps.js";
+import catalogosMexico from "../../utils/catalogosMexico.json";
+import { getCatalogosEstadosMunicipiosRequest } from "../../api/eventos.js";
 
 const TIPOS_EVENTO = [
   "Fiesta Privada",
@@ -46,6 +48,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [gpsNotice, setGpsNotice] = useState("");
+  const [catalogos, setCatalogos] = useState(catalogosMexico);
 
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
@@ -54,6 +57,8 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
     tipo_evento: "Fiesta Privada",
     fecha_evento: initialDate || tomorrow,
     hora_evento: "20:00",
+    estado_evento: "Ningúno",
+    municipio: "Ningúno",
     lugar: "",
     direccion: "",
     capacidad: 100,
@@ -66,6 +71,16 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
     mesa_regalos_tienda: "Amazon",
     mesa_regalos_url: "",
   });
+
+  useEffect(() => {
+    getCatalogosEstadosMunicipiosRequest()
+      .then((res) => {
+        if (res.data?.estados?.length) {
+          setCatalogos(res.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (initialDate) {
@@ -108,8 +123,12 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
     setSubmitting(true);
     setError("");
     try {
+      const esNinguno =
+        !form.estado_evento || form.estado_evento === "Ningúno";
       await onCreateEvento({
         ...form,
+        estado_evento: esNinguno ? "Ningúno" : form.estado_evento,
+        municipio: esNinguno ? "Ningúno" : form.municipio || "Ningúno",
         mensaje_invitacion:
           form.mensaje_invitacion.trim() ||
           `Te invitamos cordialmente a celebrar con nosotros "${form.nombre}". ¡Tu presencia hará esta noche inolvidable!`,
@@ -318,7 +337,79 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+              <div className="min-w-0">
+                <label className="mb-1 block text-[9px] font-bold uppercase tracking-wider text-gray-700">
+                  Estado
+                </label>
+                <select
+                  value={form.estado_evento || "Ningúno"}
+                  onChange={(e) => {
+                    const nuevoEstado = e.target.value;
+                    if (nuevoEstado === "Ningúno") {
+                      setForm((prev) => ({
+                        ...prev,
+                        estado_evento: "Ningúno",
+                        municipio: "Ningúno",
+                      }));
+                    } else {
+                      const listaMun =
+                        catalogos.municipiosPorEstado?.[nuevoEstado] || [];
+                      setForm((prev) => ({
+                        ...prev,
+                        estado_evento: nuevoEstado,
+                        municipio: listaMun[0] || "Ningúno",
+                      }));
+                    }
+                    setError("");
+                  }}
+                  className="h-[31px] w-full max-w-full truncate rounded-lg border border-[#E2E5F1] bg-[#f7f8fc] px-3 py-1 text-[10px] font-semibold leading-tight text-[#2D3047] outline-none transition focus:border-[#6C7EE1] focus:bg-[#f7f8fc]"
+                >
+                  <option value="Ningúno" className="text-[10px]">
+                    Ningúno
+                  </option>
+                  {(catalogos.estados || []).map((est) => (
+                    <option
+                      key={est.key}
+                      value={est.nombre}
+                      className="text-[10px]"
+                    >
+                      {est.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-1 block text-[9px] font-bold uppercase tracking-wider text-gray-700">
+                  Municipio
+                </label>
+                <select
+                  value={
+                    form.estado_evento === "Ningúno"
+                      ? "Ningúno"
+                      : form.municipio || "Ningúno"
+                  }
+                  disabled={form.estado_evento === "Ningúno"}
+                  onChange={(e) => updateField("municipio", e.target.value)}
+                  className="h-[31px] w-full max-w-full truncate rounded-lg border border-[#E2E5F1] bg-[#f7f8fc] px-3 py-1 text-[10px] font-semibold leading-tight text-[#2D3047] outline-none transition focus:border-[#6C7EE1] focus:bg-[#f7f8fc] disabled:cursor-not-allowed disabled:bg-[#f7f8fc]/75 disabled:text-[#2D3047]/50"
+                >
+                  {form.estado_evento === "Ningúno" ? (
+                    <option value="Ningúno" className="text-[10px]">
+                      Ningúno
+                    </option>
+                  ) : (
+                    (
+                      catalogos.municipiosPorEstado?.[form.estado_evento] || []
+                    ).map((mun) => (
+                      <option key={mun} value={mun} className="text-[10px]">
+                        {mun}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
               {/* Configuración de Ubicación del Evento con Google Maps (mismo bloque que Editor Rápido) */}
               <div className="space-y-3 rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-4 sm:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -643,6 +734,13 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                 <div>
                   <span className="block text-gray-400">LUGAR</span>
                   <strong className="text-sm text-white">{form.lugar}</strong>
+                  {form.estado_evento && form.estado_evento !== "Ningúno" && (
+                    <span className="block text-gray-300">
+                      {form.municipio && form.municipio !== "Ningúno"
+                        ? `${form.municipio}, ${form.estado_evento}`
+                        : form.estado_evento}
+                    </span>
+                  )}
                   {form.direccion && (
                     <span className="block text-gray-400">{form.direccion}</span>
                   )}
