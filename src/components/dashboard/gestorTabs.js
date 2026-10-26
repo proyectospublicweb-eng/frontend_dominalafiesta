@@ -37,6 +37,13 @@ export const GESTOR_TABS = [
     hidden: true, // Oculto temporalmente sin eliminar la funcionalidad
   },
   {
+    id: "memories",
+    route: "memories",
+    label: "Tab D: 📸 Cámara y Álbum de Recuerdos",
+    short: "📸 Cámara y Recuerdos",
+    pathHint: "/events/[id]/memories",
+  },
+  {
     id: "settings",
     route: "settings",
     label: "Tab E: ⚙️ Ajustes del Evento",
@@ -54,6 +61,10 @@ export function normalizeGestorTab(rawTab) {
     invitados: "guests",
     broadcast: "broadcast",
     difusion: "broadcast",
+    memories: "memories",
+    recuerdos: "memories",
+    album: "memories",
+    fotos: "memories",
     logistics: "invitation", // Redirige a invitation mientras Logística esté oculta
     logistica: "invitation",
     budget: "invitation", // Redirige a invitation mientras Presupuesto esté oculto

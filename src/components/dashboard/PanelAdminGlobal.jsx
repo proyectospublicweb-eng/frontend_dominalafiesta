@@ -4,6 +4,8 @@ import {
   updatePlatformConfigAdminRequest,
   listarPlantillasPlatformAdminRequest,
   ejecutarVerificacionRecordatoriosAdminRequest,
+  limpiarAlbumEventoAdminRequest,
+  ejecutarAutolimpiezaAlbumesAdminRequest,
 } from "../../api/eventos.js";
 
 export default function PanelAdminGlobal() {
@@ -11,9 +13,12 @@ export default function PanelAdminGlobal() {
   const [saving, setSaving] = useState(false);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [runningCron, setRunningCron] = useState(false);
+  const [runningAlbumCleanup, setRunningAlbumCleanup] = useState(false);
+  const [cleaningEventId, setCleaningEventId] = useState(null);
   const [notice, setNotice] = useState("");
   const [templatesList, setTemplatesList] = useState([]);
   const [usuariosList, setUsuariosList] = useState([]);
+  const [albumesEventos, setAlbumesEventos] = useState([]);
   const [newAdminEmail, setNewAdminEmail] = useState("");
 
   const [form, setForm] = useState({
@@ -27,6 +32,8 @@ export default function PanelAdminGlobal() {
     mode: "template",
     cronHour: 10,
     adminEmails: [],
+    photoQuality: "hd",
+    albumRetentionDays: 30,
   });
 
   const showToast = (msg) => {
@@ -53,10 +60,15 @@ export default function PanelAdminGlobal() {
           adminEmails: Array.isArray(data.config.adminEmails)
             ? data.config.adminEmails
             : [],
+          photoQuality: data.config.photoQuality || "hd",
+          albumRetentionDays: Number(data.config.albumRetentionDays ?? 30) || 30,
         });
       }
       if (Array.isArray(data?.usuarios)) {
         setUsuariosList(data.usuarios);
+      }
+      if (Array.isArray(data?.albumesEventos)) {
+        setAlbumesEventos(data.albumesEventos);
       }
     } catch (err) {
       showToast(
@@ -88,6 +100,8 @@ export default function PanelAdminGlobal() {
         mode: form.mode,
         cronHour: Number(form.cronHour ?? 10),
         adminEmails: emailsToSave,
+        photoQuality: form.photoQuality,
+        albumRetentionDays: Number(form.albumRetentionDays ?? 30) || 30,
       });
 
       if (data?.config) {
@@ -106,7 +120,12 @@ export default function PanelAdminGlobal() {
           adminEmails: Array.isArray(data.config.adminEmails)
             ? data.config.adminEmails
             : [],
+          photoQuality: data.config.photoQuality || "hd",
+          albumRetentionDays: Number(data.config.albumRetentionDays ?? 30) || 30,
         }));
+        if (Array.isArray(data?.albumesEventos)) {
+          setAlbumesEventos(data.albumesEventos);
+        }
         setUsuariosList((prev) =>
           prev.map((u) => {
             const emailLower = String(u.correoregistro || "")
@@ -221,6 +240,48 @@ export default function PanelAdminGlobal() {
       );
     } finally {
       setRunningCron(false);
+    }
+  };
+
+  const handleRunAlbumCleanupNow = async () => {
+    try {
+      setRunningAlbumCleanup(true);
+      const { data } = await ejecutarAutolimpiezaAlbumesAdminRequest();
+      if (Array.isArray(data?.albumesEventos)) {
+        setAlbumesEventos(data.albumesEventos);
+      }
+      showToast(`✓ ${data?.message || "Autolimpieza de álbumes ejecutada."}`);
+    } catch (err) {
+      showToast(
+        err.response?.data?.message ||
+          "Error al ejecutar la autolimpieza de álbumes."
+      );
+    } finally {
+      setRunningAlbumCleanup(false);
+    }
+  };
+
+  const handleCleanEventAlbum = async (evAlbum) => {
+    if (!evAlbum?.idevento) return;
+    try {
+      setCleaningEventId(evAlbum.idevento);
+      const { data } = await limpiarAlbumEventoAdminRequest(evAlbum.idevento);
+      if (Array.isArray(data?.albumesEventos)) {
+        setAlbumesEventos(data.albumesEventos);
+      }
+      showToast(
+        `🗑️ ${
+          data?.message ||
+          `Álbum del evento "${evAlbum.nombre}" limpiado exitosamente.`
+        }`
+      );
+    } catch (err) {
+      showToast(
+        err.response?.data?.message ||
+          "No se pudo limpiar el álbum de este evento."
+      );
+    } finally {
+      setCleaningEventId(null);
     }
   };
 
@@ -666,6 +727,160 @@ export default function PanelAdminGlobal() {
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Módulo 3: Cámara en Vivo y Álbumes de Recuerdos HD por Evento */}
+      <div className="rounded-3xl border border-[#6C7EE1]/30 bg-white p-4 shadow-xs sm:p-6">
+        <div className="mb-4 flex flex-col justify-between gap-2 border-b border-[#E6E9F4] pb-4 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="min-w-0">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#6C7EE1]">
+              MÓDULO 3 • CÁMARA EN VIVO Y ÁLBUMES DE RECUERDOS HD
+            </span>
+            <h3 className="font-display text-lg font-bold uppercase tracking-wide text-[#2D3047] sm:text-xl lg:text-2xl">
+              📸 Calidad Fotográfica Global y Autolimpieza de Álbumes (30 Días)
+            </h3>
+            <p className="text-xs text-[#8E94A9]">
+              Cada evento cuenta con su propio álbum ilimitado en Alta Definición. Configura el nivel de calidad WebP y el periodo de vigencia antes de su eliminación automática.
+            </p>
+          </div>
+          <span className="self-start rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 py-1.5 text-xs font-extrabold text-emerald-700 sm:self-auto">
+            ∞ Fotos Ilimitadas por Evento • Vigencia: {form.albumRetentionDays} días
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-12">
+          <div className="sm:col-span-1 xl:col-span-6">
+            <label className="mb-1 block text-xs font-bold text-[#2D3047]">
+              Calidad Fotográfica Global (Motor Dual WebP HD)
+            </label>
+            <select
+              value={form.photoQuality}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, photoQuality: e.target.value }))
+              }
+              className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1] focus:bg-white"
+            >
+              <option value="standard">
+                Estándar Full HD (1920px · ~180 KB — Máximo ahorro)
+              </option>
+              <option value="hd">
+                ⭐ Alta Definición HD 2.5K (2560px · ~480 KB — Recomendado Gama Alta)
+              </option>
+              <option value="ultrahd">
+                Ultra HD 4K Fotográfico (3840px · ~950 KB — Impresión / Pantallas 4K)
+              </option>
+            </select>
+          </div>
+
+          <div className="sm:col-span-1 xl:col-span-6">
+            <label className="mb-1 block text-xs font-bold text-[#2D3047]">
+              Periodo de Vigencia para Descargar Álbum (Días antes de Autolimpieza)
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={365}
+              value={form.albumRetentionDays}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  albumRetentionDays: Math.max(
+                    1,
+                    Math.min(365, Number(e.target.value) || 30)
+                  ),
+                }))
+              }
+              className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1] focus:bg-white"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-col items-stretch justify-between gap-3 border-b border-[#E6E9F4] pb-4 sm:flex-row sm:flex-wrap sm:items-center">
+          <p className="text-[11px] text-[#5B617A]">
+            ℹ️ Al cumplirse los <strong>{form.albumRetentionDays} días</strong>, el servidor elimina automáticamente las fotos del evento vencido para mantener el disco libre.
+          </p>
+          <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              disabled={runningAlbumCleanup}
+              onClick={handleRunAlbumCleanupNow}
+              className="w-full cursor-pointer rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-center text-xs font-bold text-[#D97706] transition hover:bg-amber-500/20 disabled:opacity-50 sm:w-auto"
+            >
+              {runningAlbumCleanup
+                ? "⏳ Revisando álbumes..."
+                : "🧹 Ejecutar Autolimpieza de Vencidos"}
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSaveConfig()}
+              className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-5 py-2.5 text-center text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0] disabled:opacity-50 sm:w-auto"
+            >
+              {saving ? "⏳ Guardando..." : "💾 Guardar Calidad y Vigencia"}
+            </button>
+          </div>
+        </div>
+
+        {/* Monitor de Álbumes por Evento */}
+        <div className="mt-4">
+          <h4 className="mb-2.5 text-xs font-extrabold uppercase tracking-wider text-[#2D3047]">
+            📊 Monitor de Álbumes Fotográficos por Evento ({albumesEventos.length})
+          </h4>
+          {albumesEventos.length === 0 ? (
+            <p className="rounded-xl bg-[#F7F8FC] p-4 text-center text-xs text-[#5B617A]">
+              Aún no hay eventos registrados en la plataforma.
+            </p>
+          ) : (
+            <div className="space-y-2.5">
+              {albumesEventos.map((ev) => (
+                <div
+                  key={ev.idevento}
+                  className="flex flex-col items-stretch justify-between gap-3 rounded-2xl border border-[#E6E9F4] bg-[#F7F8FC] p-3.5 text-xs sm:flex-row sm:items-center"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-extrabold text-[#2D3047]">
+                        #{ev.idevento} • {ev.nombre}
+                      </span>
+                      <span className="rounded-full bg-[#6C7EE1]/12 px-2.5 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
+                        📷 {ev.totalPhotos} foto(s) ({ev.totalMb} MB)
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
+                          ev.daysRemaining <= 5
+                            ? "bg-amber-500/20 text-amber-800"
+                            : "bg-emerald-500/15 text-emerald-700"
+                        }`}
+                      >
+                        ⏳ Restan {ev.daysRemaining} días (Expira:{" "}
+                        {String(ev.expiresAt || "").slice(0, 10)})
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-[10px] text-[#8E94A9]">
+                      Anfitrión: {ev.propietario_email || "—"} • Fecha evento:{" "}
+                      {String(ev.fecha_evento || "").slice(0, 10)}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={
+                      ev.totalPhotos === 0 || cleaningEventId === ev.idevento
+                    }
+                    onClick={() => handleCleanEventAlbum(ev)}
+                    className="w-full shrink-0 cursor-pointer rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2 text-center text-[11px] font-bold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 sm:w-auto"
+                  >
+                    {cleaningEventId === ev.idevento
+                      ? "⏳ Limpiando..."
+                      : ev.totalPhotos > 0
+                      ? `🗑️ Limpiar Álbum (${ev.totalMb} MB)`
+                      : "Álbum Vacío"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

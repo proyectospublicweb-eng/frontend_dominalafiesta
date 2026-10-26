@@ -112,5 +112,40 @@ export const listarPlantillasPlatformAdminRequest = (payload = {}) =>
 export const ejecutarVerificacionRecordatoriosAdminRequest = () =>
   instanceAxios.post("/admin/verificar-recordatorios");
 
+export const limpiarAlbumEventoAdminRequest = (idEvento) =>
+  instanceAxios.delete(`/admin/eventos/${idEvento}/album-fotos`);
+
+export const ejecutarAutolimpiezaAlbumesAdminRequest = () =>
+  instanceAxios.post("/admin/autolimpieza-albumes");
+
+// Cámara en Vivo y Álbum de Recuerdos HD por Evento (Fase 1)
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "/apiproyectoeventos"
+).replace(/\/+$/, "");
+
+export const getAlbumPhotoUrl = (relativePath) => {
+  if (!relativePath) return "";
+  if (/^(https?:|data:|blob:)/i.test(relativePath)) return relativePath;
+  const clean = String(relativePath).startsWith("/")
+    ? relativePath
+    : `/${relativePath}`;
+  return `${API_BASE_URL}${clean}`;
+};
+
+export const getAlbumFotosEventoRequest = (idEvento) =>
+  instanceAxios.get(`/eventos/${idEvento}/album-fotos`);
+
+export const addFotoAlbumEventoRequest = (idEvento, payload) =>
+  instanceAxios.post(`/eventos/${idEvento}/album-fotos`, payload);
+
+export const deleteFotoAlbumEventoRequest = (idEvento, idFoto) =>
+  instanceAxios.delete(`/eventos/${idEvento}/album-fotos/${idFoto}`);
+
+export const descargarAlbumZipEventoRequest = (idEvento) =>
+  instanceAxios.get(`/eventos/${idEvento}/album-fotos/descargar-zip`, {
+    responseType: "blob",
+  });
+
+
 
 

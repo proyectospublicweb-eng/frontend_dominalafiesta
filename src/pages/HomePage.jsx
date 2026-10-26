@@ -765,6 +765,41 @@ function HomePage() {
                                 </span>
                               </button>
 
+                              {/* 3.5 Cámara y Álbum de Recuerdos - Emerald */}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openEventManager(ev.idevento, "memories")
+                                }
+                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-emerald-600 px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(16,185,129,0.25)] transition hover:-translate-y-0.5 hover:bg-emerald-700 sm:justify-start"
+                              >
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white">
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="h-3.5 w-3.5 text-white"
+                                  >
+                                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                                    <circle cx="12" cy="13" r="3" />
+                                  </svg>
+                                </span>
+                                <div className="flex-1 pr-1 sm:flex-initial">
+                                  <span className="block text-[9px] font-medium leading-tight text-white/80">
+                                    Cámara HD (30 días)
+                                  </span>
+                                  <span className="block text-xs font-extrabold leading-tight tracking-tight text-white">
+                                    Recuerdos
+                                  </span>
+                                </div>
+                                <span className="text-xs font-bold text-white/90 transition-transform group-hover:translate-x-1">
+                                  →
+                                </span>
+                              </button>
+
                               {/* 4. Ajustes y QR - Deep Twilight (#2D3047) */}
                               <button
                                 type="button"

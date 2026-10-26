@@ -24,6 +24,7 @@ import {
   deletePresupuestoRequest,
 } from "../../api/eventos.js";
 import { GESTOR_TABS, normalizeGestorTab } from "./gestorTabs.js";
+import CamaraAlbumEvento from "./CamaraAlbumEvento.jsx";
 import { useGoogleMapsLocation } from "../../utils/googleMaps.js";
 import catalogosMexico from "../../utils/catalogosMexico.json";
 
@@ -2343,13 +2344,20 @@ function GestorEvento({
                 invitaciones pendientes por confirmar
               </p>
             </div>
-            <div>
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => onChangeSubTab("guests")}
                 className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2 text-center text-xs font-bold text-white shadow-xs transition hover:bg-[#5A6CD0] sm:w-auto sm:py-1.5"
               >
                 Ver Invitados
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeSubTab("memories")}
+                className="w-full cursor-pointer rounded-xl bg-emerald-600 px-4 py-2 text-center text-xs font-bold text-white shadow-xs transition hover:bg-emerald-700 sm:w-auto sm:py-1.5"
+              >
+                📸 Cámara y Recuerdos
               </button>
             </div>
           </div>
@@ -6969,6 +6977,13 @@ function GestorEvento({
             </div>
           </div>
         </div>
+      )}
+
+      {/* =====================================================================
+          TAB D: 📸 CÁMARA EN VIVO Y ÁLBUM DE RECUERDOS HD (/events/[id]/memories)
+         ===================================================================== */}
+      {currentTab === "memories" && (
+        <CamaraAlbumEvento evento={evento} onShowNotice={showNotice} />
       )}
     </div>
   );
