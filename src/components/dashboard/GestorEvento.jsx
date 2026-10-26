@@ -12,6 +12,10 @@ import {
   deleteInvitadoRequest,
   enviarCorreoIndividualRequest,
   enviarDifusionRequest,
+  guardarConfigWhatsAppApiRequest,
+  listarPlantillasWhatsAppApiRequest,
+  enviarWhatsAppIndividualApiRequest,
+  enviarRecordatoriosWhatsAppMasivoRequest,
   addLogisticaRequest,
   updateLogisticaRequest,
   deleteLogisticaRequest,
@@ -461,6 +465,21 @@ function GestorEvento({
   const [previewGuestId, setPreviewGuestId] = useState("");
   const [confirmBroadcastModal, setConfirmBroadcastModal] = useState(null);
   const [confirmDirectEmailGuest, setConfirmDirectEmailGuest] = useState(null);
+  const [showMetaWaConfig, setShowMetaWaConfig] = useState(false);
+  const [sendingWaGuestId, setSendingWaGuestId] = useState(null);
+  const [sendingWaBulk, setSendingWaBulk] = useState(false);
+  const [loadingMetaTemplates, setLoadingMetaTemplates] = useState(false);
+  const [metaTemplatesList, setMetaTemplatesList] = useState([]);
+  const [metaWaForm, setMetaWaForm] = useState({
+    configured: false,
+    wabaId: "",
+    phoneNumberId: "",
+    accessToken: "",
+    tokenMasked: "",
+    templateName: "recordatorio_evento_recuerdalo",
+    templateLang: "es_MX",
+    mode: "template",
+  });
 
   // Tab D: Logística (Seating Chart Drag & Drop, Checklist con fecha límite, Cronograma)
   const [draggedGuestId, setDraggedGuestId] = useState(null);
@@ -625,6 +644,18 @@ function GestorEvento({
           ...prev,
           modalidad: modNormalizada,
         }));
+        setMetaWaForm({
+          configured: Boolean(data.evento.whatsapp_api_configurado),
+          wabaId: data.evento.whatsapp_api_waba_id || "",
+          phoneNumberId: data.evento.whatsapp_api_phone_id || "",
+          accessToken: "",
+          tokenMasked: data.evento.whatsapp_api_token_masked || "",
+          templateName:
+            data.evento.whatsapp_api_template ||
+            "recordatorio_evento_recuerdalo",
+          templateLang: data.evento.whatsapp_api_lang || "es_MX",
+          mode: data.evento.whatsapp_api_mode || "template",
+        });
         setNuevoPropietarioEmail(data.evento.propietario_email || "");
       } catch (err) {
         console.error("Error cargando detalle del evento:", err);
@@ -1351,6 +1382,203 @@ function GestorEvento({
         err.response?.data?.message || "Error al procesar el envío masivo"
       );
     }
+  };
+
+  const handleSaveMetaWaConfig = async () => {
+    try {
+      const { data } = await guardarConfigWhatsAppApiRequest(evento.idevento, {
+        wabaId: metaWaForm.wabaId,
+        phoneNumberId: metaWaForm.phoneNumberId,
+        accessToken: metaWaForm.accessToken,
+        templateName: metaWaForm.templateName,
+        templateLang: metaWaForm.templateLang,
+        mode: metaWaForm.mode,
+      });
+      setMetaWaForm((prev) => ({
+        ...prev,
+        configured: Boolean(data.whatsapp_api_configurado),
+        wabaId: data.whatsapp_api_waba_id || "",
+        phoneNumberId: data.whatsapp_api_phone_id || "",
+        accessToken: "",
+        tokenMasked: data.whatsapp_api_token_masked || "",
+        templateName:
+          data.whatsapp_api_template || "recordatorio_evento_recuerdalo",
+        templateLang: data.whatsapp_api_lang || "es_MX",
+        mode: data.whatsapp_api_mode || "template",
+      }));
+      setShowMetaWaConfig(false);
+      showNotice(
+        "✓ Credenciales de Meta WhatsApp Cloud API guardadas correctamente."
+      );
+    } catch (err) {
+      showNotice(
+        err.response?.data?.message ||
+          "Error al guardar la configuración de Meta WhatsApp API"
+      );
+    }
+  };
+
+  const handleListMetaTemplates = async () => {
+    const cleanWaba = String(metaWaForm.wabaId || "").trim();
+    if (!cleanWaba) return;
+    try {
+      setLoadingMetaTemplates(true);
+      showNotice("⏳ Consultando plantillas de tu cuenta WABA en Meta...");
+      const { data } = await listarPlantillasWhatsAppApiRequest(
+        evento.idevento,
+        {
+          wabaId: cleanWaba,
+          accessToken: metaWaForm.accessToken,
+        }
+      );
+      const list = Array.isArray(data?.templates) ? data.templates : [];
+      setMetaTemplatesList(list);
+      if (list.length === 0) {
+        showNotice("ℹ️ No se encontraron plantillas en esta cuenta WABA.");
+      } else {
+        showNotice(
+          `✓ Se encontraron ${list.length} plantilla(s) en tu cuenta comercial de Meta. Haz clic en cualquiera para seleccionarla.`
+        );
+      }
+    } catch (err) {
+      showNotice(
+        `⚠️ ${
+          err.response?.data?.message ||
+          "Error al consultar las plantillas del WABA ID en Meta"
+        }`
+      );
+    } finally {
+      setLoadingMetaTemplates(false);
+    }
+  };
+
+  const handleSendSilentWhatsAppReminder = async (guest) => {
+    if (!metaWaForm.configured) {
+      const text = formatGuestMessage(invForm.recordatorio_mensaje, guest);
+      const cleanPhone = String(guest.telefono || "").replace(/\D/g, "");
+      const waUrl = cleanPhone
+        ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
+        : `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, "_blank", "noopener,noreferrer");
+      await handleUpdateGuest(guest.idinvitado, {
+        invitacion_enviada: true,
+        canal_ultimo_envio: "Recordatorio WhatsApp",
+      });
+      return;
+    }
+    try {
+      setSendingWaGuestId(guest.idinvitado);
+      showNotice(
+        `⏳ Enviando recordatorio silencioso por API de Meta a ${guest.nombre}...`
+      );
+      const { data } = await enviarWhatsAppIndividualApiRequest(
+        evento.idevento,
+        guest.idinvitado,
+        {
+          linkUrl: selectedWhatsappLinkObj?.url || baseShareUrl,
+          customMessage: invForm.recordatorio_mensaje,
+          canal: "Recordatorio WhatsApp API",
+        }
+      );
+      if (data?.invitado) {
+        setDetalle((prev) => ({
+          ...prev,
+          invitados: prev.invitados.map((g) =>
+            g.idinvitado === guest.idinvitado ? data.invitado : g
+          ),
+        }));
+      }
+      onEventoUpdated();
+      showNotice(
+        `✓ ${data.message || `Recordatorio enviado por API Meta a ${guest.nombre}`}`
+      );
+    } catch (err) {
+      showNotice(
+        `⚠️ ${
+          err.response?.data?.message ||
+          `No se pudo enviar por API Meta a ${guest.nombre}`
+        }`
+      );
+    } finally {
+      setSendingWaGuestId(null);
+    }
+  };
+
+  const handleTriggerBulkReminders = async () => {
+    if (pendientesList.length === 0) {
+      showNotice(
+        "ℹ️ Actualmente hay 0 invitados en estado 'Pendiente'. Solo se envía a quienes aún no han confirmado."
+      );
+      return;
+    }
+
+    if (metaWaForm.configured) {
+      try {
+        setSendingWaBulk(true);
+        showNotice(
+          `⏳ Disparando recordatorios silenciosos por API de Meta a ${pendientesList.length} invitado(s) pendiente(s)...`
+        );
+        const { data } = await enviarRecordatoriosWhatsAppMasivoRequest(
+          evento.idevento,
+          {
+            estadoFiltro: "Pendiente",
+            linkUrl: selectedWhatsappLinkObj?.url || baseShareUrl,
+            customMessage: invForm.recordatorio_mensaje,
+            incluirCorreo: true,
+          }
+        );
+        if (Array.isArray(data?.invitados)) {
+          setDetalle((prev) => ({ ...prev, invitados: data.invitados }));
+        }
+        onEventoUpdated();
+        if (data.waEnviadosCount === 0 && data.waErroresCount > 0) {
+          showNotice(
+            `⚠️ Error en API Meta (${data.waErroresCount} fallo(s)): ${
+              data.ultimoError || "Verifica plantilla y credenciales"
+            }`
+          );
+        } else {
+          showNotice(
+            `✓ Disparo silencioso completado: ${data.waEnviadosCount} WhatsApp API enviados${
+              data.emailEnviadosCount > 0
+                ? ` • ${data.emailEnviadosCount} Correos enviados`
+                : ""
+            }${
+              data.sinTelefonoCount > 0
+                ? ` (${data.sinTelefonoCount} sin teléfono)`
+                : ""
+            }.`
+          );
+        }
+      } catch (err) {
+        showNotice(
+          err.response?.data?.message ||
+            "Error al disparar recordatorios masivos por API de Meta"
+        );
+      } finally {
+        setSendingWaBulk(false);
+      }
+      return;
+    }
+
+    // Respaldo semiautomático si aún no se han ingresado credenciales de Meta API
+    const firstPending = pendientesList[0];
+    if (firstPending) {
+      const text = formatGuestMessage(
+        invForm.recordatorio_mensaje,
+        firstPending
+      );
+      const cleanPhone = String(firstPending.telefono || "").replace(/\D/g, "");
+      const waUrl = cleanPhone
+        ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
+        : `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, "_blank", "noopener,noreferrer");
+    }
+    await handleBroadcastMasivo({
+      soloPendientes: true,
+      canal: "Recordatorio Automático",
+      estadoFiltro: "Pendiente",
+    });
   };
 
   // =========================================================================
@@ -5820,9 +6048,11 @@ function GestorEvento({
           <div className="rounded-2xl border border-amber-500/30 bg-white border border-[#E6E9F4] p-4 shadow-xs sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#D97706]">
-                  AUTOMATIZACIÓN INTELIGENTE
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#D97706]">
+                    AUTOMATIZACIÓN INTELIGENTE
+                  </span>
+                </div>
                 <h4 className="font-display text-xl font-bold uppercase tracking-wide text-[#2D3047] sm:text-2xl">
                   ⏰ Recordatorios Automatizados para &ldquo;Pendientes&rdquo;
                 </h4>
@@ -5835,20 +6065,22 @@ function GestorEvento({
                 </p>
               </div>
 
-              <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-[#D97706]">
-                <input
-                  type="checkbox"
-                  checked={Boolean(invForm.recordatorio_activo)}
-                  onChange={(e) =>
-                    setInvForm((p) => ({
-                      ...p,
-                      recordatorio_activo: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 accent-amber-400"
-                />
-                <span>Recordatorio Automático Activo</span>
-              </label>
+              <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-2.5">
+                <label className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-[#D97706] sm:w-auto">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(invForm.recordatorio_activo)}
+                    onChange={(e) =>
+                      setInvForm((p) => ({
+                        ...p,
+                        recordatorio_activo: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 accent-amber-400"
+                  />
+                  <span>Recordatorio Automático Activo</span>
+                </label>
+              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -5892,47 +6124,60 @@ function GestorEvento({
             {pendientesList.length > 0 && (
               <div className="mt-4 rounded-xl border border-amber-500/20 bg-[#F7F8FC] p-3">
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[#D97706]">
-                  🟡 Invitados en estado &ldquo;Pendiente&rdquo; ({pendientesList.length}) — Envío directo por WhatsApp:
+                  🟡 Invitados en estado &ldquo;Pendiente&rdquo; ({pendientesList.length}) — Envío Silencioso por WhatsApp API:
                 </p>
                 <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
                   {pendientesList.map((g) => (
                     <div
                       key={g.idinvitado}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#E6E9F4] bg-white shadow-xs px-3 py-2 text-xs"
+                      className="flex flex-col items-stretch justify-between gap-2 rounded-lg border border-[#E6E9F4] bg-white px-3 py-2.5 text-xs shadow-xs sm:flex-row sm:flex-wrap sm:items-center sm:py-2"
                     >
-                      <div>
+                      <div className="min-w-0">
                         <span className="font-bold text-[#2D3047]">{g.nombre}</span>{" "}
-                        <span className="text-[10px] text-[#8E94A9]">
+                        <span className="break-all text-[10px] text-[#8E94A9]">
                           ({g.telefono || "Sin teléfono"} •{" "}
                           {g.correo || "Sin correo"})
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const text = formatGuestMessage(
-                            invForm.recordatorio_mensaje,
-                            g
-                          );
-                          const cleanPhone = String(g.telefono || "").replace(
-                            /\D/g,
-                            ""
-                          );
-                          const waUrl = cleanPhone
-                            ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-                                text
-                              )}`
-                            : `https://wa.me/?text=${encodeURIComponent(text)}`;
-                          window.open(waUrl, "_blank", "noopener,noreferrer");
-                          await handleUpdateGuest(g.idinvitado, {
-                            invitacion_enviada: true,
-                            canal_ultimo_envio: "Recordatorio WhatsApp",
-                          });
-                        }}
-                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-emerald-500"
-                      >
-                        📲 Enviar Recordatorio WhatsApp
-                      </button>
+                      <div className="flex w-full items-center gap-1.5 sm:w-auto">
+                        <button
+                          type="button"
+                          disabled={sendingWaGuestId === g.idinvitado}
+                          onClick={() => handleSendSilentWhatsAppReminder(g)}
+                          className="flex-1 cursor-pointer rounded-lg bg-emerald-600 px-3 py-2 text-center text-[11px] font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50 sm:flex-initial sm:py-1.5"
+                        >
+                          {sendingWaGuestId === g.idinvitado
+                            ? "⏳ Enviando..."
+                            : "🚀 Enviar Silencioso (API Meta)"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const text = formatGuestMessage(
+                              invForm.recordatorio_mensaje,
+                              g
+                            );
+                            const cleanPhone = String(g.telefono || "").replace(
+                              /\D/g,
+                              ""
+                            );
+                            const waUrl = cleanPhone
+                              ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                                  text
+                                )}`
+                              : `https://wa.me/?text=${encodeURIComponent(text)}`;
+                            window.open(waUrl, "_blank", "noopener,noreferrer");
+                            await handleUpdateGuest(g.idinvitado, {
+                              invitacion_enviada: true,
+                              canal_ultimo_envio: "Recordatorio WhatsApp",
+                            });
+                          }}
+                          title="Abrir enlace wa.me manualmente"
+                          className="shrink-0 cursor-pointer rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-2 text-[10px] font-bold text-[#5B617A] transition hover:border-emerald-400 hover:text-emerald-700 sm:py-1.5"
+                        >
+                          📲 wa.me
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -5949,38 +6194,13 @@ function GestorEvento({
               </button>
               <button
                 type="button"
-                onClick={async () => {
-                  if (pendientesList.length === 0) {
-                    showNotice(
-                      "ℹ️ Actualmente hay 0 invitados en estado 'Pendiente'. Solo se envía a quienes aún no han confirmado."
-                    );
-                    return;
-                  }
-                  const firstPending = pendientesList[0];
-                  if (firstPending) {
-                    const text = formatGuestMessage(
-                      invForm.recordatorio_mensaje,
-                      firstPending
-                    );
-                    const cleanPhone = String(
-                      firstPending.telefono || ""
-                    ).replace(/\D/g, "");
-                    const waUrl = cleanPhone
-                      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-                          text
-                        )}`
-                      : `https://wa.me/?text=${encodeURIComponent(text)}`;
-                    window.open(waUrl, "_blank", "noopener,noreferrer");
-                  }
-                  await handleBroadcastMasivo({
-                    soloPendientes: true,
-                    canal: "Recordatorio Automático",
-                    estadoFiltro: "Pendiente",
-                  });
-                }}
-                className="w-full cursor-pointer rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-amber-400 sm:w-auto"
+                disabled={sendingWaBulk}
+                onClick={handleTriggerBulkReminders}
+                className="w-full cursor-pointer rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-amber-400 disabled:opacity-50 sm:w-auto"
               >
-                ⚡ Disparar Ahora a {pendientesList.length} Pendientes
+                {sendingWaBulk
+                  ? "⏳ Disparando por API Meta..."
+                  : `⚡ Disparar Ahora a ${pendientesList.length} Pendientes`}
               </button>
             </div>
           </div>

@@ -9,6 +9,7 @@ import {
 import WizardCrearEvento from "../components/dashboard/WizardCrearEvento.jsx";
 import GestorEvento from "../components/dashboard/GestorEvento.jsx";
 import CalendarioEventos from "../components/dashboard/CalendarioEventos.jsx";
+import PanelAdminGlobal from "../components/dashboard/PanelAdminGlobal.jsx";
 import {
   GESTOR_TABS,
   normalizeGestorTab,
@@ -271,9 +272,16 @@ function HomePage() {
                   .toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold text-white">
-                  {user?.username || "Organizador"}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate text-xs font-bold text-white">
+                    {user?.username || "Organizador"}
+                  </p>
+                  {user?.isAdmin && (
+                    <span className="shrink-0 rounded-md bg-[#4CE0B3]/20 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#4CE0B3]">
+                      🛡️ Admin
+                    </span>
+                  )}
+                </div>
                 <p className="truncate text-[10px] text-[#8E94B2]">
                   {user?.correoRegistro}
                 </p>
@@ -359,6 +367,31 @@ function HomePage() {
                 Mes
               </span>
             </button>
+
+            {/* 4. Configuración Global (Exclusivo Cuentas Administradoras) */}
+            {user?.isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("admin");
+                  setSidebarOpen(false);
+                  navigate("/home");
+                }}
+                className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-xs font-semibold transition ${
+                  activeSection === "admin"
+                    ? "bg-[#23263A] font-bold text-white shadow-inner ring-1 ring-[#4CE0B3]/40"
+                    : "text-[#4CE0B3] hover:bg-[#23263A]/50 hover:text-white"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <span className="text-sm">🛡️</span>
+                  <span>Config. Global</span>
+                </span>
+                <span className="rounded-full bg-[#4CE0B3]/20 px-2 py-0.5 text-[10px] font-extrabold text-[#4CE0B3]">
+                  Admin
+                </span>
+              </button>
+            )}
           </nav>
         </div>
       </aside>
@@ -881,6 +914,11 @@ function HomePage() {
               onGoToWizard={() => setActiveSection("wizard")}
             />
           )}
+
+          {/* =================================================================
+              SECCIÓN 5: CONFIGURACIÓN GLOBAL DE PLATAFORMA (SOLO ADMINS)
+             ================================================================= */}
+          {activeSection === "admin" && user?.isAdmin && <PanelAdminGlobal />}
         </main>
       </div>
 

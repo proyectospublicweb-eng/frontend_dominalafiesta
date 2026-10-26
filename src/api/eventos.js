@@ -46,6 +46,27 @@ export const enviarCorreoIndividualRequest = (
 export const enviarDifusionRequest = (idEvento, payload = {}) =>
   instanceAxios.post(`/eventos/${idEvento}/difusion`, payload);
 
+export const guardarConfigWhatsAppApiRequest = (idEvento, payload = {}) =>
+  instanceAxios.put(`/eventos/${idEvento}/whatsapp-config`, payload);
+
+export const listarPlantillasWhatsAppApiRequest = (idEvento, payload = {}) =>
+  instanceAxios.post(`/eventos/${idEvento}/whatsapp-plantillas`, payload);
+
+export const enviarWhatsAppIndividualApiRequest = (
+  idEvento,
+  idInvitado,
+  payload = {}
+) =>
+  instanceAxios.post(
+    `/eventos/${idEvento}/invitados/${idInvitado}/enviar-whatsapp`,
+    payload
+  );
+
+export const enviarRecordatoriosWhatsAppMasivoRequest = (
+  idEvento,
+  payload = {}
+) => instanceAxios.post(`/eventos/${idEvento}/recordatorios-whatsapp`, payload);
+
 // Logística (Mesas / Seating Chart, Cronograma, Tareas)
 export const addLogisticaRequest = (idEvento, payload) =>
   instanceAxios.post(`/eventos/${idEvento}/logistica`, payload);
@@ -77,5 +98,19 @@ export const confirmarRsvpPublicoRequest = (idEvento, payload) =>
 
 export const getCatalogosEstadosMunicipiosRequest = () =>
   instanceAxios.get("/catalogos/estados-municipios");
+
+// Administración Global de Plataforma (Solo Cuentas Administradoras)
+export const getPlatformConfigAdminRequest = () =>
+  instanceAxios.get("/admin/config");
+
+export const updatePlatformConfigAdminRequest = (payload = {}) =>
+  instanceAxios.put("/admin/config", payload);
+
+export const listarPlantillasPlatformAdminRequest = (payload = {}) =>
+  instanceAxios.post("/admin/whatsapp-plantillas", payload);
+
+export const ejecutarVerificacionRecordatoriosAdminRequest = () =>
+  instanceAxios.post("/admin/verificar-recordatorios");
+
 
 
