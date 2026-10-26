@@ -406,6 +406,7 @@ function GestorEvento({
   const [customLinkForm, setCustomLinkForm] = useState({
     etiqueta: "",
     modalidad: "Adultos + Niños",
+    tipoPase: "GENERAL",
     adultos: 0,
     ninos: 0,
   });
@@ -688,9 +689,12 @@ function GestorEvento({
   const baseShareUrl = `${window.location.origin}/${eventoSlug}/e${
     evento.idevento || "nuevo"
   }`;
-  const buildCustomInviteUrl = ({ modalidad, adultos, ninos }) => {
+  const buildCustomInviteUrl = ({ modalidad, tipoPase, adultos, ninos }) => {
     const params = new URLSearchParams();
     if (modalidad) params.set("mod", modalidad);
+    const paseClean =
+      String(tipoPase || "GENERAL").toUpperCase() === "VIP" ? "VIP" : "GENERAL";
+    params.set("tipo", paseClean);
     const numAd = Math.max(0, Number(adultos) || 0);
     const numNi = Math.max(0, Number(ninos) || 0);
     params.set("adultos", String(numAd));
@@ -712,6 +716,12 @@ function GestorEvento({
           item.estado ||
           invForm.modalidad_invitados
       );
+      const tipoPase =
+        String(parsed.tipoPase || item.fecha_limite || "GENERAL")
+          .trim()
+          .toUpperCase() === "VIP"
+          ? "VIP"
+          : "GENERAL";
       const soloAd = isSoloAdultosMod(modalidad);
       const soloNi = isSoloNinosMod(modalidad);
       const adultos = soloNi
@@ -730,9 +740,10 @@ function GestorEvento({
         iditem: item.iditem,
         etiqueta: item.titulo || "Link Personalizado",
         modalidad,
+        tipoPase,
         adultos,
         ninos,
-        url: buildCustomInviteUrl({ modalidad, adultos, ninos }),
+        url: buildCustomInviteUrl({ modalidad, tipoPase, adultos, ninos }),
       };
     });
 
@@ -745,6 +756,7 @@ function GestorEvento({
       iditem: "principal",
       etiqueta: "Link General del Evento",
       modalidad: normalizeModalidad(invForm.modalidad_invitados),
+      tipoPase: "GENERAL",
       adultos: 0,
       ninos: 0,
       url: baseShareUrl,
@@ -1444,6 +1456,7 @@ function GestorEvento({
       setCustomLinkForm((prev) => ({
         ...prev,
         etiqueta: "",
+        tipoPase: "GENERAL",
         adultos: 0,
         ninos: 0,
       }));
@@ -1472,6 +1485,10 @@ function GestorEvento({
     setCustomLinkForm({
       etiqueta: item.etiqueta || "",
       modalidad: normalizeModalidad(item.modalidad),
+      tipoPase:
+        String(item.tipoPase || "GENERAL").toUpperCase() === "VIP"
+          ? "VIP"
+          : "GENERAL",
       adultos: item.adultos ?? 0,
       ninos: item.ninos ?? 0,
     });
@@ -1483,6 +1500,7 @@ function GestorEvento({
     setCustomLinkForm((prev) => ({
       ...prev,
       etiqueta: "",
+      tipoPase: "GENERAL",
       adultos: 0,
       ninos: 0,
     }));
@@ -1510,6 +1528,10 @@ function GestorEvento({
   const executeSaveCustomLink = async () => {
     setShowConfirmCreateLinkModal(false);
     const mod = normalizeModalidad(customLinkForm.modalidad);
+    const tipoPaseFinal =
+      String(customLinkForm.tipoPase || "GENERAL").toUpperCase() === "VIP"
+        ? "VIP"
+        : "GENERAL";
     const numAdultos = isSoloNinosMod(mod)
       ? 0
       : Math.max(0, parseInt(customLinkForm.adultos, 10) || 0);
@@ -1520,6 +1542,7 @@ function GestorEvento({
     const tituloFinal = customLinkForm.etiqueta.trim();
     const detalleJson = JSON.stringify({
       modalidad: mod,
+      tipoPase: tipoPaseFinal,
       adultos: numAdultos,
       ninos: numNinos,
     });
@@ -1538,6 +1561,7 @@ function GestorEvento({
                   titulo: tituloFinal,
                   detalle: detalleJson,
                   estado: mod,
+                  fecha_limite: tipoPaseFinal,
                   capacidad_mesa: numAdultos,
                   hora_itinerario: String(numNinos),
                 }
@@ -1548,6 +1572,7 @@ function GestorEvento({
         setCustomLinkForm((prev) => ({
           ...prev,
           etiqueta: "",
+          tipoPase: "GENERAL",
           adultos: 0,
           ninos: 0,
         }));
@@ -1563,6 +1588,7 @@ function GestorEvento({
             titulo: tituloFinal,
             detalle: detalleJson,
             estado: mod,
+            fecha_limite: tipoPaseFinal,
             capacidad_mesa: numAdultos,
             hora_itinerario: String(numNinos),
           }
@@ -1577,6 +1603,7 @@ function GestorEvento({
         setCustomLinkForm((prev) => ({
           ...prev,
           etiqueta: "",
+          tipoPase: "GENERAL",
           adultos: 0,
           ninos: 0,
         }));
@@ -1594,6 +1621,7 @@ function GestorEvento({
         titulo: tituloFinal,
         detalle: detalleJson,
         estado: mod,
+        fecha_limite: tipoPaseFinal,
         capacidad_mesa: numAdultos,
         hora_itinerario: String(numNinos),
       };
@@ -1604,6 +1632,7 @@ function GestorEvento({
       setCustomLinkForm((prev) => ({
         ...prev,
         etiqueta: "",
+        tipoPase: "GENERAL",
         adultos: 0,
         ninos: 0,
       }));
@@ -1619,6 +1648,7 @@ function GestorEvento({
         titulo: tituloFinal,
         detalle: detalleJson,
         estado: mod,
+        fecha_limite: tipoPaseFinal,
         capacidad_mesa: numAdultos,
         hora_itinerario: String(numNinos),
       });
@@ -1629,6 +1659,7 @@ function GestorEvento({
       setCustomLinkForm((prev) => ({
         ...prev,
         etiqueta: "",
+        tipoPase: "GENERAL",
         adultos: 0,
         ninos: 0,
       }));
@@ -2984,7 +3015,7 @@ function GestorEvento({
                             {diasParaEvento}
                           </span>
                           <span className="text-[9px] uppercase text-gray-400">
-                            Días
+                            Días Restantes
                           </span>
                         </div>
                         <div>
@@ -2997,7 +3028,7 @@ function GestorEvento({
                         </div>
                         <div>
                           <span className="block text-base font-bold text-[#15b2f5]">
-                            VIP
+                            GENERAL
                           </span>
                           <span className="text-[9px] uppercase text-gray-400">
                             Pase
@@ -3403,7 +3434,7 @@ function GestorEvento({
                   : "border-[#E6E9F4] bg-[#F8F9FD]"
               }`}
             >
-              <div className="sm:col-span-1 lg:col-span-3">
+              <div className="sm:col-span-1 lg:col-span-2">
                 <label className="mb-1.5 block text-xs font-bold text-[#2D3047]">
                   Identificador del Link <span className="text-rose-500">*</span>
                 </label>
@@ -3431,7 +3462,26 @@ function GestorEvento({
                 )}
               </div>
 
-              <div className="sm:col-span-1 lg:col-span-3">
+              <div className="sm:col-span-1 lg:col-span-2">
+                <label className="mb-1.5 block text-xs font-bold text-[#2D3047]">
+                  Tipo de Pase
+                </label>
+                <select
+                  value={customLinkForm.tipoPase || "GENERAL"}
+                  onChange={(e) =>
+                    setCustomLinkForm((p) => ({
+                      ...p,
+                      tipoPase: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#E6E9F4] bg-white px-3.5 py-2.5 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                >
+                  <option value="GENERAL">GENERAL</option>
+                  <option value="VIP">VIP</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-1 lg:col-span-2">
                 <label className="mb-1.5 block text-xs font-bold text-[#2D3047]">
                   Modalidad de Asistencia
                 </label>
@@ -3570,6 +3620,7 @@ function GestorEvento({
                     style={{ backgroundColor: "#fde68a", color: "#111212" }}
                   >
                     <th className="px-4 py-3 text-[#111212]">Identificador del Link</th>
+                    <th className="px-4 py-3 text-[#111212]">Tipo de Pase</th>
                     <th className="px-4 py-3 text-[#111212]">Modalidad de Asistencia</th>
                     <th className="px-4 py-3 text-[#111212]">Pases Adultos</th>
                     <th className="px-4 py-3 text-[#111212]">Pases Niños</th>
@@ -3585,6 +3636,11 @@ function GestorEvento({
                         ⭐ Principal
                       </span>
                       Link General del Evento
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="inline-flex items-center rounded-lg border border-[#E6E9F4] bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#2D3047]">
+                        GENERAL
+                      </span>
                     </td>
                     <td className="px-4 py-3.5">
                       <span className="inline-flex items-center gap-1 rounded-full border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2.5 py-1 text-[11px] font-bold text-[#6C7EE1]">
@@ -3683,6 +3739,17 @@ function GestorEvento({
                       >
                         <td className="px-4 py-3.5 font-bold text-[#2D3047]">
                           {item.etiqueta}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span
+                            className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-[11px] font-extrabold ${
+                              item.tipoPase === "VIP"
+                                ? "border-amber-400/50 bg-amber-500/15 text-amber-700"
+                                : "border-[#E6E9F4] bg-white text-[#2D3047]"
+                            }`}
+                          >
+                            {item.tipoPase || "GENERAL"}
+                          </span>
                         </td>
                         <td className="px-4 py-3.5">
                           <span className="inline-flex items-center gap-1 rounded-full border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 px-2.5 py-1 text-[11px] font-bold text-[#6C7EE1]">
@@ -3812,6 +3879,14 @@ function GestorEvento({
                       </span>
                       <span className="font-extrabold text-[#2D3047]">
                         {customLinkForm.etiqueta.trim()}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-semibold text-[#8E94A9]">
+                        Tipo de Pase:
+                      </span>
+                      <span className="font-extrabold text-[#2D3047]">
+                        {customLinkForm.tipoPase || "GENERAL"}
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -4227,10 +4302,10 @@ function GestorEvento({
                     </div>
                   </div>
 
-                  {/* Campo 7: Menú / Alergias */}
+                  {/* Campo 7: Restricción alimentaria o nota para el anfitrión */}
                   <div className="group relative lg:col-span-4">
                     <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#5B617A]">
-                      <span>Menú Especial / Alergias</span>
+                      <span>Restricción alimentaria o nota para el anfitrión</span>
                       <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-[#ECEFFA] text-[10px] font-bold text-[#6C7EE1]">
                         ?
                       </span>
@@ -4815,7 +4890,7 @@ function GestorEvento({
 
                       <div className="sm:col-span-2">
                         <label className="mb-1 block font-bold text-[#2D3047]">
-                          Requerimientos (Menú Especial / Alergias)
+                          Restricción alimentaria o nota para el anfitrión
                         </label>
                         <input
                           type="text"

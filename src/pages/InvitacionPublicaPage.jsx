@@ -188,6 +188,13 @@ function InvitacionPublicaPage() {
   const [searchParams] = useSearchParams();
   const guestToken = searchParams.get("guest") || searchParams.get("pase") || "";
   const urlMod = (searchParams.get("mod") || "").trim();
+  const urlTipoPase = (
+    searchParams.get("tipo") ||
+    searchParams.get("tipo_pase") ||
+    ""
+  )
+    .trim()
+    .toUpperCase();
   const urlAdultos = Math.max(
     0,
     parseInt(searchParams.get("adultos") || "0", 10) || 0
@@ -370,6 +377,13 @@ function InvitacionPublicaPage() {
   const soloNinos = modEventoLower === "solo niños";
   const adultosLockedByLink = !soloNinos && urlAdultos > 0;
   const ninosLockedByLink = !soloAdultos && urlNinos > 0;
+  const tipoPaseEvento =
+    urlTipoPase === "VIP" || urlTipoPase === "GENERAL"
+      ? urlTipoPase
+      : invitado?.grupo &&
+        ["VIP", "GENERAL"].includes(String(invitado.grupo).trim().toUpperCase())
+      ? String(invitado.grupo).trim().toUpperCase()
+      : "GENERAL";
 
   const handleConfirmSubmit = async (e) => {
     e.preventDefault();
@@ -383,6 +397,7 @@ function InvitacionPublicaPage() {
         telefono: form.telefono.trim(),
         correo: form.correo.trim(),
         estado_rsvp: form.estado_rsvp,
+        grupo: tipoPaseEvento,
         modalidad_pase: modalidadEvento,
         adultos: soloNinos
           ? 0
@@ -466,7 +481,7 @@ function InvitacionPublicaPage() {
                   {diasParaEvento}
                 </span>
                 <span className="text-[10px] uppercase text-gray-400">
-                  Días
+                  Días Restantes
                 </span>
               </div>
               <div>
@@ -479,7 +494,7 @@ function InvitacionPublicaPage() {
               </div>
               <div>
                 <span className="block text-xl font-extrabold text-[#15B2F5]">
-                  {invitado?.grupo || "VIP"}
+                  {tipoPaseEvento}
                 </span>
                 <span className="text-[10px] uppercase text-gray-400">
                   Pase
