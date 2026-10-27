@@ -466,6 +466,7 @@ function GestorEvento({
   const [previewGuestId, setPreviewGuestId] = useState("");
   const [confirmBroadcastModal, setConfirmBroadcastModal] = useState(null);
   const [confirmDirectEmailGuest, setConfirmDirectEmailGuest] = useState(null);
+  const [guestLimitWarningModal, setGuestLimitWarningModal] = useState(null);
   const [showMetaWaConfig, setShowMetaWaConfig] = useState(false);
   const [sendingWaGuestId, setSendingWaGuestId] = useState(null);
   const [sendingWaBulk, setSendingWaBulk] = useState(false);
@@ -817,6 +818,107 @@ function GestorEvento({
   );
 
   // =========================================================================
+  // CÁLCULOS ESTADÍSTICOS Y LÍMITE DE INVITADOS PERMITIDOS (TAB A, B, C, D, E)
+  // =========================================================================
+  const isRejected = (status) =>
+    status === "Rechazado" || status === "Declinado";
+
+  const totalInvitadosCount = invitados.length;
+  const confirmadosList = invitados.filter(
+    (g) => g.estado_rsvp === "Confirmado"
+  );
+  const rechazadosList = invitados.filter((g) => isRejected(g.estado_rsvp));
+  const pendientesList = invitados.filter((g) => g.estado_rsvp === "Pendiente");
+  const invitadosEnviadosList = invitados.filter((g) =>
+    Boolean(g.invitacion_enviada)
+  );
+
+  const totalAdultos = invitados.reduce(
+    (acc, g) => acc + Number(g.adultos ?? g.pases ?? 1),
+    0
+  );
+  const totalNinos = invitados.reduce((acc, g) => acc + Number(g.ninos ?? 0), 0);
+  const totalPasesLista = invitados.reduce(
+    (acc, g) => acc + Number(g.pases || 1),
+    0
+  );
+  const pasesConfirmadosCount = confirmadosList.reduce(
+    (acc, g) => acc + Number(g.pases || 1),
+    0
+  );
+  const invitadosEnviadosCount = invitadosEnviadosList.length;
+  const pasesEnviadosCount = invitadosEnviadosList.reduce(
+    (acc, g) => acc + Number(g.pases || 1),
+    0
+  );
+  const menusEspecialesCount = invitados.filter(
+    (g) => g.nota_alimentacion && g.nota_alimentacion.trim().length > 0
+  ).length;
+
+  const limiteInvitadosPermitidos = Math.max(
+    1,
+    Number(invForm.capacidad ?? evento.capacidad ?? 100) || 100
+  );
+  const maximoActualInvitadosOPases = Math.max(
+    totalPasesLista,
+    totalInvitadosCount,
+    pasesEnviadosCount,
+    invitadosEnviadosCount
+  );
+  const isGuestLimitExceeded =
+    maximoActualInvitadosOPases > limiteInvitadosPermitidos;
+  const excedenteInvitadosActual = Math.max(
+    0,
+    maximoActualInvitadosOPases - limiteInvitadosPermitidos
+  );
+
+  const validateAndWarnBeforeShare = ({
+    canal = "WhatsApp / Correo",
+    destinatarioLabel = "Invitado",
+    proyectadoInvitados = totalInvitadosCount,
+    proyectadoPases = totalPasesLista,
+    enviadosDespuesInvitados = invitadosEnviadosCount,
+    enviadosDespuesPases = pasesEnviadosCount,
+    onProceed,
+  }) => {
+    const maxEvaluado = Math.max(
+      proyectadoPases,
+      proyectadoInvitados,
+      enviadosDespuesPases,
+      enviadosDespuesInvitados
+    );
+    if (maxEvaluado > limiteInvitadosPermitidos) {
+      const excedente = maxEvaluado - limiteInvitadosPermitidos;
+      showNotice(
+        `⚠️ Advertencia: Se ha sobrepasado el límite de ${limiteInvitadosPermitidos} invitados permitidos en la configuración del evento (+${excedente} adicional${
+          excedente === 1 ? "" : "es"
+        }).`
+      );
+      setGuestLimitWarningModal({
+        canal,
+        destinatarioLabel,
+        limitePermitido: limiteInvitadosPermitidos,
+        totalInvitadosLista: totalInvitadosCount,
+        totalPasesLista,
+        invitadosEnviadosActuales: invitadosEnviadosCount,
+        pasesEnviadosActuales: pasesEnviadosCount,
+        proyectadoInvitados: Math.max(
+          proyectadoInvitados,
+          enviadosDespuesInvitados
+        ),
+        proyectadoPases: Math.max(proyectadoPases, enviadosDespuesPases),
+        excedente,
+        onProceed,
+      });
+      return false;
+    }
+    if (typeof onProceed === "function") {
+      onProceed();
+    }
+    return true;
+  };
+
+  // =========================================================================
   // HANDLERS: EVENTO / INVITACIÓN / AJUSTES
   // =========================================================================
   const handleSaveEvento = async (e, customPatch = null) => {
@@ -830,6 +932,10 @@ function GestorEvento({
       !rawPayload.estado_evento || rawPayload.estado_evento === "Ningúno";
     const payload = {
       ...rawPayload,
+      capacidad: Math.max(
+        1,
+        Number(rawPayload.capacidad ?? evento?.capacidad ?? 100) || 100
+      ),
       estado_evento: esNinguno ? "Ningúno" : rawPayload.estado_evento,
       municipio: esNinguno ? "Ningúno" : rawPayload.municipio || "Ningúno",
       mesa_regalos_tienda: String(
@@ -1024,7 +1130,18 @@ function GestorEvento({
         nota_alimentacion: "",
       });
       onEventoUpdated();
-      showNotice("✓ Invitado agregado a la lista.");
+      const nuevoTotalPases = totalPasesLista + totalPases;
+      const nuevoTotalInvitados = totalInvitadosCount + 1;
+      if (
+        nuevoTotalPases > limiteInvitadosPermitidos ||
+        nuevoTotalInvitados > limiteInvitadosPermitidos
+      ) {
+        showNotice(
+          `⚠️ Invitado agregado. Atención: Tu lista (${nuevoTotalInvitados} invitados / ${nuevoTotalPases} pases) supera el límite configurado de ${limiteInvitadosPermitidos} invitados permitidos.`
+        );
+      } else {
+        showNotice("✓ Invitado agregado a la lista.");
+      }
     } catch {
       showNotice("Error al agregar invitado");
     }
@@ -1043,9 +1160,23 @@ function GestorEvento({
       setCsvText("");
       setAddMode("individual");
       onEventoUpdated();
-      showNotice(
-        `✓ Se importaron ${csvPreviewRows.length} invitados correctamente.`
+      const importedList = Array.isArray(data) ? data : [];
+      const importedPases = importedList.reduce(
+        (acc, g) => acc + Number(g.pases || 1),
+        0
       );
+      if (
+        importedPases > limiteInvitadosPermitidos ||
+        importedList.length > limiteInvitadosPermitidos
+      ) {
+        showNotice(
+          `⚠️ Se importaron ${csvPreviewRows.length} invitados. Atención: El total (${importedList.length} invitados / ${importedPases} pases) supera el límite de ${limiteInvitadosPermitidos} permitidos.`
+        );
+      } else {
+        showNotice(
+          `✓ Se importaron ${csvPreviewRows.length} invitados correctamente.`
+        );
+      }
     } catch {
       showNotice("Error al importar invitados desde CSV/Excel");
     }
@@ -1247,7 +1378,7 @@ function GestorEvento({
 </html>`;
   };
 
-  const handleSendDirectEmail = async (guest) => {
+  const executeSendDirectEmail = async (guest) => {
     const emailDestino = String(guest.correo || "").trim();
     if (!emailDestino || !emailDestino.includes("@")) {
       showNotice(
@@ -1299,7 +1430,27 @@ function GestorEvento({
     }
   };
 
-  const handleSendWhatsApp = async (guest) => {
+  const handleRequestDirectEmail = (guest) => {
+    const guestPases = Math.max(1, Number(guest?.pases || 1));
+    const isNewSend = !guest?.invitacion_enviada;
+    validateAndWarnBeforeShare({
+      canal: "Correo Electrónico",
+      destinatarioLabel: `${guest.nombre} (${
+        guest.correo || "Sin correo"
+      } • ${guestPases} pase${guestPases === 1 ? "" : "s"})`,
+      proyectadoInvitados: totalInvitadosCount,
+      proyectadoPases: totalPasesLista,
+      enviadosDespuesInvitados: invitadosEnviadosCount + (isNewSend ? 1 : 0),
+      enviadosDespuesPases: pasesEnviadosCount + (isNewSend ? guestPases : 0),
+      onProceed: () => setConfirmDirectEmailGuest(guest),
+    });
+  };
+
+  const handleSendDirectEmail = async (guest) => {
+    await executeSendDirectEmail(guest);
+  };
+
+  const executeSendWhatsApp = async (guest) => {
     const text = formatGuestMessage(
       whatsappMsg,
       guest,
@@ -1316,7 +1467,25 @@ function GestorEvento({
     });
   };
 
-  const handleBroadcastMasivo = async ({
+  const handleSendWhatsApp = (guest) => {
+    const guestPases = Math.max(1, Number(guest?.pases || 1));
+    const isNewSend = !guest?.invitacion_enviada;
+    validateAndWarnBeforeShare({
+      canal: "WhatsApp Directo",
+      destinatarioLabel: `${guest.nombre} (${
+        guest.telefono || "Enlace directo"
+      } • ${guestPases} pase${guestPases === 1 ? "" : "s"})`,
+      proyectadoInvitados: totalInvitadosCount,
+      proyectadoPases: totalPasesLista,
+      enviadosDespuesInvitados: invitadosEnviadosCount + (isNewSend ? 1 : 0),
+      enviadosDespuesPases: pasesEnviadosCount + (isNewSend ? guestPases : 0),
+      onProceed: () => {
+        executeSendWhatsApp(guest);
+      },
+    });
+  };
+
+  const executeBroadcastMasivo = async ({
     soloPendientes = false,
     canal = broadcastChannel,
     estadoFiltro = null,
@@ -1383,6 +1552,31 @@ function GestorEvento({
         err.response?.data?.message || "Error al procesar el envío masivo"
       );
     }
+  };
+
+  const handleRequestBroadcastMasivo = (payload) => {
+    const targetList = payload?.soloPendientes
+      ? invitados.filter((g) => !g.invitacion_enviada)
+      : invitados;
+    const targetPases = targetList.reduce(
+      (acc, g) => acc + Number(g.pases || 1),
+      0
+    );
+    validateAndWarnBeforeShare({
+      canal: `Difusión Masiva (${payload?.canal || broadcastChannel})`,
+      destinatarioLabel: payload?.soloPendientes
+        ? `${targetList.length} invitado(s) sin envío previo (${targetPases} pases)`
+        : `Todos los invitados (${invitados.length} invitados • ${totalPasesLista} pases)`,
+      proyectadoInvitados: totalInvitadosCount,
+      proyectadoPases: totalPasesLista,
+      enviadosDespuesInvitados: totalInvitadosCount,
+      enviadosDespuesPases: totalPasesLista,
+      onProceed: () => setConfirmBroadcastModal(payload),
+    });
+  };
+
+  const handleBroadcastMasivo = async (payload) => {
+    await executeBroadcastMasivo(payload);
   };
 
   const handleSaveMetaWaConfig = async () => {
@@ -1453,7 +1647,7 @@ function GestorEvento({
     }
   };
 
-  const handleSendSilentWhatsAppReminder = async (guest) => {
+  const executeSendSilentWhatsAppReminder = async (guest) => {
     if (!metaWaForm.configured) {
       const text = formatGuestMessage(invForm.recordatorio_mensaje, guest);
       const cleanPhone = String(guest.telefono || "").replace(/\D/g, "");
@@ -1505,14 +1699,25 @@ function GestorEvento({
     }
   };
 
-  const handleTriggerBulkReminders = async () => {
-    if (pendientesList.length === 0) {
-      showNotice(
-        "ℹ️ Actualmente hay 0 invitados en estado 'Pendiente'. Solo se envía a quienes aún no han confirmado."
-      );
-      return;
-    }
+  const handleSendSilentWhatsAppReminder = (guest) => {
+    const guestPases = Math.max(1, Number(guest?.pases || 1));
+    const isNewSend = !guest?.invitacion_enviada;
+    validateAndWarnBeforeShare({
+      canal: "Recordatorio por WhatsApp",
+      destinatarioLabel: `${guest.nombre} (${
+        guest.telefono || "WhatsApp"
+      } • ${guestPases} pase${guestPases === 1 ? "" : "s"})`,
+      proyectadoInvitados: totalInvitadosCount,
+      proyectadoPases: totalPasesLista,
+      enviadosDespuesInvitados: invitadosEnviadosCount + (isNewSend ? 1 : 0),
+      enviadosDespuesPases: pasesEnviadosCount + (isNewSend ? guestPases : 0),
+      onProceed: () => {
+        executeSendSilentWhatsAppReminder(guest);
+      },
+    });
+  };
 
+  const executeTriggerBulkReminders = async () => {
     if (metaWaForm.configured) {
       try {
         setSendingWaBulk(true);
@@ -1575,10 +1780,34 @@ function GestorEvento({
         : `https://wa.me/?text=${encodeURIComponent(text)}`;
       window.open(waUrl, "_blank", "noopener,noreferrer");
     }
-    await handleBroadcastMasivo({
+    await executeBroadcastMasivo({
       soloPendientes: true,
       canal: "Recordatorio Automático",
       estadoFiltro: "Pendiente",
+    });
+  };
+
+  const handleTriggerBulkReminders = () => {
+    if (pendientesList.length === 0) {
+      showNotice(
+        "ℹ️ Actualmente hay 0 invitados en estado 'Pendiente'. Solo se envía a quienes aún no han confirmado."
+      );
+      return;
+    }
+    const pendingPases = pendientesList.reduce(
+      (acc, g) => acc + Number(g.pases || 1),
+      0
+    );
+    validateAndWarnBeforeShare({
+      canal: "Recordatorios Masivos (WhatsApp / Correo)",
+      destinatarioLabel: `${pendientesList.length} invitado(s) en estado Pendiente (${pendingPases} pases)`,
+      proyectadoInvitados: totalInvitadosCount,
+      proyectadoPases: totalPasesLista,
+      enviadosDespuesInvitados: totalInvitadosCount,
+      enviadosDespuesPases: totalPasesLista,
+      onProceed: () => {
+        executeTriggerBulkReminders();
+      },
     });
   };
 
@@ -1898,7 +2127,7 @@ function GestorEvento({
     }
   };
 
-  const handleShareCustomLink = async (linkItem) => {
+  const executeShareCustomLink = async (linkItem) => {
     const shareText = `¡Hola! 🎉 Estás cordialmente invitado(a) a ${
       evento.nombre || "nuestro evento"
     } el día ${formatDateInput(evento.fecha_evento)} a las ${
@@ -1925,7 +2154,7 @@ function GestorEvento({
     window.open(waUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleWhatsAppCustomLink = (linkItem) => {
+  const executeWhatsAppCustomLink = (linkItem) => {
     const shareText = `¡Hola! 🎉 Estás cordialmente invitado(a) a ${
       evento.nombre || "nuestro evento"
     } el día ${formatDateInput(evento.fecha_evento)} a las ${
@@ -1937,6 +2166,60 @@ function GestorEvento({
     }): ${linkItem.url}`;
     const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
     window.open(waUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleShareCustomLink = (linkItem) => {
+    const linkPases = Math.max(
+      1,
+      Number(linkItem?.adultos || 0) + Number(linkItem?.ninos || 0)
+    );
+    validateAndWarnBeforeShare({
+      canal: "Compartir Link de Invitación",
+      destinatarioLabel: `${linkItem?.etiqueta || "Link de Invitación"} (${
+        linkItem?.modalidad || "General"
+      } • ${linkPases} pase${linkPases === 1 ? "" : "s"})`,
+      proyectadoInvitados: Math.max(
+        totalInvitadosCount,
+        invitadosEnviadosCount + 1
+      ),
+      proyectadoPases: Math.max(
+        totalPasesLista,
+        pasesEnviadosCount + linkPases,
+        linkPases
+      ),
+      enviadosDespuesInvitados: invitadosEnviadosCount + 1,
+      enviadosDespuesPases: pasesEnviadosCount + linkPases,
+      onProceed: () => {
+        executeShareCustomLink(linkItem);
+      },
+    });
+  };
+
+  const handleWhatsAppCustomLink = (linkItem) => {
+    const linkPases = Math.max(
+      1,
+      Number(linkItem?.adultos || 0) + Number(linkItem?.ninos || 0)
+    );
+    validateAndWarnBeforeShare({
+      canal: "WhatsApp (Link de Invitación)",
+      destinatarioLabel: `${linkItem?.etiqueta || "Link de Invitación"} (${
+        linkItem?.modalidad || "General"
+      } • ${linkPases} pase${linkPases === 1 ? "" : "s"})`,
+      proyectadoInvitados: Math.max(
+        totalInvitadosCount,
+        invitadosEnviadosCount + 1
+      ),
+      proyectadoPases: Math.max(
+        totalPasesLista,
+        pasesEnviadosCount + linkPases,
+        linkPases
+      ),
+      enviadosDespuesInvitados: invitadosEnviadosCount + 1,
+      enviadosDespuesPases: pasesEnviadosCount + linkPases,
+      onProceed: () => {
+        executeWhatsAppCustomLink(linkItem);
+      },
+    });
   };
 
   // =========================================================================
@@ -2147,35 +2430,8 @@ function GestorEvento({
   };
 
   // =========================================================================
-  // CÁLCULOS ESTADÍSTICOS (TAB B, D, E)
+  // FILTROS DE TABLA DE INVITADOS (TAB B, D, E)
   // =========================================================================
-  const isRejected = (status) =>
-    status === "Rechazado" || status === "Declinado";
-
-  const totalInvitadosCount = invitados.length;
-  const confirmadosList = invitados.filter(
-    (g) => g.estado_rsvp === "Confirmado"
-  );
-  const rechazadosList = invitados.filter((g) => isRejected(g.estado_rsvp));
-  const pendientesList = invitados.filter((g) => g.estado_rsvp === "Pendiente");
-
-  const totalAdultos = invitados.reduce(
-    (acc, g) => acc + Number(g.adultos ?? g.pases ?? 1),
-    0
-  );
-  const totalNinos = invitados.reduce((acc, g) => acc + Number(g.ninos ?? 0), 0);
-  const totalPasesLista = invitados.reduce(
-    (acc, g) => acc + Number(g.pases || 1),
-    0
-  );
-  const pasesConfirmadosCount = confirmadosList.reduce(
-    (acc, g) => acc + Number(g.pases || 1),
-    0
-  );
-  const menusEspecialesCount = invitados.filter(
-    (g) => g.nota_alimentacion && g.nota_alimentacion.trim().length > 0
-  ).length;
-
   const filteredGuests = invitados.filter((g) => {
     const matchStatus =
       rsvpFilter === "Todos"
@@ -2265,6 +2521,139 @@ function GestorEvento({
         </div>
       )}
 
+      {/* Modal de Advertencia cuando se sobrepasa el Número de Invitados Permitidos al compartir por WhatsApp o Correo */}
+      {guestLimitWarningModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F1A45]/70 p-4 backdrop-blur-xs">
+          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl border-2 border-amber-400 bg-white p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-3 border-b border-amber-200 pb-3.5">
+              <div className="flex items-start gap-2.5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-xl">
+                  ⚠️
+                </span>
+                <div>
+                  <span className="inline-block rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-800">
+                    ADVERTENCIA DE CAPACIDAD CONFIGURADA
+                  </span>
+                  <h3 className="mt-1 text-base font-extrabold text-[#2D3047] sm:text-lg">
+                    Has sobrepasado el número de invitados permitidos
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGuestLimitWarningModal(null)}
+                className="cursor-pointer rounded-lg border border-[#E6E9F4] px-2.5 py-1 text-xs font-bold text-[#8E94A9] hover:border-rose-400 hover:text-rose-500"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50/80 p-3.5 text-xs text-amber-950">
+              <p className="font-bold leading-relaxed">
+                Estás intentando compartir invitaciones virtuales por{" "}
+                <span className="underline decoration-amber-600">
+                  {guestLimitWarningModal.canal}
+                </span>
+                , pero el número de invitados / pases registrados o enviados{" "}
+                <strong className="text-rose-700">
+                  supera el límite de {guestLimitWarningModal.limitePermitido}{" "}
+                  invitados permitidos
+                </strong>{" "}
+                especificado en la configuración del evento.
+              </p>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2.5 text-xs sm:grid-cols-3">
+              <div className="rounded-xl border border-[#E6E9F4] bg-[#F8F9FD] p-3">
+                <span className="block text-[10px] font-bold uppercase text-[#8E94A9]">
+                  Límite Configurado
+                </span>
+                <p className="mt-1 text-lg font-extrabold text-[#2D3047]">
+                  {guestLimitWarningModal.limitePermitido}
+                </p>
+                <span className="text-[10px] text-[#5B617A]">
+                  invitados permitidos
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-[#E6E9F4] bg-[#F8F9FD] p-3">
+                <span className="block text-[10px] font-bold uppercase text-[#8E94A9]">
+                  Actual / Proyectado
+                </span>
+                <p className="mt-1 text-lg font-extrabold text-amber-700">
+                  {guestLimitWarningModal.proyectadoInvitados} inv. /{" "}
+                  {guestLimitWarningModal.proyectadoPases} pases
+                </p>
+                <span className="text-[10px] text-[#5B617A]">
+                  Enviados:{" "}
+                  {guestLimitWarningModal.invitadosEnviadosActuales} (
+                  {guestLimitWarningModal.pasesEnviadosActuales} pases)
+                </span>
+              </div>
+
+              <div className="col-span-2 rounded-xl border border-rose-200 bg-rose-50 p-3 sm:col-span-1">
+                <span className="block text-[10px] font-bold uppercase text-rose-700">
+                  Exceso Detectado
+                </span>
+                <p className="mt-1 text-lg font-extrabold text-rose-600">
+                  +{guestLimitWarningModal.excedente}
+                </p>
+                <span className="text-[10px] font-semibold text-rose-700">
+                  sobre el límite
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-[#E6E9F4] bg-[#F8F9FD] px-3.5 py-2.5 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold text-[#8E94A9]">
+                  Destinatario / Acción:
+                </span>
+                <span className="font-extrabold text-[#2D3047]">
+                  {guestLimitWarningModal.destinatarioLabel}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-col-reverse items-stretch justify-between gap-2.5 border-t border-[#E6E9F4] pt-4 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setGuestLimitWarningModal(null);
+                  onChangeSubTab("settings");
+                }}
+                className="cursor-pointer rounded-xl border border-[#6C7EE1]/40 bg-[#6C7EE1]/10 px-3.5 py-2.5 text-xs font-extrabold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
+              >
+                ⚙️ Ajustar Límite en Configuración
+              </button>
+
+              <div className="flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={() => setGuestLimitWarningModal(null)}
+                  className="cursor-pointer rounded-xl border border-[#E6E9F4] bg-white px-4 py-2.5 text-xs font-bold text-[#8E94A9] transition hover:border-[#2D3047] hover:text-[#2D3047]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const proceedFn = guestLimitWarningModal.onProceed;
+                    setGuestLimitWarningModal(null);
+                    if (typeof proceedFn === "function") {
+                      proceedFn();
+                    }
+                  }}
+                  className="cursor-pointer rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-black shadow-sm transition hover:bg-amber-400"
+                >
+                  ⚠️ Compartir de Todos Modos
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* =====================================================================
           TARJETA SUPERIOR UNIFICADA CON FONDO BLANCO
          ===================================================================== */}
@@ -2333,15 +2722,29 @@ function GestorEvento({
             <div>
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-xl font-extrabold tracking-tight text-[#2D3047]">
-                  {pasesConfirmadosCount} / {evento.capacidad}
+                  {pasesConfirmadosCount} / {limiteInvitadosPermitidos}
                 </span>
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#6C7EE1]">
                   Confirmación de Asistencia
                 </h3>
+                {isGuestLimitExceeded && (
+                  <button
+                    type="button"
+                    onClick={() => onChangeSubTab("settings")}
+                    className="cursor-pointer rounded-full border border-amber-400 bg-amber-100 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-800 transition hover:bg-amber-200"
+                    title="El número de invitados/pases supera el límite configurado"
+                  >
+                    ⚠️ +{excedenteInvitadosActual} sobre el límite
+                  </button>
+                )}
               </div>
               <p className="mt-1 text-xs text-[#5B617A]">
                 <strong className="text-[#2D3047]">{pendientesList.length}</strong>{" "}
-                invitaciones pendientes por confirmar
+                invitaciones pendientes por confirmar •{" "}
+                <span className="font-semibold text-[#2D3047]">
+                  En lista ahora: {totalInvitadosCount} invitados registrados /{" "}
+                  {totalPasesLista} lugares
+                </span>
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -2654,6 +3057,42 @@ function GestorEvento({
                   }
                   className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="mb-1 flex flex-wrap items-center justify-between gap-1 text-xs font-semibold text-[#0d23ad]">
+                  <span style={{ color: "#0d23ad" }}>
+                    👥 Número de Invitados Permitidos (Límite del Evento)
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                      isGuestLimitExceeded
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-emerald-100 text-emerald-700"
+                    }`}
+                  >
+                    {isGuestLimitExceeded
+                      ? `⚠️ Superado: ${totalInvitadosCount} invitados registrados / ${totalPasesLista} lugares`
+                      : `✓ En lista ahora: ${totalInvitadosCount} invitados registrados / ${totalPasesLista} lugares`}
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={invForm.capacidad ?? evento.capacidad ?? 100}
+                  onChange={(e) =>
+                    setInvForm((prev) => ({
+                      ...prev,
+                      capacidad: e.target.value,
+                    }))
+                  }
+                  placeholder="Ej. 100"
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-xs font-bold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                />
+                <span className="mt-1 block text-[11px] text-[#8E94A9]">
+                  Si al compartir las invitaciones virtuales por WhatsApp o Correo se sobrepasa este número, el sistema mostrará una advertencia.
+                </span>
               </div>
 
               <div className="sm:col-span-2">
@@ -4187,6 +4626,39 @@ function GestorEvento({
          ===================================================================== */}
       {currentTab === "guests" && (
         <div className="space-y-6">
+          {/* Banner de estado / advertencia del límite de invitados permitidos */}
+          {isGuestLimitExceeded && (
+            <div className="flex flex-col justify-between gap-3 rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-xs text-amber-950 shadow-xs sm:flex-row sm:items-center">
+              <div className="flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-200 text-base">
+                  ⚠️
+                </span>
+                <div>
+                  <p className="font-extrabold text-[#2D3047]">
+                    Límite de Invitados Permitidos Superado (+
+                    {excedenteInvitadosActual} adicional
+                    {excedenteInvitadosActual === 1 ? "" : "es"})
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-amber-900">
+                    Tienes <strong>{totalInvitadosCount} invitados</strong> (
+                    <strong>{totalPasesLista} pases</strong>) frente al máximo
+                    configurado de{" "}
+                    <strong>{limiteInvitadosPermitidos} permitidos</strong>. Al
+                    compartir invitaciones virtuales por WhatsApp o Correo se
+                    mostrará una advertencia.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onChangeSubTab("settings")}
+                className="shrink-0 cursor-pointer rounded-xl bg-[#2D3047] px-3.5 py-2 text-[11px] font-extrabold text-white transition hover:bg-[#1E2030]"
+              >
+                ⚙️ Ajustar Límite ({limiteInvitadosPermitidos})
+              </button>
+            </div>
+          )}
+
           {/* Resumen Estadístico Superior */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-4">
@@ -5171,6 +5643,69 @@ function GestorEvento({
          ===================================================================== */}
       {currentTab === "broadcast" && (
         <div className="space-y-6">
+          {/* Barra de control / advertencia de Número de Invitados Permitidos al compartir */}
+          <div
+            className={`flex flex-col justify-between gap-3 rounded-2xl border p-4 text-xs shadow-xs sm:flex-row sm:items-center ${
+              isGuestLimitExceeded
+                ? "border-2 border-amber-400 bg-amber-50 text-amber-950"
+                : "border-[#E6E9F4] bg-white text-[#2D3047]"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base ${
+                  isGuestLimitExceeded
+                    ? "bg-amber-200 text-amber-900"
+                    : "bg-[#6C7EE1]/15 text-[#6C7EE1]"
+                }`}
+              >
+                {isGuestLimitExceeded ? "⚠️" : "👥"}
+              </span>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="font-extrabold text-[#2D3047]">
+                    {isGuestLimitExceeded
+                      ? "Advertencia: Se ha superado el número de invitados permitidos en la configuración"
+                      : "Control de Invitados Permitidos para Compartir por WhatsApp / Correo"}
+                  </h4>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
+                      isGuestLimitExceeded
+                        ? "bg-rose-600 text-white"
+                        : "bg-emerald-100 text-emerald-700"
+                    }`}
+                  >
+                    {isGuestLimitExceeded
+                      ? `⚠️ +${excedenteInvitadosActual} sobre el límite`
+                      : "✓ Dentro del límite"}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-[11px] text-[#5B617A]">
+                  Límite configurado:{" "}
+                  <strong className="text-[#2D3047]">
+                    {limiteInvitadosPermitidos} invitados
+                  </strong>{" "}
+                  • En lista:{" "}
+                  <strong className="text-[#2D3047]">
+                    {totalInvitadosCount} invitados ({totalPasesLista} pases)
+                  </strong>{" "}
+                  • Enviados:{" "}
+                  <strong className="text-[#6C7EE1]">
+                    {invitadosEnviadosCount} ({pasesEnviadosCount} pases)
+                  </strong>
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onChangeSubTab("settings")}
+              className="shrink-0 cursor-pointer rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-[11px] font-extrabold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+            >
+              ⚙️ Configurar Límite ({limiteInvitadosPermitidos})
+            </button>
+          </div>
+
           {/* 1. Enlace de Invitación del Evento */}
           <div className="rounded-2xl border border-[#E6E9F4] bg-white shadow-xs p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -5588,7 +6123,7 @@ function GestorEvento({
                     </div>
                     <button
                       type="button"
-                      onClick={() => setConfirmDirectEmailGuest(g)}
+                      onClick={() => handleRequestDirectEmail(g)}
                       className="w-full shrink-0 cursor-pointer rounded-xl bg-[#6C7EE1] px-3.5 py-2 text-center text-[11px] font-bold text-white transition hover:bg-[#5A6CD0] sm:w-auto"
                     >
                       ✉️ Enviar Correo
@@ -5683,7 +6218,7 @@ function GestorEvento({
                 <button
                   type="button"
                   onClick={() =>
-                    setConfirmBroadcastModal({
+                    handleRequestBroadcastMasivo({
                       soloPendientes: true,
                       canal: broadcastChannel,
                     })
@@ -5695,7 +6230,7 @@ function GestorEvento({
                 <button
                   type="button"
                   onClick={() =>
-                    setConfirmBroadcastModal({
+                    handleRequestBroadcastMasivo({
                       soloPendientes: false,
                       canal: broadcastChannel,
                     })
@@ -6160,24 +6695,51 @@ function GestorEvento({
                         </button>
                         <button
                           type="button"
-                          onClick={async () => {
-                            const text = formatGuestMessage(
-                              invForm.recordatorio_mensaje,
-                              g
+                          onClick={() => {
+                            const guestPases = Math.max(
+                              1,
+                              Number(g?.pases || 1)
                             );
-                            const cleanPhone = String(g.telefono || "").replace(
-                              /\D/g,
-                              ""
-                            );
-                            const waUrl = cleanPhone
-                              ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-                                  text
-                                )}`
-                              : `https://wa.me/?text=${encodeURIComponent(text)}`;
-                            window.open(waUrl, "_blank", "noopener,noreferrer");
-                            await handleUpdateGuest(g.idinvitado, {
-                              invitacion_enviada: true,
-                              canal_ultimo_envio: "Recordatorio WhatsApp",
+                            const isNewSend = !g?.invitacion_enviada;
+                            validateAndWarnBeforeShare({
+                              canal: "Recordatorio Manual por WhatsApp (wa.me)",
+                              destinatarioLabel: `${g.nombre} (${
+                                g.telefono || "WhatsApp"
+                              } • ${guestPases} pase${
+                                guestPases === 1 ? "" : "s"
+                              })`,
+                              proyectadoInvitados: totalInvitadosCount,
+                              proyectadoPases: totalPasesLista,
+                              enviadosDespuesInvitados:
+                                invitadosEnviadosCount + (isNewSend ? 1 : 0),
+                              enviadosDespuesPases:
+                                pasesEnviadosCount +
+                                (isNewSend ? guestPases : 0),
+                              onProceed: async () => {
+                                const text = formatGuestMessage(
+                                  invForm.recordatorio_mensaje,
+                                  g
+                                );
+                                const cleanPhone = String(
+                                  g.telefono || ""
+                                ).replace(/\D/g, "");
+                                const waUrl = cleanPhone
+                                  ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                                      text
+                                    )}`
+                                  : `https://wa.me/?text=${encodeURIComponent(
+                                      text
+                                    )}`;
+                                window.open(
+                                  waUrl,
+                                  "_blank",
+                                  "noopener,noreferrer"
+                                );
+                                await handleUpdateGuest(g.idinvitado, {
+                                  invitacion_enviada: true,
+                                  canal_ultimo_envio: "Recordatorio WhatsApp",
+                                });
+                              },
                             });
                           }}
                           title="Abrir enlace wa.me manualmente"
@@ -6758,8 +7320,149 @@ function GestorEvento({
          ===================================================================== */}
       {currentTab === "settings" && (
         <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-12">
-          {/* Columna Izquierda (7 cols): Duplicar, Pausar RSVP, Cambiar Propietario, Eliminar */}
+          {/* Columna Izquierda (7 cols): Límite de Invitados, Duplicar, Pausar RSVP, Cambiar Propietario, Eliminar */}
           <div className="space-y-6 lg:col-span-7">
+            {/* Tarjeta Principal: Configuración del Número de Invitados Permitidos */}
+            <div className="rounded-2xl border border-[#6C7EE1]/35 bg-white p-4 shadow-xs sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#6C7EE1]">
+                    CONFIGURACIÓN DE CAPACIDAD Y ENVÍOS
+                  </span>
+                  <h3
+                    style={{ color: "#0d23ad" }}
+                    className="font-display mt-0.5 text-xl font-bold uppercase tracking-wide text-[#0d23ad] sm:text-2xl"
+                  >
+                    👥 Número de Invitados Permitidos
+                  </h3>
+                </div>
+                <span
+                  className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${
+                    isGuestLimitExceeded
+                      ? "bg-amber-100 text-amber-800 ring-1 ring-amber-400"
+                      : "bg-emerald-100 text-emerald-700"
+                  }`}
+                >
+                  {isGuestLimitExceeded
+                    ? `⚠️ Límite superado (+${excedenteInvitadosActual})`
+                    : "✓ Dentro del límite configurado"}
+                </span>
+              </div>
+
+              <p className="mt-1.5 text-xs text-[#8E94A9]">
+                Especifica el número máximo de invitados permitidos para tu
+                evento. Si al compartir las invitaciones virtuales por{" "}
+                <strong>WhatsApp</strong> o <strong>Correo Electrónico</strong>{" "}
+                se sobrepasa esta cantidad, el sistema mostrará una advertencia.
+              </p>
+
+              <div className="mt-4 rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4">
+                <label className="mb-1.5 block text-xs font-extrabold text-[#2D3047]">
+                  Número de Invitados Permitidos en este Evento *
+                </label>
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                  <input
+                    type="number"
+                    min={1}
+                    max={10000}
+                    value={invForm.capacidad ?? evento.capacidad ?? 100}
+                    onChange={(e) =>
+                      setInvForm((prev) => ({
+                        ...prev,
+                        capacidad: e.target.value,
+                      }))
+                    }
+                    placeholder="Ej. 100"
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-4 py-2.5 text-sm font-extrabold text-[#2D3047] shadow-2xs outline-none transition focus:border-[#6C7EE1] sm:max-w-[220px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const cleanCapacidad = Math.max(
+                        1,
+                        Number(invForm.capacidad) || 1
+                      );
+                      setInvForm((prev) => ({
+                        ...prev,
+                        capacidad: cleanCapacidad,
+                      }));
+                      await handleSaveEvento(null, {
+                        capacidad: cleanCapacidad,
+                      });
+                    }}
+                    className="cursor-pointer rounded-xl bg-[#6C7EE1] px-5 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-xs transition hover:bg-[#5A6CD0]"
+                  >
+                    💾 Guardar Límite de Invitados
+                  </button>
+                </div>
+
+                {/* Resumen comparativo en vivo */}
+                <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                  <div className="rounded-xl border border-[#E6E9F4] bg-white p-3">
+                    <span className="block text-[10px] font-bold uppercase text-[#8E94A9]">
+                      Permitidos (Configuración)
+                    </span>
+                    <p className="mt-0.5 text-lg font-extrabold text-[#2D3047]">
+                      {limiteInvitadosPermitidos}{" "}
+                      <span className="text-xs font-semibold text-[#8E94A9]">
+                        máx.
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-[#E6E9F4] bg-white p-3">
+                    <span className="block text-[10px] font-bold uppercase text-[#8E94A9]">
+                      En Lista Ahora
+                    </span>
+                    <p
+                      className={`mt-0.5 text-xs font-extrabold ${
+                        totalPasesLista > limiteInvitadosPermitidos ||
+                        totalInvitadosCount > limiteInvitadosPermitidos
+                          ? "text-amber-600"
+                          : "text-[#2D3047]"
+                      }`}
+                    >
+                      {totalInvitadosCount} invitados registrados /{" "}
+                      <span className="font-semibold text-[#8E94A9]">
+                        {totalPasesLista} lugares
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-[#E6E9F4] bg-white p-3">
+                    <span className="block text-[10px] font-bold uppercase text-[#8E94A9]">
+                      Enviados (WhatsApp/Correo)
+                    </span>
+                    <p
+                      className={`mt-0.5 text-lg font-extrabold ${
+                        pasesEnviadosCount > limiteInvitadosPermitidos ||
+                        invitadosEnviadosCount > limiteInvitadosPermitidos
+                          ? "text-rose-600"
+                          : "text-[#18A97E]"
+                      }`}
+                    >
+                      {invitadosEnviadosCount} env.{" "}
+                      <span className="text-xs font-semibold text-[#8E94A9]">
+                        ({pasesEnviadosCount} pases)
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {isGuestLimitExceeded && (
+                  <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-[11px] font-semibold text-amber-900">
+                    ⚠️ Actualmente el número de invitados/pases supera el límite
+                    configurado en{" "}
+                    <strong>
+                      +{excedenteInvitadosActual} invitado(s)/pase(s)
+                    </strong>
+                    . Cuando compartas invitaciones por WhatsApp o Correo se
+                    mostrará una advertencia.
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6">
               <h3 className="font-display text-xl font-bold uppercase tracking-wide text-[#2D3047] sm:text-2xl">
                 ⚙️ Acciones de Control del Evento

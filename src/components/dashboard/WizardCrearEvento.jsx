@@ -510,16 +510,22 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
-                  Capacidad Estimada (Invitados)
+                <label
+                  style={{ color: "#0d23ad" }}
+                  className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#0d23ad]"
+                >
+                  👥 Número de Invitados Permitidos (Capacidad del Evento)
                 </label>
                 <input
                   type="number"
                   min="1"
                   value={form.capacidad}
                   onChange={(e) => updateField("capacidad", e.target.value)}
-                  className="w-full rounded-xl border border-[#E2E5F1] bg-[#F7F8FC] px-4 py-3 text-sm text-[#2D3047] outline-none transition focus:border-[#6C7EE1] focus:bg-white"
+                  className="w-full rounded-xl border border-[#E2E5F1] bg-[#F7F8FC] px-4 py-3 text-sm font-bold text-[#2D3047] outline-none transition focus:border-[#6C7EE1] focus:bg-white"
                 />
+                <p className="mt-1 text-[11px] text-gray-500">
+                  Puedes modificar este límite en cualquier momento desde la configuración del evento. Si al compartir invitaciones virtuales por WhatsApp o Correo se supera esta cantidad, el sistema te enviará una advertencia.
+                </p>
               </div>
 
               <div className="hidden">
