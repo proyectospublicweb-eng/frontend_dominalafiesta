@@ -36,15 +36,63 @@ function encodeCanvasDual(
   const hdWidth = Math.max(1, Math.round(srcWidth * scaleHd));
   const hdHeight = Math.max(1, Math.round(srcHeight * scaleHd));
 
+  const hasOverlay = Boolean(
+    overlayConfig && overlayConfig.designId && overlayConfig.designId !== "none"
+  );
+  const isClubPartyFilter = overlayConfig?.designId === "club-party";
+  const isKineticFilter = overlayConfig?.designId === "kinetic";
+  const isVortexFilter = overlayConfig?.designId === "vortex";
+  const isColorVeilFilter = overlayConfig?.designId === "color-veil";
+  const isHazeFilter = overlayConfig?.designId === "haze";
+  const isPrismaFilter = overlayConfig?.designId === "prisma";
+  const isSolsticeFilter = overlayConfig?.designId === "solstice";
+  const isShadowsFilter = overlayConfig?.designId === "shadows";
+  const isPolarFilter = overlayConfig?.designId === "polar";
+  const isMetroFilter = overlayConfig?.designId === "metro";
+
   const hdCanvas = document.createElement("canvas");
   hdCanvas.width = hdWidth;
   hdCanvas.height = hdHeight;
   const hdCtx = hdCanvas.getContext("2d");
+  let origDataUrl = "";
+
   if (hdCtx) {
     hdCtx.imageSmoothingEnabled = true;
     hdCtx.imageSmoothingQuality = "high";
+    // Capturar primero la imagen base limpia (origDataUrl) cuando se aplica un overlay
+    if (hasOverlay) {
+      hdCtx.drawImage(sourceElement, 0, 0, hdWidth, hdHeight);
+      origDataUrl = hdCanvas.toDataURL("image/webp", preset.quality);
+      if (!origDataUrl.startsWith("data:image/webp")) {
+        origDataUrl = hdCanvas.toDataURL("image/jpeg", preset.quality);
+      }
+      hdCtx.clearRect(0, 0, hdWidth, hdHeight);
+    }
+
+    if (isClubPartyFilter) {
+      hdCtx.filter = "contrast(1.22) brightness(0.92) saturate(1.15)";
+    } else if (isKineticFilter) {
+      hdCtx.filter = "contrast(1.18) brightness(0.95) saturate(1.14)";
+    } else if (isVortexFilter) {
+      hdCtx.filter = "contrast(1.26) brightness(0.92) saturate(0.42)";
+    } else if (isColorVeilFilter) {
+      hdCtx.filter = "contrast(1.16) brightness(0.95) saturate(1.12)";
+    } else if (isHazeFilter) {
+      hdCtx.filter = "contrast(1.08) brightness(0.95) saturate(0.88) sepia(0.14)";
+    } else if (isPrismaFilter) {
+      hdCtx.filter = "contrast(1.22) brightness(0.94) saturate(1.20)";
+    } else if (isSolsticeFilter) {
+      hdCtx.filter = "contrast(1.16) brightness(0.96) saturate(1.14)";
+    } else if (isShadowsFilter) {
+      hdCtx.filter = "grayscale(100%) contrast(1.42) brightness(0.86)";
+    } else if (isPolarFilter) {
+      hdCtx.filter = "grayscale(100%) contrast(1.22) brightness(0.96)";
+    } else if (isMetroFilter) {
+      hdCtx.filter = "contrast(1.20) brightness(0.93) saturate(1.12)";
+    }
     hdCtx.drawImage(sourceElement, 0, 0, hdWidth, hdHeight);
-    if (overlayConfig && overlayConfig.designId && overlayConfig.designId !== "none") {
+    hdCtx.filter = "none";
+    if (hasOverlay) {
       drawPhotoOverlayOnCanvas(hdCtx, hdWidth, hdHeight, overlayConfig);
     }
   }
@@ -52,6 +100,9 @@ function encodeCanvasDual(
   let hdDataUrl = hdCanvas.toDataURL("image/webp", preset.quality);
   if (!hdDataUrl.startsWith("data:image/webp")) {
     hdDataUrl = hdCanvas.toDataURL("image/jpeg", preset.quality);
+  }
+  if (!origDataUrl) {
+    origDataUrl = hdDataUrl;
   }
 
   // 2. Generar miniatura ultraligera (~420px) para la galería rápida
@@ -67,8 +118,30 @@ function encodeCanvasDual(
   if (thumbCtx) {
     thumbCtx.imageSmoothingEnabled = true;
     thumbCtx.imageSmoothingQuality = "high";
+    if (isClubPartyFilter) {
+      thumbCtx.filter = "contrast(1.22) brightness(0.92) saturate(1.15)";
+    } else if (isKineticFilter) {
+      thumbCtx.filter = "contrast(1.18) brightness(0.95) saturate(1.14)";
+    } else if (isVortexFilter) {
+      thumbCtx.filter = "contrast(1.26) brightness(0.92) saturate(0.42)";
+    } else if (isColorVeilFilter) {
+      thumbCtx.filter = "contrast(1.16) brightness(0.95) saturate(1.12)";
+    } else if (isHazeFilter) {
+      thumbCtx.filter = "contrast(1.08) brightness(0.95) saturate(0.88) sepia(0.14)";
+    } else if (isPrismaFilter) {
+      thumbCtx.filter = "contrast(1.22) brightness(0.94) saturate(1.20)";
+    } else if (isSolsticeFilter) {
+      thumbCtx.filter = "contrast(1.16) brightness(0.96) saturate(1.14)";
+    } else if (isShadowsFilter) {
+      thumbCtx.filter = "grayscale(100%) contrast(1.42) brightness(0.86)";
+    } else if (isPolarFilter) {
+      thumbCtx.filter = "grayscale(100%) contrast(1.22) brightness(0.96)";
+    } else if (isMetroFilter) {
+      thumbCtx.filter = "contrast(1.20) brightness(0.93) saturate(1.12)";
+    }
     thumbCtx.drawImage(sourceElement, 0, 0, thumbWidth, thumbHeight);
-    if (overlayConfig && overlayConfig.designId && overlayConfig.designId !== "none") {
+    thumbCtx.filter = "none";
+    if (hasOverlay) {
       drawPhotoOverlayOnCanvas(thumbCtx, thumbWidth, thumbHeight, overlayConfig);
     }
   }
@@ -81,9 +154,25 @@ function encodeCanvasDual(
   return {
     hdDataUrl,
     thumbDataUrl,
+    origDataUrl,
+    overlayId: hasOverlay ? String(overlayConfig.designId) : "none",
     width: hdWidth,
     height: hdHeight,
   };
+}
+
+/**
+ * Re-renderiza un elemento HTMLImageElement existente aplicando un nuevo Overlay
+ * y devuelve { hdDataUrl, thumbDataUrl, overlayId, width, height }.
+ */
+export function renderOverlayOnImageElementDual(
+  imgEl,
+  presetKey = "hd",
+  overlayConfig = null
+) {
+  const iw = Number(imgEl?.naturalWidth || imgEl?.width) || 1920;
+  const ih = Number(imgEl?.naturalHeight || imgEl?.height) || 1080;
+  return encodeCanvasDual(imgEl, iw, ih, presetKey, overlayConfig);
 }
 
 /**
@@ -139,4 +228,116 @@ export function optimizeImageFileDual(
     img.src = objectUrl;
   });
 }
+
+/**
+ * Convierte cualquier fotografía al vuelo a resolución 2K (2560px en su lado mayor)
+ * directamente en la memoria RAM del navegador, redibujando su Overlay en resolución
+ * vectorial 2K nativa y devolviendo un Blob listo para descarga inmediata
+ * SIN guardar ni ocupar espacio extra en la base de datos o servidor.
+ */
+export function generateOnTheFly2KBlob(imageUrl, overlayConfig = null) {
+  return new Promise((resolve, reject) => {
+    if (!imageUrl) {
+      reject(new Error("URL de imagen no válida."));
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const srcW = Number(img.naturalWidth || img.width) || 1920;
+        const srcH = Number(img.naturalHeight || img.height) || 1080;
+        const target2KMax = 2560;
+        const maxSide = Math.max(srcW, srcH, 1);
+        const scale2K = target2KMax / maxSide;
+
+        const w2k = Math.max(1, Math.round(srcW * scale2K));
+        const h2k = Math.max(1, Math.round(srcH * scale2K));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w2k;
+        canvas.height = h2k;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("No se pudo inicializar el lienzo 2K en memoria."));
+          return;
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
+        const hasOverlay = Boolean(
+          overlayConfig &&
+            overlayConfig.designId &&
+            overlayConfig.designId !== "none"
+        );
+        const isClubPartyFilter = overlayConfig?.designId === "club-party";
+        const isKineticFilter = overlayConfig?.designId === "kinetic";
+        const isVortexFilter = overlayConfig?.designId === "vortex";
+        const isColorVeilFilter = overlayConfig?.designId === "color-veil";
+        const isHazeFilter = overlayConfig?.designId === "haze";
+        const isPrismaFilter = overlayConfig?.designId === "prisma";
+        const isSolsticeFilter = overlayConfig?.designId === "solstice";
+        const isShadowsFilter = overlayConfig?.designId === "shadows";
+        const isPolarFilter = overlayConfig?.designId === "polar";
+        const isMetroFilter = overlayConfig?.designId === "metro";
+
+        if (isClubPartyFilter) {
+          ctx.filter = "contrast(1.22) brightness(0.92) saturate(1.15)";
+        } else if (isKineticFilter) {
+          ctx.filter = "contrast(1.18) brightness(0.95) saturate(1.14)";
+        } else if (isVortexFilter) {
+          ctx.filter = "contrast(1.26) brightness(0.92) saturate(0.42)";
+        } else if (isColorVeilFilter) {
+          ctx.filter = "contrast(1.16) brightness(0.95) saturate(1.12)";
+        } else if (isHazeFilter) {
+          ctx.filter = "contrast(1.08) brightness(0.95) saturate(0.88) sepia(0.14)";
+        } else if (isPrismaFilter) {
+          ctx.filter = "contrast(1.22) brightness(0.94) saturate(1.20)";
+        } else if (isSolsticeFilter) {
+          ctx.filter = "contrast(1.16) brightness(0.96) saturate(1.14)";
+        } else if (isShadowsFilter) {
+          ctx.filter = "grayscale(100%) contrast(1.42) brightness(0.86)";
+        } else if (isPolarFilter) {
+          ctx.filter = "grayscale(100%) contrast(1.22) brightness(0.96)";
+        } else if (isMetroFilter) {
+          ctx.filter = "contrast(1.20) brightness(0.93) saturate(1.12)";
+        } else {
+          ctx.filter = "contrast(1.03) saturate(1.03)";
+        }
+        ctx.drawImage(img, 0, 0, w2k, h2k);
+        ctx.filter = "none";
+
+        if (hasOverlay) {
+          drawPhotoOverlayOnCanvas(ctx, w2k, h2k, overlayConfig);
+        }
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("No se pudo codificar el archivo 2K."));
+              return;
+            }
+            resolve({
+              blob,
+              width: w2k,
+              height: h2k,
+              ext: "jpg",
+            });
+          },
+          "image/jpeg",
+          0.95
+        );
+      } catch (err) {
+        reject(err);
+      }
+    };
+    img.onerror = () => {
+      reject(new Error("No se pudo cargar la imagen para convertirla a 2K."));
+    };
+    img.src = imageUrl;
+  });
+}
+
 

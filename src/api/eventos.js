@@ -138,6 +138,9 @@ export const getAlbumFotosEventoRequest = (idEvento) =>
 export const addFotoAlbumEventoRequest = (idEvento, payload) =>
   instanceAxios.post(`/eventos/${idEvento}/album-fotos`, payload);
 
+export const updateFotoAlbumEventoRequest = (idEvento, idFoto, payload) =>
+  instanceAxios.put(`/eventos/${idEvento}/album-fotos/${idFoto}`, payload);
+
 export const deleteFotoAlbumEventoRequest = (idEvento, idFoto) =>
   instanceAxios.delete(`/eventos/${idEvento}/album-fotos/${idFoto}`);
 
