@@ -144,6 +144,12 @@ export const updateFotoAlbumEventoRequest = (idEvento, idFoto, payload) =>
 export const deleteFotoAlbumEventoRequest = (idEvento, idFoto) =>
   instanceAxios.delete(`/eventos/${idEvento}/album-fotos/${idFoto}`);
 
+export const addReelAlbumEventoRequest = (idEvento, payload) =>
+  instanceAxios.post(`/eventos/${idEvento}/album-reels`, payload);
+
+export const deleteReelAlbumEventoRequest = (idEvento, idReel) =>
+  instanceAxios.delete(`/eventos/${idEvento}/album-reels/${idReel}`);
+
 export const descargarAlbumZipEventoRequest = (idEvento) =>
   instanceAxios.get(`/eventos/${idEvento}/album-fotos/descargar-zip`, {
     responseType: "blob",

@@ -445,7 +445,7 @@ function HomePage() {
         </header>
 
         {/* Contenido Dinámico */}
-        <main className="flex-1 overflow-y-auto px-3.5 pb-10 sm:px-6 lg:px-8">
+        <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-3 pb-10 sm:px-6 lg:px-8">
           {/* =================================================================
               SECCIÓN 1: INICIO / MIS EVENTOS (MISMA ORGANIZACIÓN + ESTILO "Tbk")
              ================================================================= */}

@@ -82,3 +82,87 @@ input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0px 1000px #f3f6fa inset;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+
+/* Scrollbar estilo Smart Home Glass: invisible en reposo y visible únicamente mientras se da scroll */
+.smart-glass-scroll {
+  --sb-track: transparent;
+  --sb-thumb: transparent;
+  --sb-border: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.smart-glass-scroll.is-scrolling {
+  --sb-track: rgba(14, 18, 26, 0.62);
+  --sb-thumb: linear-gradient(
+    180deg,
+    rgba(56, 189, 248, 0.82) 0%,
+    rgba(129, 140, 248, 0.78) 52%,
+    rgba(244, 114, 182, 0.72) 100%
+  );
+  --sb-border: rgba(255, 255, 255, 0.22);
+  scrollbar-color: rgba(86, 180, 252, 0.68) rgba(14, 18, 26, 0.55);
+}
+
+.smart-glass-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.smart-glass-scroll::-webkit-scrollbar-track {
+  background: var(--sb-track);
+  border-radius: 9999px;
+  margin: 8px 0;
+}
+
+.smart-glass-scroll::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb);
+  border-radius: 9999px;
+  border: 1px solid var(--sb-border);
+}
+
+.smart-glass-scroll.is-scrolling::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(56, 189, 248, 0.98) 0%,
+    rgba(129, 140, 248, 0.95) 52%,
+    rgba(244, 114, 182, 0.9) 100%
+  );
+}
+
+.smart-glass-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+
+/* Scrollbar visible y estilizado para tablas administrativas (scroll horizontal + vertical) */
+.admin-table-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #6c7ee1 #eef1fa;
+}
+
+.admin-table-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.admin-table-scroll::-webkit-scrollbar-track {
+  background: #eef1fa;
+  border-radius: 9999px;
+}
+
+.admin-table-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #6c7ee1 0%, #4a5bc4 100%);
+  border-radius: 9999px;
+  border: 1px solid #dce0f0;
+}
+
+.admin-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #2d3047;
+}
+
+.admin-table-scroll::-webkit-scrollbar-corner {
+  background: #eef1fa;
+}
