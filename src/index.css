@@ -166,3 +166,12 @@ input:-webkit-autofill:focus {
 .admin-table-scroll::-webkit-scrollbar-corner {
   background: #eef1fa;
 }
+
+
+/* Tipografía del Dashboard estilo Tripler (Plus Jakarta Sans / DM Sans) */
+.font-wallet,
+.font-wallet .font-display,
+.font-wallet .font-heading {
+  font-family: "Plus Jakarta Sans", "DM Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: -0.015em;
+}

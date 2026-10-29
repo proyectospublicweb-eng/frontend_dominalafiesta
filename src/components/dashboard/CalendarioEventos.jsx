@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 
+const DEFAULT_INVITACION_THUMB = "/default-invitacion.svg";
+
 const MONTH_NAMES = [
   "Enero",
   "Febrero",
@@ -25,42 +27,42 @@ const DAY_NAMES = [
   { short: "D", medium: "Dom" },
 ];
 
-// Paleta de colores armónica con el Dashboard ("Tbk" style)
+// Paleta de colores armónica con el Dashboard ("Tripler" style)
 const EVENT_PALETTES = [
   {
-    badgeBg: "bg-[#4E54A3] text-white shadow-[#4E54A3]/30",
-    cardBg: "bg-[#ECEFFA]/75 border-l-4 border-[#4E54A3]",
-    avatarBg: "bg-[#4E54A3] text-white",
-    accentText: "text-[#4E54A3]",
-    ringColor: "ring-[#4E54A3]",
+    badgeBg: "bg-[#86B59F] text-white shadow-[#86B59F]/30",
+    cardBg: "bg-[#F2F8F5] border border-[#DCECE4] border-l-4 border-l-[#86B59F]",
+    avatarBg: "bg-[#86B59F] text-white",
+    accentText: "text-[#588B73]",
+    ringColor: "ring-[#86B59F]",
   },
   {
-    badgeBg: "bg-[#FF8086] text-white shadow-[#FF8086]/30",
-    cardBg: "bg-[#FFF0EF]/85 border-l-4 border-[#FF8086]",
-    avatarBg: "bg-[#FF8086] text-white",
-    accentText: "text-[#E05349]",
-    ringColor: "ring-[#FF8086]",
+    badgeBg: "bg-[#4A4A8A] text-white shadow-[#4A4A8A]/30",
+    cardBg: "bg-[#F3F3FA] border border-[#E2E2F2] border-l-4 border-l-[#4A4A8A]",
+    avatarBg: "bg-[#4A4A8A] text-white",
+    accentText: "text-[#4A4A8A]",
+    ringColor: "ring-[#4A4A8A]",
   },
   {
-    badgeBg: "bg-[#6C7EE1] text-white shadow-[#6C7EE1]/30",
-    cardBg: "bg-[#EEF1FD]/85 border-l-4 border-[#6C7EE1]",
-    avatarBg: "bg-[#6C7EE1] text-white",
-    accentText: "text-[#5869C9]",
-    ringColor: "ring-[#6C7EE1]",
+    badgeBg: "bg-[#FF5B4D] text-white shadow-[#FF5B4D]/30",
+    cardBg: "bg-[#FFF4F2] border border-[#FCDCD8] border-l-4 border-l-[#FF5B4D]",
+    avatarBg: "bg-[#FF5B4D] text-white",
+    accentText: "text-[#E6483B]",
+    ringColor: "ring-[#FF5B4D]",
   },
   {
-    badgeBg: "bg-[#9599D6] text-white shadow-[#9599D6]/30",
-    cardBg: "bg-[#F3F4FC] border-l-4 border-[#9599D6]",
-    avatarBg: "bg-[#9599D6] text-white",
-    accentText: "text-[#4E54A3]",
-    ringColor: "ring-[#9599D6]",
+    badgeBg: "bg-[#C9B16B] text-white shadow-[#C9B16B]/30",
+    cardBg: "bg-[#FAF7EE] border border-[#EFE6CC] border-l-4 border-l-[#C9B16B]",
+    avatarBg: "bg-[#C9B16B] text-white",
+    accentText: "text-[#9A8035]",
+    ringColor: "ring-[#C9B16B]",
   },
   {
-    badgeBg: "bg-[#2D3047] text-white shadow-[#2D3047]/30",
-    cardBg: "bg-[#F0F2F8] border-l-4 border-[#2D3047]",
-    avatarBg: "bg-[#2D3047] text-white",
-    accentText: "text-[#2D3047]",
-    ringColor: "ring-[#2D3047]",
+    badgeBg: "bg-[#14141F] text-white shadow-[#14141F]/25",
+    cardBg: "bg-[#F6F7F9] border border-[#E4E6EE] border-l-4 border-l-[#14141F]",
+    avatarBg: "bg-[#14141F] text-white",
+    accentText: "text-[#14141F]",
+    ringColor: "ring-[#14141F]",
   },
 ];
 
@@ -242,21 +244,21 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
     : [];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
+    <div className="font-wallet grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
       {/* =====================================================================
           COLUMNA IZQUIERDA (7 COLS EN LG, 8 COLS EN XL): CALENDARIO MENSUAL
          ===================================================================== */}
       <div
         ref={calendarRef}
-        className="min-w-0 rounded-2xl bg-white p-3.5 shadow-[0_10px_30px_rgba(108,126,225,0.06)] sm:rounded-3xl sm:p-6 lg:col-span-7 xl:col-span-8 xl:p-8"
+        className="min-w-0 rounded-2xl border border-[#ECEEF2] bg-white p-3.5 shadow-[0_14px_38px_rgba(20,20,31,0.05)] sm:rounded-3xl sm:p-6 lg:col-span-7 xl:col-span-8 xl:p-8"
       >
         {/* Cabecera del Mes y Controles de Navegación */}
         <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between sm:pb-6">
           <div className="min-w-0">
-            <h2 className="truncate text-lg font-extrabold tracking-tight text-[#2D3047] sm:text-2xl">
+            <h2 className="truncate text-lg font-extrabold tracking-tight text-[#14141F] sm:text-2xl">
               {MONTH_NAMES[viewMonth]} {viewYear}
             </h2>
-            <p className="mt-0.5 text-[11px] text-[#8E94A9] sm:text-xs">
+            <p className="mt-0.5 text-[11px] text-[#8A8D9F] sm:text-xs">
               Toca un día señalado o una tarjeta para ubicar tu evento
             </p>
           </div>
@@ -269,7 +271,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                   setSelectedDateStr(null);
                   setHighlightedEventoId(null);
                 }}
-                className="rounded-full bg-[#ECEFFA] px-3 py-1.5 text-[11px] font-bold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white sm:px-3.5 sm:text-xs"
+                className="rounded-full bg-[#F3F3FA] px-3 py-1.5 text-[11px] font-bold text-[#4A4A8A] transition hover:bg-[#4A4A8A] hover:text-white sm:px-3.5 sm:text-xs"
               >
                 Ver Todos ({enrichedEventos.length})
               </button>
@@ -277,14 +279,14 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
             <button
               type="button"
               onClick={handleGoToToday}
-              className="rounded-full border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-1.5 text-[11px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:bg-[#6C7EE1] hover:text-white sm:text-xs"
+              className="rounded-full border border-[#E4E6EE] bg-[#F6F7F9] px-3 py-1.5 text-[11px] font-bold text-[#14141F] transition hover:border-[#4A4A8A] hover:bg-[#4A4A8A] hover:text-white sm:text-xs"
             >
               Hoy
             </button>
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#DCE0F0] bg-[#F7F8FC] text-xs font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:bg-[#6C7EE1] hover:text-white sm:h-9 sm:w-9 sm:text-sm"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E4E6EE] bg-[#F6F7F9] text-xs font-bold text-[#14141F] transition hover:border-[#4A4A8A] hover:bg-[#4A4A8A] hover:text-white sm:h-9 sm:w-9 sm:text-sm"
               aria-label="Mes anterior"
             >
               ←
@@ -292,7 +294,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
             <button
               type="button"
               onClick={handleNextMonth}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#DCE0F0] bg-[#F7F8FC] text-xs font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:bg-[#6C7EE1] hover:text-white sm:h-9 sm:w-9 sm:text-sm"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E4E6EE] bg-[#F6F7F9] text-xs font-bold text-[#14141F] transition hover:border-[#4A4A8A] hover:bg-[#4A4A8A] hover:text-white sm:h-9 sm:w-9 sm:text-sm"
               aria-label="Mes siguiente"
             >
               →
@@ -301,7 +303,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
         </div>
 
         {/* Barra de Días de la Semana (Adaptativa para Móvil / Tablet / Desktop) */}
-        <div className="mb-2.5 grid grid-cols-7 rounded-xl bg-[#F0F2F8] py-2 text-center text-[11px] font-extrabold text-[#2D3047] sm:mb-3 sm:rounded-2xl sm:py-3 sm:text-xs">
+        <div className="mb-2.5 grid grid-cols-7 rounded-xl bg-[#F4F5F7] py-2 text-center text-[11px] font-extrabold text-[#14141F] sm:mb-3 sm:rounded-2xl sm:py-3 sm:text-xs">
           {DAY_NAMES.map((day) => (
             <div key={day.medium}>
               <span className="sm:hidden">{day.short}</span>
@@ -311,7 +313,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
         </div>
 
         {/* Cuadrícula del Calendario */}
-        <div className="grid grid-cols-7 overflow-hidden rounded-xl border-l border-t border-[#ECEFFA] sm:rounded-2xl">
+        <div className="grid grid-cols-7 overflow-hidden rounded-xl border-l border-t border-[#ECEEF2] sm:rounded-2xl">
           {calendarCells.map((cell) => {
             const isSelected = selectedDateStr === cell.dateStr;
             const isToday = todayStr === cell.dateStr;
@@ -329,13 +331,13 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                     setHighlightedEventoId(null);
                   }
                 }}
-                className={`min-h-[62px] min-w-0 cursor-pointer border-b border-r border-[#ECEFFA] p-1 transition sm:min-h-[88px] sm:p-2 md:min-h-[104px] md:p-2.5 xl:min-h-[112px] xl:p-3 ${
+                className={`min-h-[62px] min-w-0 cursor-pointer border-b border-r border-[#ECEEF2] p-1 transition sm:min-h-[88px] sm:p-2 md:min-h-[104px] md:p-2.5 xl:min-h-[112px] xl:p-3 ${
                   !cell.isCurrentMonth
-                    ? "bg-[#FAFBFD] text-[#C0C5D8]"
+                    ? "bg-[#FAFBFD] text-[#C5C8D6]"
                     : isSelected
-                    ? "bg-[#ECEFFA]/55 ring-2 ring-inset ring-[#6C7EE1]"
+                    ? "bg-[#F3F3FA]/75 ring-2 ring-inset ring-[#4A4A8A]"
                     : hasEvents
-                    ? "bg-[#F7F8FC] hover:bg-[#ECEFFA]/40"
+                    ? "bg-[#F6F7F9] hover:bg-[#F3F3FA]/50"
                     : "bg-white hover:bg-[#FAFBFD]"
                 }`}
               >
@@ -344,17 +346,17 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                   <span
                     className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-extrabold sm:h-6 sm:w-6 sm:text-xs ${
                       isToday
-                        ? "bg-[#6C7EE1] text-white shadow-xs"
+                        ? "bg-[#FF5B4D] text-white shadow-2xs"
                         : cell.isCurrentMonth
-                        ? "text-[#2D3047]"
-                        : "text-[#C0C5D8]"
+                        ? "text-[#14141F]"
+                        : "text-[#C5C8D6]"
                     }`}
                   >
                     {String(cell.dayNum).padStart(2, "0")}
                   </span>
 
                   {hasEvents && (
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#4CE0B3] sm:h-2 sm:w-2" />
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#86B59F] sm:h-2 sm:w-2" />
                   )}
                 </div>
 
@@ -377,7 +379,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                             ev.palette.badgeBg
                           } ${
                             isEvHighlighted
-                              ? "ring-2 ring-[#2D3047]"
+                              ? "ring-2 ring-[#14141F]"
                               : "opacity-95 hover:opacity-100"
                           }`}
                         >
@@ -400,7 +402,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                         e.stopPropagation();
                         onCreateNew(cell.dateStr);
                       }}
-                      className="flex w-full items-center justify-center gap-1 rounded-md bg-[#2D3047] px-1 py-1 text-center text-[8px] leading-tight font-extrabold text-white shadow-xs transition hover:bg-[#6C7EE1] sm:rounded-lg sm:px-2 sm:py-1.5 sm:text-[10px]"
+                      className="flex w-full items-center justify-center gap-1 rounded-md bg-[#4A4A8A] px-1 py-1 text-center text-[8px] leading-tight font-extrabold text-white shadow-xs transition hover:bg-[#FF5B4D] sm:rounded-lg sm:px-2 sm:py-1.5 sm:text-[10px]"
                     >
                       <span className="hidden sm:inline">＋</span>
                       <span>Crear Evento</span>
@@ -414,50 +416,67 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
 
         {/* Vista rápida en Móvil y Tablet Vertical cuando se toca un día con eventos */}
         {selectedDayEvents.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-3.5 lg:hidden">
+          <div className="mt-4 rounded-2xl border border-[#ECEEF2] bg-[#F6F7F9] p-3.5 lg:hidden">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#4A4A8A]">
                 Eventos del {formatShortDate(selectedDateStr)}
               </span>
               <button
                 type="button"
                 onClick={() => setSelectedDateStr(null)}
-                className="text-xs font-bold text-[#8E94A9] hover:text-[#2D3047]"
+                className="text-xs font-bold text-[#8A8D9F] hover:text-[#14141F]"
               >
                 ✕
               </button>
             </div>
             <div className="space-y-2">
-              {selectedDayEvents.map((ev) => (
-                <div
-                  key={ev.idevento}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-2.5 shadow-2xs"
-                >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <span
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold ${ev.palette.avatarBg}`}
-                    >
-                      {ev.codeNum}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-extrabold text-[#2D3047]">
-                        {ev.nombre}
-                      </p>
-                      <p className="truncate text-[10px] text-[#6E748A]">
-                        ⏰ {ev.hora_evento || "20:00"} hrs • 📍{" "}
-                        {ev.lugar || "Salón por definir"}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onOpenEvento(ev.idevento, "invitation")}
-                    className="shrink-0 rounded-lg bg-[#6C7EE1] px-2.5 py-1.5 text-[10px] font-extrabold text-white shadow-2xs transition hover:bg-[#5A6CD0]"
+              {selectedDayEvents.map((ev) => {
+                const coverThumb =
+                  String(ev.imagen_portada || "").trim() ||
+                  DEFAULT_INVITACION_THUMB;
+                return (
+                  <div
+                    key={ev.idevento}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-2.5 shadow-2xs"
                   >
-                    Abrir →
-                  </button>
-                </div>
-              ))}
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold ${ev.palette.avatarBg}`}
+                      >
+                        {ev.codeNum}
+                      </span>
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-[#ECEEF2] bg-[#2D3047] shadow-2xs">
+                        <img
+                          src={coverThumb}
+                          alt={`Invitación de ${ev.nombre}`}
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = DEFAULT_INVITACION_THUMB;
+                          }}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-extrabold text-[#14141F]">
+                          {ev.nombre}
+                        </p>
+                        <p className="truncate text-[10px] text-[#8A8D9F]">
+                          ⏰ {ev.hora_evento || "20:00"} hrs • 📍{" "}
+                          {ev.lugar || "Salón por definir"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onOpenEvento(ev.idevento, "invitation")}
+                      className="shrink-0 rounded-lg bg-[#4A4A8A] px-2.5 py-1.5 text-[10px] font-extrabold text-white shadow-2xs transition hover:bg-[#3F3F7A]"
+                    >
+                      Abrir →
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -466,14 +485,14 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
       {/* =====================================================================
           COLUMNA DERECHA (5 COLS EN LG, 4 COLS EN XL): TARJETAS DE EVENTOS
          ===================================================================== */}
-      <div className="flex min-w-0 flex-col justify-between rounded-2xl bg-white p-4 shadow-[0_10px_30px_rgba(108,126,225,0.06)] sm:rounded-3xl sm:p-6 lg:col-span-5 xl:col-span-4 xl:p-7">
+      <div className="flex min-w-0 flex-col justify-between rounded-2xl border border-[#ECEEF2] bg-white p-4 shadow-[0_14px_38px_rgba(20,20,31,0.05)] sm:rounded-3xl sm:p-6 lg:col-span-5 xl:col-span-4 xl:p-7">
         <div>
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ECEFFA] pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ECEEF2] pb-4">
             <div className="min-w-0">
-              <h3 className="text-lg font-extrabold tracking-tight text-[#2D3047] sm:text-xl">
+              <h3 className="text-lg font-extrabold tracking-tight text-[#14141F] sm:text-xl">
                 Eventos Agendados
               </h3>
-              <p className="mt-0.5 truncate text-xs text-[#8E94A9]">
+              <p className="mt-0.5 truncate text-xs text-[#8A8D9F]">
                 {selectedDateStr
                   ? `Fecha seleccionada: ${formatShortDate(selectedDateStr)}`
                   : `${enrichedEventos.length} eventos registrados en tu calendario`}
@@ -482,7 +501,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
             <button
               type="button"
               onClick={() => onCreateNew(selectedDateStr || "")}
-              className="shrink-0 rounded-full bg-[#6C7EE1] px-3.5 py-1.5 text-xs font-extrabold text-white shadow-sm shadow-[#6C7EE1]/30 transition hover:bg-[#5A6CD0]"
+              className="shrink-0 rounded-full bg-[#FF5B4D] px-3.5 py-1.5 text-xs font-extrabold text-white shadow-[0_8px_18px_rgba(255,91,77,0.3)] transition hover:bg-[#F24C3E]"
             >
               ＋ Nuevo
             </button>
@@ -490,16 +509,16 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
 
           {enrichedEventos.length === 0 ? (
             <div className="py-10 text-center sm:py-12">
-              <p className="text-sm font-bold text-[#2D3047]">
+              <p className="text-sm font-bold text-[#14141F]">
                 No tienes eventos programados
               </p>
-              <p className="mt-1 text-xs text-[#8E94A9]">
+              <p className="mt-1 text-xs text-[#8A8D9F]">
                 Crea tu primer evento para visualizarlo en el calendario.
               </p>
               <button
                 type="button"
                 onClick={() => onCreateNew(selectedDateStr || "")}
-                className="mt-4 rounded-full bg-[#6C7EE1] px-5 py-2 text-xs font-bold text-white shadow-md shadow-[#6C7EE1]/25 transition hover:bg-[#5A6CD0]"
+                className="mt-4 rounded-full bg-[#FF5B4D] px-5 py-2 text-xs font-bold text-white shadow-[0_8px_18px_rgba(255,91,77,0.3)] transition hover:bg-[#F24C3E]"
               >
                 ＋ Crear Evento
               </button>
@@ -511,12 +530,15 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                 const isSelectedCard =
                   highlightedEventoId === ev.idevento ||
                   selectedDateStr === ev.dateStr;
+                const coverThumb =
+                  String(ev.imagen_portada || "").trim() ||
+                  DEFAULT_INVITACION_THUMB;
 
                 return (
                   <div
                     key={ev.idevento}
                     onClick={() => handleFocusEventOnCalendar(ev, true)}
-                    className={`min-w-0 cursor-pointer rounded-xl px-3 py-2 transition hover:-translate-y-0.5 hover:shadow-md sm:px-3.5 sm:py-2.5 ${
+                    className={`min-w-0 cursor-pointer rounded-2xl px-3 py-2 transition hover:-translate-y-0.5 hover:shadow-md sm:px-3.5 sm:py-2.5 ${
                       ev.palette.cardBg
                     } ${
                       isSelectedCard
@@ -524,37 +546,55 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                         : ""
                     }`}
                   >
-                    {/* Fila superior en una sola línea: Insignia circular + Tipo + Fecha */}
-                    <div className="flex items-center justify-between gap-1.5">
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <span
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold shadow-xs ${ev.palette.avatarBg}`}
-                        >
-                          {ev.codeNum}
-                        </span>
-                        <span className="truncate rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#2D3047]">
-                          {ev.tipo_evento || "Evento"}
-                        </span>
-                      </div>
-                      <span className="shrink-0 text-[10px] font-bold text-[#6E748A]">
-                        {formatShortDate(ev.dateStr)}
-                      </span>
-                    </div>
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div className="min-w-0 flex-1">
+                        {/* Fila superior en una sola línea: Insignia circular + Tipo + Fecha */}
+                        <div className="flex items-center justify-between gap-1.5">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <span
+                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold shadow-xs ${ev.palette.avatarBg}`}
+                            >
+                              {ev.codeNum}
+                            </span>
+                            <span className="truncate rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#14141F] shadow-2xs">
+                              {ev.tipo_evento || "Evento"}
+                            </span>
+                          </div>
+                          <span className="shrink-0 text-[10px] font-bold text-[#8A8D9F]">
+                            {formatShortDate(ev.dateStr)}
+                          </span>
+                        </div>
 
-                    {/* Título del Evento y Horario/Lugar compactos */}
-                    <div className="mt-1.5">
-                      <h4 className="truncate text-xs font-extrabold leading-tight tracking-tight text-[#2D3047] sm:text-sm">
-                        {ev.nombre}
-                      </h4>
-                      <p className="mt-0.5 truncate text-[11px] font-medium leading-tight text-[#6E748A]">
-                        ⏰ {ev.hora_evento || "20:00"} hrs &nbsp;•&nbsp; 📍{" "}
-                        {ev.lugar || "Salón por definir"}
-                      </p>
+                        {/* Título del Evento y Horario/Lugar compactos */}
+                        <div className="mt-1.5">
+                          <h4 className="truncate text-xs font-extrabold leading-tight tracking-tight text-[#14141F] sm:text-sm">
+                            {ev.nombre}
+                          </h4>
+                          <p className="mt-0.5 truncate text-[11px] font-medium leading-tight text-[#8A8D9F]">
+                            ⏰ {ev.hora_evento || "20:00"} hrs &nbsp;•&nbsp; 📍{" "}
+                            {ev.lugar || "Salón por definir"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Miniatura de la invitación virtual (o imagen genérica automática si no tiene) */}
+                      <div className="h-12 w-10 shrink-0 overflow-hidden rounded-xl border border-white bg-[#2D3047] shadow-xs">
+                        <img
+                          src={coverThumb}
+                          alt={`Invitación de ${ev.nombre}`}
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = DEFAULT_INVITACION_THUMB;
+                          }}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
                     </div>
 
                     {/* Pie de tarjeta compacto: Confirmados y botón para abrir el Gestor */}
-                    <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-[#2D3047]/10 pt-1.5 text-[10px]">
-                      <span className="font-bold text-[#2D3047]">
+                    <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-[#14141F]/10 pt-1.5 text-[10px]">
+                      <span className="font-bold text-[#14141F]">
                         👥 {ev.pases_confirmados || 0}/{ev.capacidad} confirmados
                       </span>
                       <button

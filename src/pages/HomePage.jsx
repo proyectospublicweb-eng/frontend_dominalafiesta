@@ -15,11 +15,30 @@ import {
   normalizeGestorTab,
 } from "../components/dashboard/gestorTabs.js";
 
-const THUMB_GRADIENTS = [
-  "from-[#7587EB] via-[#6C7EE1] to-[#5869C9]",
-  "from-[#E4F9F3] via-[#D2F4EA] to-[#E8ECFA]",
-  "from-[#FA938B] via-[#F98880] to-[#EE7169]",
-  "from-[#343854] via-[#2D3047] to-[#23263A]",
+const DEFAULT_INVITACION_THUMB = "/default-invitacion.svg";
+
+const EVENT_CARD_THEMES = [
+  {
+    cardClass:
+      "from-[#8FBDAA] via-[#86B59F] to-[#78A892] shadow-[0_14px_28px_rgba(134,181,159,0.38)]",
+    badgeClass: "bg-white text-black shadow-2xs",
+    titleClass: "text-black",
+    metaClass: "text-black",
+  },
+  {
+    cardClass:
+      "from-[#535398] via-[#4A4A8A] to-[#3F3F7A] shadow-[0_14px_28px_rgba(74,74,138,0.38)]",
+    badgeClass: "bg-white text-black shadow-2xs",
+    titleClass: "text-black",
+    metaClass: "text-black",
+  },
+  {
+    cardClass:
+      "from-[#FF685B] via-[#FF5B4D] to-[#F24C3E] shadow-[0_14px_28px_rgba(255,91,77,0.38)]",
+    badgeClass: "bg-white text-black shadow-2xs",
+    titleClass: "text-black",
+    metaClass: "text-black",
+  },
 ];
 
 function HomePage() {
@@ -218,7 +237,7 @@ function HomePage() {
   }, [eventos, folderTab, typeFilter, searchKeyword]);
 
   return (
-    <div className="flex min-h-screen bg-[#F0F2F8] text-[#2D3047]">
+    <div className="font-wallet flex min-h-screen bg-[#F5F6F8] text-[#090C24]">
       {/* Overlay oscuro en móviles cuando el panel izquierdo está abierto */}
       {sidebarOpen && (
         <div
@@ -232,7 +251,7 @@ function HomePage() {
           SIDEBAR IZQUIERDO ESTILO "Tbk" (#2D3047 + BLOQUE SUPERIOR #6C7EE1)
          ===================================================================== */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col justify-between bg-[#2D3047] text-white shadow-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+        className={`font-wallet fixed inset-y-0 left-0 z-50 flex w-64 flex-col justify-between bg-[#2D3047] text-white shadow-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -397,25 +416,25 @@ function HomePage() {
       </aside>
 
       {/* =====================================================================
-          ÁREA PRINCIPAL DERECHA
+          ÁREA PRINCIPAL DERECHA (ESTILO Y PALETA "TRIPLER": #86B59F, #4A4A8A, #FF5B4D)
          ===================================================================== */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Barra Superior Limpia (Saludo Editorial, Buscador Píldora, Iconos y Avatar) */}
+      <div className="font-wallet flex min-w-0 flex-1 flex-col bg-[#F6F7F9] text-black">
+        {/* Barra Superior Limpia (Saludo Editorial, Iconos y Avatar) */}
         <header className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-4 sm:gap-4 sm:px-6 sm:py-5 lg:px-8">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="rounded-xl bg-white p-2 text-[#2D3047] shadow-xs lg:hidden"
+              className="rounded-xl border border-[#ECEEF2] bg-white p-2 text-black shadow-2xs lg:hidden"
               aria-label="Abrir menú"
             >
               ☰
             </button>
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-extrabold tracking-tight text-[#2D3047] sm:text-3xl">
+              <h1 className="truncate text-xl font-extrabold tracking-tight text-black sm:text-3xl">
                 ¡Hola! {user?.username || "Organizador"}
               </h1>
-              <p className="text-[11px] text-[#8E94A9] sm:text-xs">
+              <p className="text-[11px] font-medium text-black sm:text-xs">
                 Administra tus invitaciones, confirmaciones y accesos en tiempo real ✨
               </p>
             </div>
@@ -426,18 +445,18 @@ function HomePage() {
               type="button"
               onClick={() => openEventManager(selectedEventoId, "settings")}
               title="Ajustes del evento"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xs text-[#6E7491] shadow-xs transition hover:text-[#6C7EE1]"
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[#4A4A8A] text-xs text-black shadow-[0_6px_16px_rgba(74,74,138,0.28)] transition hover:bg-[#3F3F7A]"
             >
               ⚙️
             </button>
 
-            <div className="flex items-center gap-2 rounded-full bg-white p-1 shadow-xs sm:gap-2.5 sm:py-1 sm:pl-1.5 sm:pr-3.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#2D3047] text-xs font-bold text-[#4CE0B3]">
+            <div className="flex items-center gap-2 rounded-full border border-[#ECEEF2] bg-white p-1 shadow-2xs sm:gap-2.5 sm:py-1 sm:pl-1.5 sm:pr-3.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FF5B4D] text-xs font-extrabold text-black shadow-2xs">
                 {String(user?.username || "U")
                   .slice(0, 1)
                   .toUpperCase()}
               </div>
-              <span className="hidden text-xs font-bold text-[#2D3047] sm:inline">
+              <span className="hidden text-xs font-bold text-black sm:inline">
                 {user?.username || "Organizador"}
               </span>
             </div>
@@ -447,29 +466,32 @@ function HomePage() {
         {/* Contenido Dinámico */}
         <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-3 pb-10 sm:px-6 lg:px-8">
           {/* =================================================================
-              SECCIÓN 1: INICIO / MIS EVENTOS (MISMA ORGANIZACIÓN + ESTILO "Tbk")
+              SECCIÓN 1: INICIO / MIS EVENTOS (MISMA ORGANIZACIÓN + ESTILO "TRIPLER")
              ================================================================= */}
           {activeSection === "inicio" && (
-            <div className="space-y-6">
+            <div className="space-y-6 text-black">
               {/* PESTAÑAS TIPO CARPETA + CONTENEDOR BLANCO DE EVENTOS */}
               <div>
-                {/* Pestañas Superiores Estilo Carpeta con la Paleta (#6C7EE1, #F98880, #2D3047) */}
+                {/* Pestañas Superiores Estilo Carpeta con la Paleta Tripler (#86B59F, #4A4A8A, #FF5B4D) */}
                 <div className="grid grid-cols-1 gap-1.5 sm:flex sm:flex-wrap sm:items-end sm:gap-2">
                   {[
                     {
                       id: "all",
                       label: `Mis Eventos (${eventos.length})`,
-                      colorClass: "bg-[#6C7EE1] text-white shadow-[#6C7EE1]/30",
+                      colorClass:
+                        "bg-[#86B59F] text-black shadow-[#86B59F]/35",
                     },
                     {
                       id: "active",
                       label: "Eventos Activos/En Curso",
-                      colorClass: "bg-[#F98880] text-white shadow-[#F98880]/30",
+                      colorClass:
+                        "bg-[#4A4A8A] text-black shadow-[#4A4A8A]/35",
                     },
                     {
                       id: "paused",
                       label: "Eventos Pausados",
-                      colorClass: "bg-[#2D3047] text-white shadow-[#2D3047]/30",
+                      colorClass:
+                        "bg-[#FF5B4D] text-black shadow-[#FF5B4D]/35",
                     },
                   ].map((tab) => {
                     const isTabActive = folderTab === tab.id;
@@ -478,7 +500,7 @@ function HomePage() {
                         key={tab.id}
                         type="button"
                         onClick={() => setFolderTab(tab.id)}
-                        className={`rounded-xl px-4 py-2.5 text-xs font-extrabold transition sm:rounded-t-2xl sm:rounded-b-none sm:px-6 sm:py-3 ${tab.colorClass} ${
+                        className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs font-bold tracking-tight transition sm:rounded-t-2xl sm:rounded-b-none sm:px-6 sm:py-3 ${tab.colorClass} ${
                           isTabActive
                             ? "sm:-translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
                             : "opacity-85 hover:opacity-100"
@@ -491,12 +513,12 @@ function HomePage() {
                 </div>
 
                 {/* Panel Blanco Principal */}
-                <div className="mt-2 rounded-2xl bg-white p-4 shadow-[0_10px_30px_rgba(108,126,225,0.06)] sm:mt-0 sm:rounded-b-3xl sm:rounded-tr-3xl sm:rounded-tl-none sm:p-8">
+                <div className="mt-2 rounded-3xl border border-[#ECEEF2] bg-white p-4 text-black shadow-[0_14px_38px_rgba(20,20,31,0.05)] sm:mt-0 sm:rounded-b-[30px] sm:rounded-tr-[30px] sm:rounded-tl-none sm:p-8">
                   {/* Barra de Búsqueda, Filtro y Botón "+ Crear Evento" */}
-                  <div className="flex flex-col justify-between gap-4 border-b border-[#ECEFFA] pb-6 lg:flex-row lg:items-center">
+                  <div className="flex flex-col justify-between gap-4 border-b border-[#ECEEF2] pb-6 lg:flex-row lg:items-center">
                     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                       <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
-                        <label className="text-xs font-bold text-[#2D3047]">
+                        <label className="text-xs font-bold text-black">
                           Nombre del Evento
                         </label>
                         <input
@@ -504,18 +526,18 @@ function HomePage() {
                           value={searchKeyword}
                           onChange={(e) => setSearchKeyword(e.target.value)}
                           placeholder="Buscar por nombre o lugar..."
-                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-xs text-[#2D3047] outline-none transition focus:border-[#6C7EE1] sm:w-52"
+                          className="w-full rounded-xl border border-[#E4E6EE] bg-[#F6F7F9] px-4 py-2 text-xs font-medium text-black placeholder:text-black/60 outline-none transition focus:border-[#4A4A8A] focus:bg-white sm:w-56"
                         />
                       </div>
 
                       <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
-                        <label className="text-xs font-bold text-[#2D3047]">
+                        <label className="text-xs font-bold text-black">
                           Categoría
                         </label>
                         <select
                           value={typeFilter}
                           onChange={(e) => setTypeFilter(e.target.value)}
-                          className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none transition focus:border-[#6C7EE1] sm:w-44"
+                          className="w-full rounded-xl border border-[#E4E6EE] bg-[#F6F7F9] px-4 py-2 text-xs font-semibold text-black outline-none transition focus:border-[#4A4A8A] focus:bg-white sm:w-44"
                         >
                           {eventTypes.map((t) => (
                             <option key={t} value={t}>
@@ -532,7 +554,7 @@ function HomePage() {
                           setTypeFilter("Todos");
                           setFolderTab("all");
                         }}
-                        className="w-full rounded-full border border-[#6C7EE1] px-5 py-2 text-xs font-bold text-[#6C7EE1] transition hover:bg-[#ECEFFA] sm:w-auto"
+                        className="w-full cursor-pointer rounded-xl border border-[#4A4A8A]/30 bg-[#F4F4FA] px-5 py-2 text-xs font-bold text-black transition hover:bg-[#4A4A8A]/20 sm:w-auto"
                       >
                         Ver Todos
                       </button>
@@ -541,348 +563,88 @@ function HomePage() {
                     <button
                       type="button"
                       onClick={() => setActiveSection("wizard")}
-                      className="w-full rounded-full bg-[#6C7EE1] px-6 py-2.5 text-center text-xs font-bold text-white shadow-md shadow-[#6C7EE1]/30 transition hover:bg-[#5A6CD0] sm:w-auto sm:self-start lg:self-auto"
+                      className="w-full cursor-pointer rounded-2xl bg-[#FF5B4D] px-6 py-2.5 text-center text-xs font-bold text-black shadow-[0_10px_22px_rgba(255,91,77,0.34)] transition hover:bg-[#F24C3E] sm:w-auto sm:self-start lg:self-auto"
                     >
                       ＋ Crear Evento
                     </button>
                   </div>
 
-                  {/* Lista Horizontal de Eventos (Conservando el tamaño grande +50% +30%) */}
+                  {/* Cuadrícula de Tarjetas de Eventos (3 por fila en desktop) */}
                   {loadingEventos ? (
-                    <p className="py-12 text-center text-sm text-[#8E94A9]">
+                    <p className="py-12 text-center text-sm font-medium text-black">
                       Cargando tus eventos...
                     </p>
                   ) : filteredEventos.length === 0 ? (
                     <div className="py-12 text-center">
-                      <h3 className="text-lg font-bold text-[#2D3047]">
+                      <h3 className="text-lg font-bold text-black">
                         No se encontraron eventos en esta vista
                       </h3>
-                      <p className="mt-1 text-xs text-[#8E94A9]">
+                      <p className="mt-1 text-xs font-medium text-black">
                         Crea un nuevo evento con el Wizard paso a paso o cambia
                         los filtros de búsqueda.
                       </p>
                       <button
                         type="button"
                         onClick={() => setActiveSection("wizard")}
-                        className="mt-5 rounded-full bg-[#6C7EE1] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-[#6C7EE1]/30 transition hover:bg-[#5A6CD0]"
+                        className="mt-5 cursor-pointer rounded-2xl bg-[#FF5B4D] px-6 py-2.5 text-xs font-bold text-black shadow-[0_10px_22px_rgba(255,91,77,0.34)] transition hover:bg-[#F24C3E]"
                       >
                         ＋ Iniciar Wizard de Creación
                       </button>
                     </div>
                   ) : (
-                    <div className="divide-y divide-[#ECEFFA]">
+                    <div className="grid grid-cols-1 gap-5 pt-4 sm:grid-cols-2 lg:grid-cols-3">
                       {filteredEventos.map((ev, index) => {
                         const fechaStr = String(ev.fecha_evento || "").slice(
                           0,
                           10
                         );
-                        const thumbGrad =
-                          THUMB_GRADIENTS[index % THUMB_GRADIENTS.length];
-                        const isLightThumb = index % THUMB_GRADIENTS.length === 1;
+                        const cardTheme =
+                          EVENT_CARD_THEMES[index % EVENT_CARD_THEMES.length];
+                        const coverThumb =
+                          String(ev.imagen_portada || "").trim() ||
+                          DEFAULT_INVITACION_THUMB;
 
                         return (
                           <div
                             key={ev.idevento}
-                            className="flex flex-col justify-between gap-6 py-7 transition hover:bg-[#FAFBFD] 2xl:flex-row 2xl:items-center"
+                            onClick={() =>
+                              openEventManager(ev.idevento, "invitation")
+                            }
+                            className={`group relative flex h-[142px] w-full min-w-0 cursor-pointer items-center justify-between gap-3.5 overflow-hidden rounded-[22px] bg-gradient-to-br p-4 transition duration-200 hover:-translate-y-0.5 hover:scale-[1.01] sm:p-5 ${cardTheme.cardClass}`}
                           >
-                            {/* Izquierda: Miniatura gráfica + Título y Detalles */}
-                            <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
-                              {/* Miniatura estilo banner (reducida un 30%) */}
-                              <div
-                                onClick={() =>
-                                  openEventManager(ev.idevento, "invitation")
-                                }
-                                className={`relative flex h-[134px] w-full shrink-0 cursor-pointer flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br p-5 shadow-md transition hover:scale-[1.01] sm:w-[268px] ${thumbGrad} ${
-                                  isLightThumb
-                                    ? "border border-[#C9EFE3] text-[#2D3047]"
-                                    : "text-white"
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span
-                                    className={`rounded-lg px-2.5 py-1 text-xs font-extrabold uppercase ${
-                                      isLightThumb
-                                        ? "bg-[#6C7EE1] text-white"
-                                        : "bg-white/20 text-white"
-                                    }`}
-                                  >
-                                    {ev.tipo_evento}
-                                  </span>
-                                </div>
-                                <div className="truncate text-lg font-black tracking-tight">
-                                  {ev.nombre}
-                                </div>
-                                <div className="text-xs font-semibold opacity-95">
-                                  📅 {fechaStr} • ⏰ {ev.hora_evento} hrs
-                                </div>
+                            <div className="flex h-full min-w-0 flex-1 flex-col justify-between">
+                              <div className="flex min-w-0 items-center justify-between">
+                                <span
+                                  className={`truncate rounded-xl px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider ${cardTheme.badgeClass}`}
+                                >
+                                  {ev.tipo_evento}
+                                </span>
                               </div>
-
-                              {/* Información Central Ampliada */}
-                              <div className="space-y-3 sm:space-y-4">
-                                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                                  <span
-                                    className={`rounded-full px-3.5 py-1 text-xs font-bold sm:px-4 sm:py-1.5 sm:text-sm ${
-                                      ev.rsvp_habilitado !== false
-                                        ? "bg-[#E4F9F3] text-[#18A97E]"
-                                        : "bg-[#FFF0EF] text-[#F26B61]"
-                                    }`}
-                                  >
-                                    {ev.rsvp_habilitado !== false
-                                      ? "Evento Activo"
-                                      : "Evento Pausado"}
-                                  </span>
-                                </div>
-
-                                <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs sm:gap-4 sm:text-sm md:text-base">
-                                  <span className="rounded-xl bg-[#F0F2F8] px-3 py-2 text-[#6E7491] sm:px-4 sm:py-2.5">
-                                    👥 Invitados:{" "}
-                                    <strong className="text-[#2D3047]">
-                                      {ev.total_invitados || 0}
-                                    </strong>
-                                  </span>
-                                  <span className="rounded-xl bg-[#ECEFFA] px-3 py-2 text-[#6C7EE1] sm:px-4 sm:py-2.5">
-                                    ✅ Confirmados:{" "}
-                                    <strong>
-                                      {ev.pases_confirmados || 0}/{ev.capacidad}
-                                    </strong>
-                                  </span>
-                                  <span className="rounded-xl bg-[#FFF0EF] px-3 py-2 text-[#F26B61] sm:px-4 sm:py-2.5">
-                                    ⏳ Pendientes:{" "}
-                                    <strong className="text-[#2D3047]">
-                                      {ev.pendientes || 0}
-                                    </strong>
-                                  </span>
-                                </div>
+                              <div
+                                className={`truncate text-[14.5px] font-extrabold tracking-tight ${cardTheme.titleClass}`}
+                              >
+                                {ev.nombre}
+                              </div>
+                              <div
+                                className={`truncate text-[10px] font-semibold ${cardTheme.metaClass}`}
+                              >
+                                📅 {fechaStr} • ⏰ {ev.hora_evento} hrs
                               </div>
                             </div>
 
-                            {/* Derecha: Botones de Acción Estilo Tarjeta con Insignia Izquierda y Flecha (Reducidos un 30%) */}
-                            <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5">
-                              {/* 1. Editar / Invitación - Deep Royal Indigo (#4E54A3) */}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openEventManager(ev.idevento, "invitation")
-                                }
-                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#4E54A3] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(78,84,163,0.25)] transition hover:-translate-y-0.5 hover:bg-[#434994] sm:justify-start"
-                              >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-3.5 w-3.5 text-white"
-                                  >
-                                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                    <path d="m15 5 4 4" />
-                                  </svg>
-                                </span>
-                                <div className="flex-1 pr-1 sm:flex-initial">
-                                  <span className="block text-[9px] font-medium leading-tight text-white/75">
-                                    Diseño Digital
-                                  </span>
-                                  <span className="block text-xs font-extrabold leading-tight tracking-tight text-white">
-                                    Editar / Invitación
-                                  </span>
-                                </div>
-                                <span className="text-xs font-bold text-white/90 transition-transform group-hover:translate-x-1">
-                                  →
-                                </span>
-                              </button>
-
-                              {/* 2. Invitados - Soft Lavender Periwinkle (#9599D6) */}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openEventManager(ev.idevento, "guests")
-                                }
-                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#9599D6] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(149,153,214,0.25)] transition hover:-translate-y-0.5 hover:bg-[#8489CA] sm:justify-start"
-                              >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white">
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-3.5 w-3.5 text-white"
-                                  >
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                  </svg>
-                                </span>
-                                <div className="flex-1 pr-1 sm:flex-initial">
-                                  <span className="block text-[9px] font-medium leading-tight text-white/80">
-                                    Control de Asistencia
-                                  </span>
-                                  <span className="block text-xs font-extrabold leading-tight tracking-tight text-white">
-                                    Invitados ({ev.total_invitados || 0})
-                                  </span>
-                                </div>
-                                <span className="text-xs font-bold text-white/90 transition-transform group-hover:translate-x-1">
-                                  →
-                                </span>
-                              </button>
-
-                              {/* 3. Difusión - Periwinkle Indigo (#6C7EE1) */}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openEventManager(ev.idevento, "broadcast")
-                                }
-                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#6C7EE1] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(108,126,225,0.25)] transition hover:-translate-y-0.5 hover:bg-[#5B6DD0] sm:justify-start"
-                              >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-3.5 w-3.5 text-white"
-                                  >
-                                    <path d="m3 11 18-5v12L3 13v-2Z" />
-                                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
-                                  </svg>
-                                </span>
-                                <div className="flex-1 pr-1 sm:flex-initial">
-                                  <span className="block text-[9px] font-medium leading-tight text-white/75">
-                                    WhatsApp y Email
-                                  </span>
-                                  <span className="block text-xs font-extrabold leading-tight tracking-tight text-white">
-                                    Difusión
-                                  </span>
-                                </div>
-                                <span className="text-xs font-bold text-white/90 transition-transform group-hover:translate-x-1">
-                                  →
-                                </span>
-                              </button>
-
-                              {/* 3.5 Cámara y Álbum de Recuerdos - Emerald */}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openEventManager(ev.idevento, "memories")
-                                }
-                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-emerald-600 px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(16,185,129,0.25)] transition hover:-translate-y-0.5 hover:bg-emerald-700 sm:justify-start"
-                              >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white">
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-3.5 w-3.5 text-white"
-                                  >
-                                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                                    <circle cx="12" cy="13" r="3" />
-                                  </svg>
-                                </span>
-                                <div className="flex-1 pr-1 sm:flex-initial">
-                                  <span className="block text-[9px] font-medium leading-tight text-white/80">
-                                    Cámara HD (30 días)
-                                  </span>
-                                  <span className="block text-xs font-extrabold leading-tight tracking-tight text-white">
-                                    Recuerdos
-                                  </span>
-                                </div>
-                                <span className="text-xs font-bold text-white/90 transition-transform group-hover:translate-x-1">
-                                  →
-                                </span>
-                              </button>
-
-                              {/* 4. Ajustes y QR - Deep Twilight (#2D3047) */}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openEventManager(ev.idevento, "settings")
-                                }
-                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#2D3047] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(45,48,71,0.22)] transition hover:-translate-y-0.5 hover:bg-[#23263A] sm:justify-start"
-                              >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-3.5 w-3.5 text-white"
-                                  >
-                                    <rect width="5" height="5" x="3" y="3" rx="1" />
-                                    <rect width="5" height="5" x="16" y="3" rx="1" />
-                                    <rect width="5" height="5" x="3" y="16" rx="1" />
-                                    <path d="M21 16h-3a2 2 0 0 0-2 2v3" />
-                                    <path d="M21 21v.01" />
-                                    <path d="M12 7v3a2 2 0 0 1-2 2H7" />
-                                    <path d="M3 12h.01" />
-                                    <path d="M12 3h.01" />
-                                    <path d="M12 16v.01" />
-                                    <path d="M16 12h1" />
-                                    <path d="M21 12v.01" />
-                                    <path d="M12 21v-1" />
-                                  </svg>
-                                </span>
-                                <div className="flex-1 pr-1 sm:flex-initial">
-                                  <span className="block text-[9px] font-medium leading-tight text-white/70">
-                                    Acceso y Control
-                                  </span>
-                                  <span className="block text-xs font-extrabold leading-tight tracking-tight text-white">
-                                    Ajustes y QR
-                                  </span>
-                                </div>
-                                <span className="text-xs font-bold text-white/90 transition-transform group-hover:translate-x-1">
-                                  →
-                                </span>
-                              </button>
-
-                              {/* 5. Eliminar - Coral-Pink (#FF8086) */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setDeleteError("");
-                                  setEventoToDelete(ev);
+                            {/* Miniatura de la invitación virtual (o imagen genérica automática si no tiene) */}
+                            <div className="relative h-[104px] w-[78px] shrink-0 overflow-hidden rounded-2xl border-2 border-white/90 bg-[#2D3047] shadow-md sm:w-[84px]">
+                              <img
+                                src={coverThumb}
+                                alt={`Invitación de ${ev.nombre}`}
+                                loading="lazy"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src =
+                                    DEFAULT_INVITACION_THUMB;
                                 }}
-                                className="group flex items-center justify-between gap-2.5 rounded-xl bg-[#FF8086] px-3 py-2 text-left text-white shadow-[0_6px_15px_rgba(255,128,134,0.28)] transition hover:-translate-y-0.5 hover:bg-[#F56E74] sm:justify-start"
-                              >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white">
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-3.5 w-3.5 text-white"
-                                  >
-                                    <path d="M3 6h18" />
-                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                    <line x1="10" x2="10" y1="11" y2="17" />
-                                    <line x1="14" x2="14" y1="11" y2="17" />
-                                  </svg>
-                                </span>
-                                <div className="flex-1 pr-1 sm:flex-initial">
-                                  <span className="block text-[9px] font-medium leading-tight text-white/80">
-                                    Acción del Evento
-                                  </span>
-                                  <span className="block text-xs font-extrabold leading-tight tracking-tight text-white">
-                                    Eliminar
-                                  </span>
-                                </div>
-                                <span className="text-xs font-bold text-white/90 transition-transform group-hover:translate-x-1">
-                                  →
-                                </span>
-                              </button>
+                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                              />
                             </div>
                           </div>
                         );
