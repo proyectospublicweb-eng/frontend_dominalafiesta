@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getAlbumFotosEventoRequest,
+  toggleCompartirAlbumEventoRequest,
   addFotoAlbumEventoRequest,
   updateFotoAlbumEventoRequest,
   deleteFotoAlbumEventoRequest,
@@ -65,10 +66,20 @@ function formatAudioMinSec(totalSec) {
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 }
 
-export default function CamaraAlbumEvento({ evento, onShowNotice }) {
+export default function CamaraAlbumEvento({
+  evento,
+  onShowNotice,
+  modoInvitado = false,
+  onCloseModoInvitado,
+}) {
   const [loading, setLoading] = useState(true);
   const [fotos, setFotos] = useState([]);
   const [reels, setReels] = useState([]);
+  const [compartirConInvitados, setCompartirConInvitados] = useState(
+    Boolean(evento?.compartir_album_invitados)
+  );
+  const [togglingCompartir, setTogglingCompartir] = useState(false);
+  const [guestActiveReel, setGuestActiveReel] = useState(null);
   const [photoQuality, setPhotoQuality] = useState("hd");
   const [totalMb, setTotalMb] = useState(0);
   const [retention, setRetention] = useState({
@@ -500,6 +511,9 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
       const { data } = await getAlbumFotosEventoRequest(evento.idevento);
       setFotos(Array.isArray(data.fotos) ? data.fotos : []);
       setReels(Array.isArray(data.reels) ? data.reels : []);
+      if (data.compartir_album_invitados !== undefined) {
+        setCompartirConInvitados(Boolean(data.compartir_album_invitados));
+      }
       setPhotoQuality(data.photoQuality || "hd");
       setTotalMb(Number(data.totalMb || 0));
       if (data.retention) {
@@ -515,7 +529,34 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
     }
   };
 
+  const handleToggleCompartirConInvitados = async () => {
+    if (!evento?.idevento || togglingCompartir || modoInvitado) return;
+    setTogglingCompartir(true);
+    try {
+      const nextVal = !compartirConInvitados;
+      const { data } = await toggleCompartirAlbumEventoRequest(
+        evento.idevento,
+        nextVal
+      );
+      setCompartirConInvitados(Boolean(data.compartir_album_invitados));
+      notify(
+        data.message ||
+          (data.compartir_album_invitados
+            ? "✓ Fotos y Reels compartidos con los invitados que confirmaron asistencia."
+            : "🔒 Se revocó el permiso de ver Fotos y Reels a los invitados.")
+      );
+    } catch (err) {
+      notify(
+        err.response?.data?.message ||
+          "No se pudo actualizar el permiso para compartir fotos y reels."
+      );
+    } finally {
+      setTogglingCompartir(false);
+    }
+  };
+
   useEffect(() => {
+    setCompartirConInvitados(Boolean(evento?.compartir_album_invitados));
     fetchAlbum();
     return () => {
       stopCameraStream();
@@ -1415,60 +1456,104 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              {modoInvitado && typeof onCloseModoInvitado === "function" && (
+                <button
+                  type="button"
+                  onClick={onCloseModoInvitado}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[#4BA6FF]/40 bg-[#4BA6FF]/15 px-3 py-1 text-[10px] font-extrabold text-[#7DD3FC] transition hover:bg-[#4BA6FF] hover:text-white sm:text-[11px]"
+                >
+                  ← Volver a Mis Invitaciones
+                </button>
+              )}
               <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#3CE7B6]/20 to-[#2BC496]/20 px-2.5 py-1 text-[10px] font-extrabold text-[#3CE7B6] ring-1 ring-[#3CE7B6]/35 sm:px-3 sm:text-[11px]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#3CE7B6]" />
-                <span>∞ Fotos Ilimitadas</span>
+                <span>
+                  {modoInvitado
+                    ? "🎉 Compartido por el Anfitrión"
+                    : "∞ Fotos Ilimitadas"}
+                </span>
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#8A4FFF]/20 to-[#6E38E0]/20 px-2.5 py-1 text-[10px] font-extrabold text-[#B794FF] ring-1 ring-[#8A4FFF]/40 sm:px-3 sm:text-[11px]">
                 <span>✨ {activePreset.label.split("(")[0].trim()}</span>
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[#262942] bg-[#141526] px-2.5 py-1 text-[10px] font-bold text-[#9CA0C3] sm:px-3 sm:text-[11px]">
-                📷 {fotos.length} {fotos.length === 1 ? "foto" : "fotos"} ({totalMb} MB)
+                📷 {fotos.length} {fotos.length === 1 ? "foto" : "fotos"} · 🎬{" "}
+                {reels.length} {reels.length === 1 ? "reel" : "reels"} ({totalMb}{" "}
+                MB)
               </span>
             </div>
 
             <h2 className="mt-2.5 break-words font-display text-lg font-extrabold uppercase tracking-wide text-white sm:text-xl lg:text-2xl">
-              📸 Cámara y Álbum de Recuerdos — {evento.nombre}
+              {modoInvitado
+                ? `📸 Fotos y Reels del Evento — ${evento.nombre}`
+                : `📸 Cámara y Álbum de Recuerdos — ${evento.nombre}`}
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-[#8E92B2]">
-              Este álbum es exclusivo de este evento. Toma fotografías en vivo con tu
-              cámara o súbelas desde tu galería con tu diseño de overlay personalizado.
+              {modoInvitado
+                ? "El anfitrión de este evento te otorgó permiso para ver y descargar en Alta Definición las fotografías y reels oficiales por haber confirmado tu invitación."
+                : "Este álbum es exclusivo de este evento. Toma fotografías en vivo con tu cámara o súbelas desde tu galería con tu diseño de overlay personalizado."}
             </p>
           </div>
 
           {/* Botonera Responsiva (Móvil: cuadrícula adaptativa, Tablet/Desk: fila flexible) */}
           <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:flex sm:flex-row sm:flex-wrap lg:shrink-0">
-            <button
-              type="button"
-              onClick={handleToggleCameraOpen}
-              className={`inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-extrabold text-white transition sm:w-auto ${
-                cameraOpen
-                  ? "bg-gradient-to-r from-[#F25767] to-[#E03E52] shadow-[0_6px_18px_rgba(242,87,103,0.38)] hover:brightness-110"
-                  : "bg-gradient-to-r from-[#2ED47A] to-[#38CB89] shadow-[0_6px_18px_rgba(56,203,137,0.35)] hover:brightness-110"
-              }`}
-            >
-              <span>{cameraOpen ? "✕ Cerrar Cámara" : "📷 Abrir Cámara en Vivo"}</span>
-            </button>
+            {!modoInvitado && (
+              <>
+                <button
+                  type="button"
+                  disabled={togglingCompartir}
+                  onClick={handleToggleCompartirConInvitados}
+                  className={`inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-extrabold transition sm:w-auto ${
+                    compartirConInvitados
+                      ? "border border-[#38CB89]/55 bg-gradient-to-r from-[#1E9E63] to-[#2ED47A] text-white shadow-[0_6px_20px_rgba(46,212,122,0.4)] hover:brightness-110"
+                      : "border border-[#FFB836]/45 bg-[#FFB836]/15 text-[#FFE2B8] hover:bg-[#FFB836]/25"
+                  }`}
+                  title="Otorga o revoca el permiso para que los invitados con asistencia confirmada vean las fotos y reels en su sección Mis Invitaciones"
+                >
+                  <span>
+                    {togglingCompartir
+                      ? "⏳ Actualizando permiso..."
+                      : compartirConInvitados
+                      ? "🟢 Compartiendo Fotos y Reels a Invitados"
+                      : "🤝 Compartir Fotos y Reels a Invitados"}
+                  </span>
+                </button>
 
-            <button
-              type="button"
-              onClick={() => nativeCameraInputRef.current?.click()}
-              disabled={uploadingFiles}
-              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#3CE7B6]/40 bg-[#3CE7B6]/15 px-4 py-2.5 text-xs font-extrabold text-[#3CE7B6] transition hover:bg-[#3CE7B6]/25 disabled:opacity-50 sm:hidden"
-            >
-              <span>📱 Cámara del Celular</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={handleToggleCameraOpen}
+                  className={`inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-extrabold text-white transition sm:w-auto ${
+                    cameraOpen
+                      ? "bg-gradient-to-r from-[#F25767] to-[#E03E52] shadow-[0_6px_18px_rgba(242,87,103,0.38)] hover:brightness-110"
+                      : "bg-gradient-to-r from-[#2ED47A] to-[#38CB89] shadow-[0_6px_18px_rgba(56,203,137,0.35)] hover:brightness-110"
+                  }`}
+                >
+                  <span>
+                    {cameraOpen ? "✕ Cerrar Cámara" : "📷 Abrir Cámara en Vivo"}
+                  </span>
+                </button>
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingFiles}
-              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8A4FFF] to-[#6E38E0] px-4 py-2.5 text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(138,79,255,0.38)] transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
-            >
-              <span>
-                {uploadingFiles ? "⏳ Procesando HD..." : "⬆️ Subir Foto(s)"}
-              </span>
-            </button>
+                <button
+                  type="button"
+                  onClick={() => nativeCameraInputRef.current?.click()}
+                  disabled={uploadingFiles}
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#3CE7B6]/40 bg-[#3CE7B6]/15 px-4 py-2.5 text-xs font-extrabold text-[#3CE7B6] transition hover:bg-[#3CE7B6]/25 disabled:opacity-50 sm:hidden"
+                >
+                  <span>📱 Cámara del Celular</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingFiles}
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8A4FFF] to-[#6E38E0] px-4 py-2.5 text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(138,79,255,0.38)] transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
+                >
+                  <span>
+                    {uploadingFiles ? "⏳ Procesando HD..." : "⬆️ Subir Foto(s)"}
+                  </span>
+                </button>
+              </>
+            )}
 
             <button
               type="button"
@@ -1484,6 +1569,47 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
             </button>
           </div>
         </div>
+
+        {/* Estado del Permiso para Invitados Confirmados (Solo visible para el Anfitrión) */}
+        {!modoInvitado && (
+          <div
+            className={`mt-4 flex flex-col gap-2.5 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5 ${
+              compartirConInvitados
+                ? "border-[#38CB89]/40 bg-[#38CB89]/10 text-[#D1FAE5]"
+                : "border-[#343857] bg-[#181A2C] text-[#9CA0C3]"
+            }`}
+          >
+            <div className="flex items-start gap-2.5">
+              <span className="text-base leading-none">
+                {compartirConInvitados ? "🟢" : "🔒"}
+              </span>
+              <div className="text-[11px] leading-relaxed">
+                <strong className="text-white">
+                  {compartirConInvitados
+                    ? "Permiso activo para invitados confirmados:"
+                    : "Álbum privado (solo visible para ti como anfitrión):"}
+                </strong>{" "}
+                {compartirConInvitados
+                  ? "Todos los invitados que confirmaron su invitación en este evento pueden ver y descargar estas fotos y reels desde su sesión en la sección «💌 Mis Invitaciones»."
+                  : "Activa el botón «🤝 Compartir Fotos y Reels a Invitados» cuando quieras que los invitados que confirmaron asistencia puedan ver las fotos y reels desde «💌 Mis Invitaciones»."}
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={togglingCompartir}
+              onClick={handleToggleCompartirConInvitados}
+              className={`shrink-0 cursor-pointer rounded-full px-3.5 py-1.5 text-[11px] font-extrabold transition ${
+                compartirConInvitados
+                  ? "border border-white/20 bg-[#141526]/80 text-[#FCA5A5] hover:bg-[#F25767] hover:text-white"
+                  : "bg-[#38CB89] text-[#0E131F] hover:brightness-110"
+              }`}
+            >
+              {compartirConInvitados
+                ? "Ocultar a Invitados"
+                : "Otorgar Permiso Ahora"}
+            </button>
+          </div>
+        )}
 
         {/* =====================================================================
             2. AVISO VISIBLE DE VIGENCIA DE 30 DÍAS PARA DESCARGAR AL DISPOSITIVO
@@ -1649,18 +1775,20 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:self-center">
-            <button
-              type="button"
-              onClick={handleOpenReelCreator}
-              disabled={fotos.length === 0 && reels.length === 0}
-              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] px-4 py-2 text-center text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(225,48,108,0.38)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
-              title="Abrir el creador flotante de Reels 9:16 para Instagram"
-            >
-              <span>
-                🎬 Crear Reel para Instagram
-                {reels.length > 0 ? ` (${reels.length})` : ""}
-              </span>
-            </button>
+            {!modoInvitado && (
+              <button
+                type="button"
+                onClick={handleOpenReelCreator}
+                disabled={fotos.length === 0 && reels.length === 0}
+                className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] px-4 py-2 text-center text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(225,48,108,0.38)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
+                title="Abrir el creador flotante de Reels 9:16 para Instagram"
+              >
+                <span>
+                  🎬 Crear Reel para Instagram
+                  {reels.length > 0 ? ` (${reels.length})` : ""}
+                </span>
+              </button>
+            )}
             {fotos.length > 0 && (
               <button
                 type="button"
@@ -1689,10 +1817,20 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
               Aún no hay fotografías en el álbum de "{evento.nombre}"
             </h4>
             <p className="mx-auto mt-1 max-w-md text-xs text-[#8E92B2]">
-              Presiona{" "}
-              <strong className="text-[#3CE7B6]">"📷 Abrir Cámara en Vivo"</strong> o{" "}
-              <strong className="text-[#B794FF]">"⬆️ Subir Foto(s)"</strong> para capturar tus primeros
-              recuerdos en Alta Definición y personalízalos con los overlays al abrir cada foto.
+              {modoInvitado ? (
+                "El anfitrión aún no ha subido fotografías a este evento."
+              ) : (
+                <>
+                  Presiona{" "}
+                  <strong className="text-[#3CE7B6]">
+                    "📷 Abrir Cámara en Vivo"
+                  </strong>{" "}
+                  o{" "}
+                  <strong className="text-[#B794FF]">"⬆️ Subir Foto(s)"</strong>{" "}
+                  para capturar tus primeros recuerdos en Alta Definición y
+                  personalízalos con los overlays al abrir cada foto.
+                </>
+              )}
             </p>
           </div>
         ) : (
@@ -1735,7 +1873,11 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
                     </p>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-4 gap-1.5 border-t border-[#262942] pt-2.5">
+                  <div
+                    className={`mt-3 grid gap-1.5 border-t border-[#262942] pt-2.5 ${
+                      modoInvitado ? "grid-cols-3" : "grid-cols-4"
+                    }`}
+                  >
                     <button
                       type="button"
                       onClick={() => setLightboxIndex(idx)}
@@ -1761,15 +1903,17 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
                     >
                       {downloading2KId === foto.idFoto ? "⏳..." : "✨ 2K"}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeletePhoto(foto)}
-                      disabled={deletingPhotoId === foto.idFoto}
-                      className="cursor-pointer whitespace-nowrap rounded-full bg-[#F25767]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#FF7A88] ring-1 ring-[#F25767]/30 transition hover:bg-[#F25767] hover:text-white disabled:opacity-45"
-                      title="Eliminar fotografía"
-                    >
-                      {deletingPhotoId === foto.idFoto ? "..." : "🗑️"}
-                    </button>
+                    {!modoInvitado && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePhoto(foto)}
+                        disabled={deletingPhotoId === foto.idFoto}
+                        className="cursor-pointer whitespace-nowrap rounded-full bg-[#F25767]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#FF7A88] ring-1 ring-[#F25767]/30 transition hover:bg-[#F25767] hover:text-white disabled:opacity-45"
+                        title="Eliminar fotografía"
+                      >
+                        {deletingPhotoId === foto.idFoto ? "..." : "🗑️"}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1777,6 +1921,132 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
           </div>
         )}
       </div>
+
+      {/* =====================================================================
+          5.B SECCIÓN DE REELS DEL EVENTO (VISIBLE PARA INVITADOS CONFIRMADOS Y ANFITRIÓN)
+         ===================================================================== */}
+      {(modoInvitado || reels.length > 0) && (
+        <div className="rounded-2xl border border-[#2F324D] bg-[#222437] p-3.5 shadow-[0_12px_30px_rgba(8,9,20,0.45)] sm:p-6">
+          <div className="mb-4 flex flex-col gap-2.5 border-b border-[#2E314B] pb-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] text-xs shadow-[0_4px_12px_rgba(225,48,108,0.35)]">
+                🎬
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-sm font-extrabold uppercase tracking-wider text-white">
+                  Reels del Evento ({reels.length})
+                </h3>
+                <p className="text-[11px] text-[#8E92B2]">
+                  Reels verticales (9:16) creados con los mejores momentos y música del evento. Toca cualquier Reel para reproducirlo o descargarlo.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {reels.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#343857] bg-[#181A2C] px-4 py-8 text-center">
+              <p className="text-xs font-extrabold text-white">
+                Aún no hay Reels publicados en este evento
+              </p>
+              <p className="mt-1 text-[11px] text-[#8E92B2]">
+                Cuando el anfitrión genere Reels del evento aparecerán aquí para que puedas reproducirlos y descargarlos.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {reels.map((reel, idx) => {
+                const thumbSrc =
+                  reel.localThumbUrl ||
+                  (reel.thumbUrl ? getAlbumPhotoUrl(reel.thumbUrl) : "");
+                const videoSrc =
+                  reel.localVideoUrl ||
+                  (reel.videoUrl ? getAlbumPhotoUrl(reel.videoUrl) : "");
+                const isPlayingInline = guestActiveReel?.idReel === reel.idReel;
+
+                return (
+                  <div
+                    key={reel.idReel}
+                    className="flex flex-col overflow-hidden rounded-2xl border border-[#2E314B] bg-[#181A2C] shadow-[0_8px_22px_rgba(0,0,0,0.45)] transition hover:border-[#E1306C]/60"
+                  >
+                    <div className="relative aspect-9/16 w-full overflow-hidden bg-[#0B0C17]">
+                      {isPlayingInline && videoSrc ? (
+                        <video
+                          src={videoSrc}
+                          poster={thumbSrc || undefined}
+                          controls
+                          autoPlay
+                          playsInline
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <div
+                          onClick={() => setGuestActiveReel(reel)}
+                          className="group relative h-full w-full cursor-pointer"
+                        >
+                          {thumbSrc ? (
+                            <img
+                              src={thumbSrc}
+                              alt={reel.titulo}
+                              loading="lazy"
+                              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-3xl">
+                              🎬
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/35 transition group-hover:bg-black/20">
+                            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-base text-[#0F141D] shadow-lg transition group-hover:scale-110">
+                              ▶
+                            </span>
+                          </div>
+                          <span className="absolute right-2.5 top-2.5 rounded-full bg-[#141526]/85 px-2.5 py-0.5 text-[10px] font-extrabold text-[#7DD3FC] ring-1 ring-white/15">
+                            {reel.durationSec || 15}s
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-1 flex-col justify-between p-3">
+                      <div>
+                        <p
+                          className="truncate text-xs font-extrabold text-[#F4F5FB]"
+                          title={reel.titulo}
+                        >
+                          {reel.titulo}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-[#8E92B2]">
+                          🎞️ {reel.photosCount || 1} fotos ·{" "}
+                          {reel.sizeKb ? `${reel.sizeKb} KB` : "HD 9:16"}
+                        </p>
+                      </div>
+
+                      <div className="mt-3 flex items-center gap-1.5 border-t border-[#262942] pt-2.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setGuestActiveReel(isPlayingInline ? null : reel)
+                          }
+                          className="flex-1 cursor-pointer rounded-full bg-[#4BA6FF]/15 px-2.5 py-1.5 text-[10px] font-extrabold text-[#5EB2FF] ring-1 ring-[#4BA6FF]/30 transition hover:bg-[#4BA6FF] hover:text-white"
+                        >
+                          {isPlayingInline ? "⏹ Cerrar Video" : "▶ Ver Reel"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadSavedReel(reel, idx)}
+                          className="flex-1 cursor-pointer rounded-full bg-[#38CB89]/15 px-2.5 py-1.5 text-[10px] font-extrabold text-[#3CE7B6] ring-1 ring-[#38CB89]/30 transition hover:bg-[#38CB89] hover:text-white"
+                        >
+                          ⬇️ Descargar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* =====================================================================
           6. MODAL VISOR EN PANTALLA COMPLETA (LIGHTBOX ALTA DEFINICIÓN + SELECTOR DE OVERLAY EN VIVO)
@@ -1861,13 +2131,15 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
                     ? "⏳ Generando 2K..."
                     : "✨ Descargar 2K"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleDeletePhoto(activeLightboxPhoto)}
-                  className="cursor-pointer rounded-full border border-white/[0.08] bg-[#222836] px-3 py-1.5 text-center text-[11px] font-medium text-[#FCA5A5] shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:border-[#F87171]/40 hover:bg-[#35232B] hover:text-white sm:px-3.5 sm:text-xs"
-                >
-                  🗑️ Eliminar
-                </button>
+                {!modoInvitado && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePhoto(activeLightboxPhoto)}
+                    className="cursor-pointer rounded-full border border-white/[0.08] bg-[#222836] px-3 py-1.5 text-center text-[11px] font-medium text-[#FCA5A5] shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:border-[#F87171]/40 hover:bg-[#35232B] hover:text-white sm:px-3.5 sm:text-xs"
+                  >
+                    🗑️ Eliminar
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setLightboxIndex(null)}
@@ -1929,7 +2201,8 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
                 )}
               </div>
 
-              {/* Panel Inferior del Visor estilo tarjetas "Lighting Master / Living Room / Smart Lock" */}
+              {/* Panel Inferior del Visor estilo tarjetas "Lighting Master / Living Room / Smart Lock" (Solo Anfitrión) */}
+              {!modoInvitado && (
               <div className="shrink-0 space-y-2.5 border-t border-white/[0.08] bg-gradient-to-b from-[#212735]/95 to-[#171B24]/95 px-3 py-3 backdrop-blur-md sm:space-y-3.5 sm:px-6 sm:py-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2">
@@ -2048,6 +2321,7 @@ export default function CamaraAlbumEvento({ evento, onShowNotice }) {
                   </div>
                 </div>
               </div>
+              )}
             </div>
           </div>
         </div>

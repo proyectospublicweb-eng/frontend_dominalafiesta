@@ -482,6 +482,13 @@ function GestorEvento({
     templateLang: "es_MX",
     mode: "template",
   });
+  const [scheduledEmailForm, setScheduledEmailForm] = useState({
+    fecha: "",
+    hora: "10:00",
+    templateId: "neon-vip",
+    mensaje: "",
+  });
+  const [savingScheduledEmail, setSavingScheduledEmail] = useState(false);
 
   // Tab D: Logística (Seating Chart Drag & Drop, Checklist con fecha límite, Cronograma)
   const [draggedGuestId, setDraggedGuestId] = useState(null);
@@ -554,6 +561,10 @@ function GestorEvento({
           mesa_regalos_url: draftEvento.mesa_regalos_url || "",
           recordatorio_dias: draftEvento.recordatorio_dias ?? 3,
           recordatorio_activo: Boolean(draftEvento.recordatorio_activo),
+          recordatorio_horas: draftEvento.recordatorio_horas ?? 12,
+          recordatorio_horas_activo: Boolean(
+            draftEvento.recordatorio_horas_activo
+          ),
           recordatorio_mensaje:
             draftEvento.recordatorio_mensaje ||
             "¡Hola {nombre}! Faltan {dias} días para {evento}. Por favor confirma tu asistencia en la invitación virtual: {enlace}",
@@ -634,6 +645,10 @@ function GestorEvento({
           mesa_regalos_url: urlConfig,
           recordatorio_dias: data.evento.recordatorio_dias ?? 3,
           recordatorio_activo: Boolean(data.evento.recordatorio_activo),
+          recordatorio_horas: data.evento.recordatorio_horas ?? 12,
+          recordatorio_horas_activo: Boolean(
+            data.evento.recordatorio_horas_activo
+          ),
           recordatorio_mensaje:
             data.evento.recordatorio_mensaje ||
             "¡Hola {nombre}! Faltan {dias} días para {evento}. Por favor confirma tu asistencia en la invitación virtual: {enlace}",
@@ -976,6 +991,11 @@ function GestorEvento({
           data.mesa_regalos_tienda || payload.mesa_regalos_tienda || "Amazon",
         mesa_regalos_url:
           data.mesa_regalos_url ?? payload.mesa_regalos_url ?? "",
+        recordatorio_horas:
+          data.recordatorio_horas ?? payload.recordatorio_horas ?? 12,
+        recordatorio_horas_activo: Boolean(
+          data.recordatorio_horas_activo ?? payload.recordatorio_horas_activo
+        ),
       });
       onEventoUpdated();
       showNotice("✓ Evento guardado correctamente.");
@@ -1811,6 +1831,97 @@ function GestorEvento({
     });
   };
 
+  const executeCreateScheduledEmail = async () => {
+    const fechaClean = String(scheduledEmailForm.fecha || "").trim();
+    const horaClean = String(scheduledEmailForm.hora || "10:00").trim();
+    if (!fechaClean || !horaClean) {
+      showNotice(
+        "⚠️ Selecciona la fecha y hora exacta para el envío automático de correo."
+      );
+      return;
+    }
+
+    try {
+      setSavingScheduledEmail(true);
+      const detallePayload = JSON.stringify({
+        templateId: scheduledEmailForm.templateId || "neon-vip",
+        mensaje:
+          String(scheduledEmailForm.mensaje || "").trim() ||
+          String(invForm.recordatorio_mensaje || "").trim(),
+        linkUrl: selectedEmailLinkObj?.url || baseShareUrl,
+      });
+
+      const { data } = await addLogisticaRequest(evento.idevento, {
+        categoria: "correo_programado",
+        titulo: "Envío Automático de Correo a Pendientes",
+        fecha_limite: fechaClean,
+        hora_itinerario: horaClean,
+        estado: "Programado",
+        detalle: detallePayload,
+      });
+
+      setDetalle((prev) => ({
+        ...prev,
+        logistica: [...(prev.logistica || []), data],
+      }));
+      setScheduledEmailForm((prev) => ({
+        ...prev,
+        fecha: "",
+        mensaje: "",
+      }));
+      showNotice(
+        `✓ Envío automático de correo programado para el ${fechaClean} a las ${horaClean} hrs.`
+      );
+    } catch (err) {
+      showNotice(
+        err.response?.data?.message ||
+          "Error al programar el envío automático de correo"
+      );
+    } finally {
+      setSavingScheduledEmail(false);
+    }
+  };
+
+  const handleCreateScheduledEmail = (e) => {
+    if (e?.preventDefault) e.preventDefault();
+    const fechaClean = String(scheduledEmailForm.fecha || "").trim();
+    const horaClean = String(scheduledEmailForm.hora || "10:00").trim();
+    if (!fechaClean || !horaClean) {
+      showNotice(
+        "⚠️ Selecciona la fecha y la hora exacta para programar el envío de correo."
+      );
+      return;
+    }
+    const pendingPases = pendientesList.reduce(
+      (acc, g) => acc + Number(g.pases || 1),
+      0
+    );
+    validateAndWarnBeforeShare({
+      canal: `Correo Automático Programado (${fechaClean} • ${horaClean} hrs)`,
+      destinatarioLabel: `${pendientesList.length} invitado(s) en estado Pendiente (${pendingPases} pases)`,
+      proyectadoInvitados: totalInvitadosCount,
+      proyectadoPases: totalPasesLista,
+      enviadosDespuesInvitados: totalInvitadosCount,
+      enviadosDespuesPases: totalPasesLista,
+      onProceed: () => {
+        executeCreateScheduledEmail();
+      },
+    });
+  };
+
+  const handleToggleScheduledEmailStatus = async (item) => {
+    const nextState =
+      item.estado === "Programado" ? "Pausado" : "Programado";
+    await handleUpdateLogistica(item.iditem, {
+      estado: nextState,
+    });
+    showNotice(
+      nextState === "Programado"
+        ? `✓ Envío automático de correo activado (${item.fecha_limite} • ${item.hora_itinerario} hrs).`
+        : "⏸ Envío automático de correo puesto en pausa."
+    );
+  };
+
   // =========================================================================
   // HANDLERS: LOGÍSTICA - SEATING CHART DRAG & DROP, TAREAS, CRONOGRAMA (TAB D)
   // =========================================================================
@@ -2464,6 +2575,13 @@ function GestorEvento({
         String(b.hora_itinerario || b.titulo)
       )
   );
+  const correosProgramadosList = [
+    ...logistica.filter((i) => i.categoria === "correo_programado"),
+  ].sort((a, b) => {
+    const keyA = `${a.fecha_limite || ""} ${a.hora_itinerario || ""}`;
+    const keyB = `${b.fecha_limite || ""} ${b.hora_itinerario || ""}`;
+    return keyA.localeCompare(keyB);
+  });
 
   // QR SVG Download handler
   const qrCodeValue = `${window.location.origin}/checkin/${evento.idevento}?code=${
@@ -2814,14 +2932,15 @@ function GestorEvento({
         </div>
       </div>
 
-      {/* Pestañas Superiores Estilo Carpeta con la Paleta de Colores (#6C7EE1, #F98880, #2D3047) */}
+      {/* Pestañas Superiores Estilo Carpeta con la Paleta de Colores (#86B59F, #4A4A8A, #FF5B4D, #C9B16B) */}
       <div className="grid grid-cols-2 gap-1.5 border-b border-[#DCE0F0] pb-2 sm:flex sm:flex-wrap sm:items-end sm:gap-2 sm:pb-0">
         {GESTOR_TABS.filter((t) => !t.hidden).map((t, idx) => {
           const active = currentTab === t.id;
           const tabPalette = [
-            "bg-[#6C7EE1] text-white shadow-[#6C7EE1]/30",
-            "bg-[#F98880] text-white shadow-[#F98880]/30",
-            "bg-[#2D3047] text-white shadow-[#2D3047]/30",
+            "bg-[#86B59F] text-white shadow-[#86B59F]/35",
+            "bg-[#4A4A8A] text-white shadow-[#4A4A8A]/35",
+            "bg-[#FF5B4D] text-white shadow-[#FF5B4D]/35",
+            "bg-[#C9B16B] text-white shadow-[#C9B16B]/35",
           ];
           const colorClass = tabPalette[idx % tabPalette.length];
           return (
@@ -6604,70 +6723,324 @@ function GestorEvento({
                   <strong className="text-[#D97706]">
                     {pendientesList.length} invitados en estado Pendiente
                   </strong>{" "}
-                  cuando falten X días para la fiesta.
+                  cuando falten X días o X horas para la fiesta.
                 </p>
-              </div>
-
-              <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-2.5">
-                <label className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-[#D97706] sm:w-auto">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(invForm.recordatorio_activo)}
-                    onChange={(e) =>
-                      setInvForm((p) => ({
-                        ...p,
-                        recordatorio_activo: e.target.checked,
-                      }))
-                    }
-                    className="h-4 w-4 accent-amber-400"
-                  />
-                  <span>Recordatorio Automático Activo</span>
-                </label>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
-                  Disparar cuando falten (días)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="60"
-                  value={invForm.recordatorio_dias ?? 3}
-                  onChange={(e) =>
-                    setInvForm((p) => ({
-                      ...p,
-                      recordatorio_dias: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-sm font-bold text-[#D97706] outline-none focus:border-amber-400"
-                />
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+              <div className="space-y-3.5 lg:col-span-6">
+                {/* 1. Disparar cuando falten (días) + su check individual */}
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                    Disparar cuando falten (días)
+                  </label>
+                  <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={invForm.recordatorio_dias ?? 3}
+                      onChange={(e) =>
+                        setInvForm((p) => ({
+                          ...p,
+                          recordatorio_dias: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-sm font-bold text-[#D97706] outline-none focus:border-amber-400 sm:w-32"
+                    />
+                    <label className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-[#D97706] sm:justify-start">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(invForm.recordatorio_activo)}
+                        onChange={(e) =>
+                          setInvForm((p) => ({
+                            ...p,
+                            recordatorio_activo: e.target.checked,
+                          }))
+                        }
+                        className="h-4 w-4 accent-amber-400"
+                      />
+                      <span>Recordatorio Automático Activo</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* 2. Disparar cuando falten (horas) + su check individual (debajo de días) */}
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                    Disparar cuando falten (horas)
+                  </label>
+                  <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
+                    <input
+                      type="number"
+                      min="1"
+                      max="720"
+                      value={invForm.recordatorio_horas ?? 12}
+                      onChange={(e) =>
+                        setInvForm((p) => ({
+                          ...p,
+                          recordatorio_horas: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-sm font-bold text-[#D97706] outline-none focus:border-amber-400 sm:w-32"
+                    />
+                    <label className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-[#D97706] sm:justify-start">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(invForm.recordatorio_horas_activo)}
+                        onChange={(e) =>
+                          setInvForm((p) => ({
+                            ...p,
+                            recordatorio_horas_activo: e.target.checked,
+                          }))
+                        }
+                        className="h-4 w-4 accent-amber-400"
+                      />
+                      <span>Recordatorio Automático Activo</span>
+                    </label>
+                  </div>
+                </div>
               </div>
 
-              <div className="md:col-span-3">
-                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
-                  Mensaje del Recordatorio Automático
-                </label>
-                <input
-                  type="text"
-                  value={invForm.recordatorio_mensaje || ""}
-                  onChange={(e) =>
-                    setInvForm((p) => ({
-                      ...p,
-                      recordatorio_mensaje: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-amber-400"
-                />
+              <div className="flex flex-col justify-between lg:col-span-6">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                    Mensaje del Recordatorio Automático
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={invForm.recordatorio_mensaje || ""}
+                    onChange={(e) =>
+                      setInvForm((p) => ({
+                        ...p,
+                        recordatorio_mensaje: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-amber-400"
+                  />
+                </div>
               </div>
+            </div>
+
+            {/* SUBSECCIÓN INDEPENDIENTE: Envío Automático de Correo en Fecha y Hora Específica */}
+            <div className="mt-5 rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[#4A4A8A]/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#4A4A8A]">
+                      INDEPENDIENTE DE &ldquo;DISPARAR CUANDO FALTEN (DÍAS)&rdquo;
+                    </span>
+                  </div>
+                  <h5 className="mt-1 text-sm font-extrabold tracking-tight text-[#2D3047] sm:text-base">
+                    📧 Envío Automático de Correo en Fecha y Hora Específica
+                  </h5>
+                  <p className="mt-0.5 text-xs text-[#5B617A]">
+                    Programa uno o varios envíos automáticos de correo electrónico
+                    para los{" "}
+                    <strong className="text-[#4A4A8A]">
+                      {pendientesList.length} invitados en estado &ldquo;Pendiente&rdquo;
+                    </strong>{" "}
+                    en una fecha y hora exacta (horario CDMX), sin depender del
+                    contador de días restantes.
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-xl border border-[#DCE0F0] bg-white px-3 py-1.5 text-[11px] font-bold text-[#2D3047] shadow-2xs">
+                  🗓️ {correosProgramadosList.length} programado
+                  {correosProgramadosList.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              <div className="mt-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+                <div className="lg:col-span-3">
+                  <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                    Fecha de Envío *
+                  </label>
+                  <input
+                    type="date"
+                    value={scheduledEmailForm.fecha}
+                    onChange={(e) =>
+                      setScheduledEmailForm((p) => ({
+                        ...p,
+                        fecha: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-bold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                  />
+                </div>
+
+                <div className="lg:col-span-2">
+                  <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                    Hora Exacta *
+                  </label>
+                  <input
+                    type="time"
+                    value={scheduledEmailForm.hora}
+                    onChange={(e) =>
+                      setScheduledEmailForm((p) => ({
+                        ...p,
+                        hora: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-bold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                  />
+                </div>
+
+                <div className="lg:col-span-3">
+                  <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                    Plantilla de Correo HTML
+                  </label>
+                  <select
+                    value={scheduledEmailForm.templateId}
+                    onChange={(e) =>
+                      setScheduledEmailForm((p) => ({
+                        ...p,
+                        templateId: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                  >
+                    <option value="neon-vip">✨ Neon VIP (Azul / Índigo)</option>
+                    <option value="gala-gold">🥂 Gala Gold (Dorado)</option>
+                    <option value="cyber-party">
+                      🎉 Cyber Party (Esmeralda)
+                    </option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2 lg:col-span-4">
+                  <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                    Nota / Mensaje Personalizado (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Si lo dejas vacío se usará el mensaje del recordatorio..."
+                    value={scheduledEmailForm.mensaje}
+                    onChange={(e) =>
+                      setScheduledEmailForm((p) => ({
+                        ...p,
+                        mensaje: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  disabled={savingScheduledEmail}
+                  onClick={handleCreateScheduledEmail}
+                  className="w-full cursor-pointer rounded-xl bg-[#4A4A8A] px-4 py-2.5 text-xs font-extrabold text-white shadow-xs transition hover:bg-[#3F3F7A] disabled:opacity-50 sm:w-auto"
+                >
+                  {savingScheduledEmail
+                    ? "⏳ Programando envío..."
+                    : "📅 ＋ Agregar Envío Automático de Correo"}
+                </button>
+              </div>
+
+              {correosProgramadosList.length > 0 && (
+                <div className="mt-4 space-y-2 border-t border-[#DCE0F0] pt-3.5">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#4A4A8A]">
+                    📋 Envíos Automáticos de Correo Programados ({correosProgramadosList.length}):
+                  </p>
+                  <div className="space-y-2">
+                    {correosProgramadosList.map((item) => {
+                      let parsed = {};
+                      try {
+                        parsed = JSON.parse(item.detalle || "{}");
+                      } catch {
+                        parsed = { mensaje: item.detalle || "" };
+                      }
+                      const isSent = item.estado === "Enviado";
+                      const isPaused = item.estado === "Pausado";
+                      const tplLabel =
+                        parsed.templateId === "gala-gold"
+                          ? "🥂 Gala Gold"
+                          : parsed.templateId === "cyber-party"
+                          ? "🎉 Cyber Party"
+                          : "✨ Neon VIP";
+
+                      return (
+                        <div
+                          key={item.iditem}
+                          className="flex flex-col items-stretch justify-between gap-2.5 rounded-xl border border-[#E6E9F4] bg-white p-3 text-xs shadow-2xs sm:flex-row sm:items-center"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-lg bg-[#4A4A8A]/10 px-2.5 py-0.5 text-[11px] font-extrabold text-[#4A4A8A]">
+                                📅 {item.fecha_limite || "Sin fecha"} • ⏰{" "}
+                                {item.hora_itinerario || "10:00"} hrs
+                              </span>
+                              <span
+                                className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                                  isSent
+                                    ? "bg-emerald-500/15 text-emerald-700"
+                                    : isPaused
+                                    ? "bg-slate-200 text-slate-600"
+                                    : "bg-amber-500/15 text-[#D97706]"
+                                }`}
+                              >
+                                {isSent
+                                  ? "✅ Enviado"
+                                  : isPaused
+                                  ? "⏸ Pausado"
+                                  : "⏳ Programado"}
+                              </span>
+                              <span className="rounded-full border border-[#DCE0F0] bg-[#F7F8FC] px-2 py-0.5 text-[10px] font-bold text-[#5B617A]">
+                                {tplLabel}
+                              </span>
+                            </div>
+                            {parsed.mensaje && (
+                              <p className="mt-1 truncate text-[11px] text-[#5B617A]">
+                                💬 {parsed.mensaje}
+                              </p>
+                            )}
+                            {parsed.resultado && (
+                              <p className="mt-1 text-[11px] font-semibold text-emerald-700">
+                                ✓ {parsed.resultado}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleToggleScheduledEmailStatus(item)
+                              }
+                              className="cursor-pointer rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-1.5 text-[11px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                            >
+                              {isSent
+                                ? "🔄 Reprogramar"
+                                : isPaused
+                                ? "▶ Activar"
+                                : "⏸ Pausar"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLogistica(item.iditem)}
+                              className="cursor-pointer rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-100"
+                            >
+                              🗑️ Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {pendientesList.length > 0 && (
               <div className="mt-4 rounded-xl border border-amber-500/20 bg-[#F7F8FC] p-3">
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[#D97706]">
-                  🟡 Invitados en estado &ldquo;Pendiente&rdquo; ({pendientesList.length}) — Envío Silencioso por WhatsApp API:
+                  🟡 Invitados en estado &ldquo;Pendiente&rdquo; ({pendientesList.length})
+                  {metaWaForm.configured
+                    ? " — Envío Silencioso por WhatsApp API:"
+                    : ":"}
                 </p>
                 <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
                   {pendientesList.map((g) => (
@@ -6683,16 +7056,18 @@ function GestorEvento({
                         </span>
                       </div>
                       <div className="flex w-full items-center gap-1.5 sm:w-auto">
-                        <button
-                          type="button"
-                          disabled={sendingWaGuestId === g.idinvitado}
-                          onClick={() => handleSendSilentWhatsAppReminder(g)}
-                          className="flex-1 cursor-pointer rounded-lg bg-emerald-600 px-3 py-2 text-center text-[11px] font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50 sm:flex-initial sm:py-1.5"
-                        >
-                          {sendingWaGuestId === g.idinvitado
-                            ? "⏳ Enviando..."
-                            : "🚀 Enviar Silencioso (API Meta)"}
-                        </button>
+                        {metaWaForm.configured && (
+                          <button
+                            type="button"
+                            disabled={sendingWaGuestId === g.idinvitado}
+                            onClick={() => handleSendSilentWhatsAppReminder(g)}
+                            className="flex-1 cursor-pointer rounded-lg bg-emerald-600 px-3 py-2 text-center text-[11px] font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50 sm:flex-initial sm:py-1.5"
+                          >
+                            {sendingWaGuestId === g.idinvitado
+                              ? "⏳ Enviando..."
+                              : "🚀 Enviar Silencioso (API Meta)"}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => {
@@ -6702,7 +7077,7 @@ function GestorEvento({
                             );
                             const isNewSend = !g?.invitacion_enviada;
                             validateAndWarnBeforeShare({
-                              canal: "Recordatorio Manual por WhatsApp (wa.me)",
+                              canal: "Recordatorio Manual desde mi WhatsApp",
                               destinatarioLabel: `${g.nombre} (${
                                 g.telefono || "WhatsApp"
                               } • ${guestPases} pase${
@@ -6742,10 +7117,10 @@ function GestorEvento({
                               },
                             });
                           }}
-                          title="Abrir enlace wa.me manualmente"
+                          title="Abrir mi WhatsApp para enviar el recordatorio manualmente"
                           className="shrink-0 cursor-pointer rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-2 text-[10px] font-bold text-[#5B617A] transition hover:border-emerald-400 hover:text-emerald-700 sm:py-1.5"
                         >
-                          📲 wa.me
+                          📲 Enviar por mi WhatsApp
                         </button>
                       </div>
                     </div>
@@ -7515,6 +7890,62 @@ function GestorEvento({
                     className="mt-4 w-full rounded-xl border border-[#6C7EE1]/40 bg-[#6C7EE1]/15 py-2.5 text-xs font-bold uppercase tracking-wider text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
                   >
                     📑 Duplicar Este Evento
+                  </button>
+                </div>
+
+                {/* 2.B Compartir Fotos y Reels a Invitados Confirmados */}
+                <div className="flex flex-col justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4 sm:col-span-2">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <h4 className="text-sm font-bold text-[#2D3047]">
+                        📸 Compartir Fotos y Reels a Invitados
+                      </h4>
+                      <p className="mt-1 text-xs text-[#8E94A9]">
+                        Otorga permiso para que todos los invitados que{" "}
+                        <strong className="text-[#2D3047]">
+                          confirmaron su invitación
+                        </strong>{" "}
+                        puedan ver y descargar las fotografías y reels de este
+                        evento desde su sesión en el apartado{" "}
+                        <strong className="text-[#2D3047]">
+                          &ldquo;💌 Mis Invitaciones&rdquo;
+                        </strong>
+                        .
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider ${
+                        invForm.compartir_album_invitados
+                          ? "bg-emerald-500/15 text-emerald-700"
+                          : "bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {invForm.compartir_album_invitados
+                        ? "🟢 Permiso Activo"
+                        : "🔒 Privado (Solo Anfitrión)"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextShare = !invForm.compartir_album_invitados;
+                      setInvForm((p) => ({
+                        ...p,
+                        compartir_album_invitados: nextShare,
+                      }));
+                      handleSaveEvento(null, {
+                        compartir_album_invitados: nextShare,
+                      });
+                    }}
+                    className={`mt-4 w-full cursor-pointer rounded-xl py-2.5 text-xs font-bold uppercase tracking-wider transition ${
+                      invForm.compartir_album_invitados
+                        ? "border border-emerald-500/40 bg-emerald-600 text-white hover:bg-emerald-500"
+                        : "border border-[#4A4A8A]/40 bg-[#4A4A8A]/15 text-[#4A4A8A] hover:bg-[#4A4A8A] hover:text-white"
+                    }`}
+                  >
+                    {invForm.compartir_album_invitados
+                      ? "🟢 Compartiendo Fotos y Reels a Invitados (Haz clic para ocultar)"
+                      : "🤝 Compartir Fotos y Reels a Invitados"}
                   </button>
                 </div>
               </div>

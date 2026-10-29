@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import {
   getInvitacionPublicaRequest,
   confirmarRsvpPublicoRequest,
@@ -183,6 +184,7 @@ function parsePublicGiftItem(item) {
 }
 
 function InvitacionPublicaPage() {
+  const { user } = useAuth();
   const { id: rawId } = useParams();
   const id = String(rawId || "").replace(/^e/i, "");
   const [searchParams] = useSearchParams();
@@ -280,7 +282,7 @@ function InvitacionPublicaPage() {
         setForm({
           nombre: data.invitado?.nombre || "",
           telefono: data.invitado?.telefono || "",
-          correo: data.invitado?.correo || "",
+          correo: data.invitado?.correo || user?.correoRegistro || "",
           estado_rsvp:
             data.invitado?.estado_rsvp === "Rechazado"
               ? "Rechazado"
@@ -823,10 +825,11 @@ function InvitacionPublicaPage() {
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-semibold text-gray-300">
-                      Correo electrónico
+                      Correo electrónico *
                     </label>
                     <input
                       type="email"
+                      required
                       value={form.correo}
                       onChange={(e) =>
                         setForm((p) => ({ ...p, correo: e.target.value }))
@@ -834,6 +837,9 @@ function InvitacionPublicaPage() {
                       placeholder="correo@ejemplo.com"
                       className="w-full rounded-xl border border-white/15 bg-[#142257] px-3.5 py-2 text-xs text-white outline-none focus:border-[#15B2F5]"
                     />
+                    <p className="mt-1 text-[10px] text-gray-400">
+                      Con este correo verás tu invitación en &ldquo;Mis Invitaciones&rdquo; en Recuerdalo.com.mx.
+                    </p>
                   </div>
                 </div>
 

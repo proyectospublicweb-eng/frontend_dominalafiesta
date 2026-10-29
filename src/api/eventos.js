@@ -2,6 +2,9 @@ import instanceAxios from "./axios.js";
 
 export const getEventosRequest = () => instanceAxios.get("/eventos");
 
+export const getMisInvitacionesRequest = () =>
+  instanceAxios.get("/eventos/mis-invitaciones");
+
 export const createEventoRequest = (payload) =>
   instanceAxios.post("/eventos", payload);
 
@@ -134,6 +137,14 @@ export const getAlbumPhotoUrl = (relativePath) => {
 
 export const getAlbumFotosEventoRequest = (idEvento) =>
   instanceAxios.get(`/eventos/${idEvento}/album-fotos`);
+
+export const toggleCompartirAlbumEventoRequest = (
+  idEvento,
+  compartir_album_invitados
+) =>
+  instanceAxios.put(`/eventos/${idEvento}/compartir-album`, {
+    compartir_album_invitados: Boolean(compartir_album_invitados),
+  });
 
 export const addFotoAlbumEventoRequest = (idEvento, payload) =>
   instanceAxios.post(`/eventos/${idEvento}/album-fotos`, payload);
