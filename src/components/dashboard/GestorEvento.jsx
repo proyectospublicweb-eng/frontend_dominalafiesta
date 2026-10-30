@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createEventoRequest,
   getEventoDetalleRequest,
@@ -612,6 +612,28 @@ function GestorEvento({
         });
         setInvForm(draftObj);
         setLoading(false);
+        try {
+          const { data: autoSaved } = await createEventoRequest(draftObj);
+          if (!active || !autoSaved?.idevento) return;
+          setDetalle((prev) => ({
+            ...(prev || { invitados: [], logistica: [], presupuesto: [] }),
+            evento: autoSaved,
+          }));
+          setInvForm((prev) => ({
+            ...(prev || draftObj),
+            ...autoSaved,
+            fecha_evento: formatDateInput(
+              autoSaved.fecha_evento || draftObj.fecha_evento
+            ),
+          }));
+          if (onDraftSaved) {
+            await onDraftSaved(autoSaved);
+          } else if (onEventoUpdated) {
+            onEventoUpdated();
+          }
+        } catch (err) {
+          console.error("Error en autoguardado inicial del borrador:", err);
+        }
         return;
       }
       if (!selectedEventoId) return;
@@ -758,6 +780,96 @@ function GestorEvento({
       );
     }
   }, [invForm?.recordatorio_mensaje, reminderPreviewMode]);
+
+  const lastAutoSaveSnapshotRef = useRef("");
+
+  useEffect(() => {
+    const idEv = detalle?.evento?.idevento;
+    if (!idEv || !invForm) return;
+    const cleanFechaEv = String(invForm.fecha_evento || "")
+      .trim()
+      .slice(0, 10);
+    let cleanFechaLim = invForm.fecha_limite_rsvp_activa
+      ? String(invForm.fecha_limite_rsvp || cleanFechaEv || "")
+          .trim()
+          .slice(0, 10)
+      : "";
+    if (cleanFechaLim && cleanFechaEv && cleanFechaLim > cleanFechaEv) {
+      cleanFechaLim = cleanFechaEv;
+    }
+    let normalizedGiftUrl = String(invForm.mesa_regalos_url || "").trim();
+    if (normalizedGiftUrl && !/^https?:\/\//i.test(normalizedGiftUrl)) {
+      normalizedGiftUrl = `https://${normalizedGiftUrl}`;
+    }
+    const esNinguno =
+      !invForm.estado_evento || invForm.estado_evento === "Ningúno";
+    const autoPayload = {
+      nombre: invForm.nombre || "",
+      tipo_evento: invForm.tipo_evento || "Fiesta Privada",
+      fecha_evento: cleanFechaEv,
+      hora_evento: invForm.hora_evento || "20:00",
+      lugar: invForm.lugar || "",
+      direccion: invForm.direccion || "",
+      estado_evento: esNinguno ? "Ningúno" : invForm.estado_evento,
+      municipio: esNinguno ? "Ningúno" : invForm.municipio || "Ningúno",
+      capacidad: Math.max(1, Number(invForm.capacidad || 100) || 100),
+      presupuesto_meta: Number(invForm.presupuesto_meta || 0) || 0,
+      mensaje_invitacion: invForm.mensaje_invitacion || "",
+      codigo_vestimenta: invForm.codigo_vestimenta || "",
+      plantilla_tema: invForm.plantilla_tema || "neon-crimson",
+      color_acento: invForm.color_acento || "#6C7EE1",
+      color_secundario: invForm.color_secundario || "#6C7EE1",
+      imagen_portada: invForm.imagen_portada || "",
+      texto_boton_rsvp: invForm.texto_boton_rsvp || "Confirmar Asistencia",
+      rsvp_habilitado: invForm.rsvp_habilitado !== false,
+      permitir_acompanantes: Boolean(
+        invForm.confirmar_acceso_qr ?? invForm.permitir_acompanantes ?? true
+      ),
+      confirmar_acceso_qr: Boolean(
+        invForm.confirmar_acceso_qr ?? invForm.permitir_acompanantes ?? true
+      ),
+      modalidad_invitados: invForm.modalidad_invitados || "Adultos + Niños",
+      mesa_regalos_habilitada: Boolean(invForm.mesa_regalos_habilitada),
+      mesa_regalos_tienda: String(
+        invForm.mesa_regalos_tienda ||
+          detectStoreFromUrl(normalizedGiftUrl) ||
+          "Amazon"
+      ).trim(),
+      mesa_regalos_url: normalizedGiftUrl,
+      fecha_limite_rsvp_activa: Boolean(
+        invForm.fecha_limite_rsvp_activa && cleanFechaLim
+      ),
+      fecha_limite_rsvp: cleanFechaLim,
+      recordatorio_dias: invForm.recordatorio_dias ?? 3,
+      recordatorio_activo: Boolean(invForm.recordatorio_activo),
+      recordatorio_horas: invForm.recordatorio_horas ?? 12,
+      recordatorio_horas_activo: Boolean(invForm.recordatorio_horas_activo),
+      recordatorio_mensaje: invForm.recordatorio_mensaje || "",
+    };
+
+    const snapshot = JSON.stringify({ idEv, ...autoPayload });
+    if (!lastAutoSaveSnapshotRef.current) {
+      lastAutoSaveSnapshotRef.current = snapshot;
+      return;
+    }
+    if (lastAutoSaveSnapshotRef.current === snapshot) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        lastAutoSaveSnapshotRef.current = snapshot;
+        const { data } = await updateEventoRequest(idEv, autoPayload);
+        setDetalle((prev) => (prev ? { ...prev, evento: data } : prev));
+        if (onEventoUpdated) onEventoUpdated();
+      } catch (err) {
+        console.error("Error en autoguardado de evento:", err);
+      }
+    }, 1200);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invForm, detalle?.evento?.idevento]);
 
   const csvPreviewRows = useMemo(() => parseCsvRows(csvText), [csvText]);
   const mapLocation = useGoogleMapsLocation(

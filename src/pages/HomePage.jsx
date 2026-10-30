@@ -5,6 +5,7 @@ import {
   getEventosRequest,
   getMisInvitacionesRequest,
   createEventoRequest,
+  updateEventoRequest,
   deleteEventoRequest,
 } from "../api/eventos.js";
 import WizardCrearEvento from "../components/dashboard/WizardCrearEvento.jsx";
@@ -159,7 +160,7 @@ function HomePage() {
     navigate(`/events/${targetId}/${validTab}`);
   };
 
-  // Crear el evento inmediatamente en la base de datos desde el Wizard y redirigir al Gestor con su ID real
+  // Crear o actualizar el evento inmediatamente en la base de datos desde el Wizard y redirigir al Gestor con su ID real
   const handleCreateEvento = async (formData) => {
     const esNinguno =
       !formData.estado_evento || formData.estado_evento === "Ningúno";
@@ -174,10 +175,12 @@ function HomePage() {
       mesa_regalos_habilitada: Boolean(formData.mesa_regalos_habilitada),
       rsvp_habilitado: true,
     };
-    const { data: createdEvento } = await createEventoRequest(payload);
+    const { data: savedEvento } = formData.idevento
+      ? await updateEventoRequest(formData.idevento, payload)
+      : await createEventoRequest(payload);
     setDraftEvento(null);
     await fetchEventos();
-    openEventManager(createdEvento.idevento, "invitation");
+    openEventManager(savedEvento.idevento, "invitation");
   };
 
   const handleDraftSaved = async (savedEvento) => {

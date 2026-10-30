@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGoogleMapsLocation } from "../../utils/googleMaps.js";
 import catalogosMexico from "../../utils/catalogosMexico.json";
-import { getCatalogosEstadosMunicipiosRequest } from "../../api/eventos.js";
+import {
+  getCatalogosEstadosMunicipiosRequest,
+  createEventoRequest,
+  updateEventoRequest,
+} from "../../api/eventos.js";
 
 const TIPOS_EVENTO = [
   "Fiesta Privada",
@@ -49,6 +53,9 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
   const [error, setError] = useState("");
   const [gpsNotice, setGpsNotice] = useState("");
   const [catalogos, setCatalogos] = useState(catalogosMexico);
+  const [autoSavedEventId, setAutoSavedEventId] = useState(null);
+  const autoSaveIdRef = useRef(null);
+  const autoSavingPromiseRef = useRef(null);
 
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
@@ -105,6 +112,56 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
     setError("");
   };
 
+  const buildWizardPayload = (currentForm) => {
+    const esNinguno =
+      !currentForm.estado_evento || currentForm.estado_evento === "Ningúno";
+    return {
+      ...currentForm,
+      estado_evento: esNinguno ? "Ningúno" : currentForm.estado_evento,
+      municipio: esNinguno ? "Ningúno" : currentForm.municipio || "Ningúno",
+      mensaje_invitacion:
+        String(currentForm.mensaje_invitacion || "").trim() ||
+        `Te invitamos cordialmente a celebrar con nosotros "${currentForm.nombre}". ¡Tu presencia hará esta noche inolvidable!`,
+    };
+  };
+
+  const syncWizardAutoSave = async (currentForm) => {
+    if (!String(currentForm?.nombre || "").trim() || !currentForm?.fecha_evento) {
+      return autoSaveIdRef.current;
+    }
+    if (autoSavingPromiseRef.current) {
+      await autoSavingPromiseRef.current.catch(() => {});
+    }
+    const payload = buildWizardPayload(currentForm);
+    const task = (async () => {
+      try {
+        if (!autoSaveIdRef.current) {
+          const { data } = await createEventoRequest(payload);
+          if (data?.idevento) {
+            autoSaveIdRef.current = data.idevento;
+            setAutoSavedEventId(data.idevento);
+          }
+          return data?.idevento || null;
+        }
+        await updateEventoRequest(autoSaveIdRef.current, payload);
+        return autoSaveIdRef.current;
+      } catch {
+        return autoSaveIdRef.current;
+      }
+    })();
+    autoSavingPromiseRef.current = task;
+    return task;
+  };
+
+  useEffect(() => {
+    if (!String(form.nombre || "").trim() || !form.fecha_evento) return;
+    const timer = setTimeout(() => {
+      syncWizardAutoSave(form);
+    }, 1200);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form]);
+
   const handleNext = () => {
     if (step === 1) {
       if (!form.nombre.trim()) {
@@ -136,6 +193,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
         return;
       }
     }
+    syncWizardAutoSave(form);
     setStep((s) => Math.min(4, s + 1));
   };
 
@@ -149,15 +207,10 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
     setSubmitting(true);
     setError("");
     try {
-      const esNinguno =
-        !form.estado_evento || form.estado_evento === "Ningúno";
+      const savedId = await syncWizardAutoSave(form);
       await onCreateEvento({
-        ...form,
-        estado_evento: esNinguno ? "Ningúno" : form.estado_evento,
-        municipio: esNinguno ? "Ningúno" : form.municipio || "Ningúno",
-        mensaje_invitacion:
-          form.mensaje_invitacion.trim() ||
-          `Te invitamos cordialmente a celebrar con nosotros "${form.nombre}". ¡Tu presencia hará esta noche inolvidable!`,
+        ...buildWizardPayload(form),
+        idevento: savedId || autoSavedEventId || null,
       });
     } catch (err) {
       setError(

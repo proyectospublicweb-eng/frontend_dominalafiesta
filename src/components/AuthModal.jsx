@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import PasswordField from "./PasswordField";
 
-function AuthModal({ isOpen, initialMode = "login", onClose }) {
+function AuthModal({ isOpen, initialMode = "login", defaultEmail = "", onClose }) {
   const { login, register } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState(initialMode);
@@ -124,8 +124,10 @@ function AuthModal({ isOpen, initialMode = "login", onClose }) {
 
           <div className="space-y-4">
             <input
+              key={`${mode}-${defaultEmail}-${isOpen}`}
               name="correoRegistro"
               type="email"
+              defaultValue={defaultEmail}
               placeholder="Correo electrónico"
               autoComplete="email"
               className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-4 py-3 text-sm text-[#2D3047] placeholder-[#8E94A9] outline-none transition focus:border-[#6C7EE1] focus:bg-white focus:ring-2 focus:ring-[#6C7EE1]/30"
