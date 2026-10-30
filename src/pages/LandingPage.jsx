@@ -443,7 +443,7 @@ function LandingPage() {
 
                   {/* Opción 2: Instalador Descargable (.APK) */}
                   <a
-                    href="/recuerdalo.apk"
+                    href="/recuerdalo.apk?v=2"
                     download="Recuerdalo.apk"
                     onClick={handleDownloadApkNotice}
                     className="flex items-center justify-center gap-2.5 rounded-xl border border-[#17162E]/20 bg-[#17162E] px-4 py-2.5 text-left text-xs font-extrabold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#252347]"
@@ -1020,7 +1020,7 @@ function LandingPage() {
                 <span>📲 Instalador Automático (Android, iOS y Desk)</span>
               </button>
               <a
-                href="/recuerdalo.apk"
+                href="/recuerdalo.apk?v=2"
                 download="Recuerdalo.apk"
                 onClick={handleDownloadApkNotice}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#7BE7FF]/40 bg-[#7BE7FF]/15 px-5 py-3 text-xs font-extrabold text-[#7BE7FF] transition hover:bg-[#7BE7FF]/25"
@@ -1252,7 +1252,7 @@ function LandingPage() {
                   Descarga el archivo instalador <code className="text-[#7BE7FF]">Recuerdalo.apk</code> directamente en tu teléfono Android e instálalo manualmente.
                 </p>
                 <a
-                  href="/recuerdalo.apk"
+                  href="/recuerdalo.apk?v=2"
                   download="Recuerdalo.apk"
                   onClick={() => {
                     handleDownloadApkNotice();

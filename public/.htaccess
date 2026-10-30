@@ -7,6 +7,9 @@
   RewriteEngine On
   RewriteBase /
 
+  # 0. Servir Digital Asset Links para que el APK de Android abra en pantalla completa sin barra superior
+  RewriteRule ^\.well-known/assetlinks\.json$ assetlinks.json [L]
+
   # 1. No redirigir las peticiones dirigidas a la API de Node.js (Phusion Passenger)
   RewriteRule ^apiproyectoeventos(/.*)?$ - [L]
 

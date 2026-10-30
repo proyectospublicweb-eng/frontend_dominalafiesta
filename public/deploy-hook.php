@@ -53,7 +53,7 @@ foreach ($data['files'] as $relPath => $b64Content) {
         $cleanPath === '' ||
         strpos($cleanPath, '..') !== false ||
         strpos($cleanPath, 'apiproyectoeventos/') === 0 ||
-        strpos($cleanPath, '.well-known/') === 0 ||
+        (strpos($cleanPath, '.well-known/') === 0 && $cleanPath !== '.well-known/assetlinks.json') ||
         strpos($cleanPath, 'cgi-bin/') === 0 ||
         (strpos($cleanPath, 'node_modules/') === 0 && strpos($cleanPath, 'node_modules/nodemailer/') !== 0) ||
         $cleanPath === '.env' ||
