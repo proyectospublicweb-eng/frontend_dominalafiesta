@@ -904,6 +904,17 @@ function GestorEvento({
         86400000
     )
   );
+  const todayMxPreviewStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Mexico_City",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const isPreviewFechaLimiteVencida = Boolean(
+    invForm.fecha_limite_rsvp_activa &&
+      invForm.fecha_limite_rsvp &&
+      todayMxPreviewStr > String(invForm.fecha_limite_rsvp).slice(0, 10)
+  );
 
   // =========================================================================
   // CÁLCULOS ESTADÍSTICOS Y LÍMITE DE INVITADOS PERMITIDOS (TAB A, B, C, D, E)
@@ -1018,6 +1029,17 @@ function GestorEvento({
     }
     const esNinguno =
       !rawPayload.estado_evento || rawPayload.estado_evento === "Ningúno";
+    const cleanFechaEv = String(rawPayload.fecha_evento || "")
+      .trim()
+      .slice(0, 10);
+    let cleanFechaLim = rawPayload.fecha_limite_rsvp_activa
+      ? String(rawPayload.fecha_limite_rsvp || cleanFechaEv || "")
+          .trim()
+          .slice(0, 10)
+      : "";
+    if (cleanFechaLim && cleanFechaEv && cleanFechaLim > cleanFechaEv) {
+      cleanFechaLim = cleanFechaEv;
+    }
     const payload = {
       ...rawPayload,
       capacidad: Math.max(
@@ -1032,10 +1054,10 @@ function GestorEvento({
           "Amazon"
       ).trim(),
       mesa_regalos_url: normalizedGiftUrl,
-      fecha_limite_rsvp_activa: Boolean(rawPayload.fecha_limite_rsvp_activa),
-      fecha_limite_rsvp: rawPayload.fecha_limite_rsvp_activa
-        ? String(rawPayload.fecha_limite_rsvp || "").trim().slice(0, 10)
-        : "",
+      fecha_limite_rsvp_activa: Boolean(
+        rawPayload.fecha_limite_rsvp_activa && cleanFechaLim
+      ),
+      fecha_limite_rsvp: cleanFechaLim,
     };
     try {
       if (!evento.idevento) {
@@ -1524,6 +1546,11 @@ function GestorEvento({
           📅 <strong>Fecha:</strong> ${formatDateInput(evento.fecha_evento)} &nbsp;|&nbsp;
           ⏰ <strong>Hora:</strong> ${evento.hora_evento || "20:00"} hrs
         </p>
+        ${
+          invForm?.fecha_limite_rsvp_activa && invForm?.fecha_limite_rsvp
+            ? `<p style="margin:0 0 12px;font-size:13px;color:#fde68a;">⏳ <strong>Fecha límite para confirmar:</strong> ${formatDateInput(invForm.fecha_limite_rsvp)}</p>`
+            : ""
+        }
         <p style="margin:0 0 12px;font-size:13px;color:#e5e7eb;">
           📍 <strong>Lugar:</strong> ${evento.lugar || "Salón VIP"} &nbsp;|&nbsp;
           👔 <strong>Código de Vestimenta:</strong> ${invForm?.codigo_vestimenta || "Formal / Libre"}
@@ -3329,12 +3356,19 @@ function GestorEvento({
                 <input
                   type="date"
                   value={invForm.fecha_evento || ""}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const nextEvDate = e.target.value;
                     setInvForm((prev) => ({
                       ...prev,
-                      fecha_evento: e.target.value,
-                    }))
-                  }
+                      fecha_evento: nextEvDate,
+                      ...(prev.fecha_limite_rsvp_activa &&
+                      prev.fecha_limite_rsvp &&
+                      nextEvDate &&
+                      prev.fecha_limite_rsvp > nextEvDate
+                        ? { fecha_limite_rsvp: nextEvDate }
+                        : {}),
+                    }));
+                  }}
                   className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
               </div>
@@ -3408,12 +3442,21 @@ function GestorEvento({
                           ? invForm.fecha_limite_rsvp || ""
                           : ""
                       }
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const nextDate = e.target.value;
                         setInvForm((prev) => ({
                           ...prev,
                           fecha_limite_rsvp: nextDate,
                         }));
+                        if (
+                          evento.idevento &&
+                          /^\d{4}-\d{2}-\d{2}$/.test(nextDate)
+                        ) {
+                          await handleSaveEvento(null, {
+                            fecha_limite_rsvp_activa: true,
+                            fecha_limite_rsvp: nextDate,
+                          });
+                        }
                       }}
                       className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#EAECEF] disabled:text-[#8E94A9] disabled:opacity-60"
                     />
@@ -4122,9 +4165,16 @@ function GestorEvento({
                           invForm.fecha_limite_rsvp_activa &&
                             invForm.fecha_limite_rsvp
                         ) && (
-                          <p className="text-amber-300">
+                          <p
+                            className={
+                              isPreviewFechaLimiteVencida
+                                ? "text-rose-300"
+                                : "text-amber-300"
+                            }
+                          >
                             ⏳ <strong>Fecha límite para confirmar:</strong>{" "}
-                            {invForm.fecha_limite_rsvp}
+                            {invForm.fecha_limite_rsvp}{" "}
+                            {isPreviewFechaLimiteVencida ? "(Caducada)" : ""}
                           </p>
                         )}
                         <p>
@@ -4236,12 +4286,18 @@ function GestorEvento({
                         }
                         className="mt-4 w-full cursor-pointer rounded-xl py-2.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                         style={{
-                          backgroundColor:
-                            invForm.color_secundario || "#15b2f5",
+                          backgroundColor: isPreviewFechaLimiteVencida
+                            ? "#e11d48"
+                            : invForm.color_secundario || "#15b2f5",
+                          color: isPreviewFechaLimiteVencida
+                            ? "#ffffff"
+                            : "#000000",
                         }}
                         title="Haz clic para abrir y probar el formulario real de Confirmación de Asistencia"
                       >
-                        {invForm.texto_boton_rsvp || "Confirmar Asistencia"}
+                        {isPreviewFechaLimiteVencida
+                          ? "⏳ FECHA DE CONFIRMACIÓN CADUCADA"
+                          : invForm.texto_boton_rsvp || "Confirmar Asistencia"}
                       </button>
                     </div>
                   </div>
@@ -4334,9 +4390,16 @@ function GestorEvento({
                               invForm.fecha_limite_rsvp_activa &&
                                 invForm.fecha_limite_rsvp
                             ) && (
-                              <span className="mt-1 block text-[11px] font-bold text-amber-300">
+                              <span
+                                className={`mt-1 block text-[11px] font-bold ${
+                                  isPreviewFechaLimiteVencida
+                                    ? "text-rose-300"
+                                    : "text-amber-300"
+                                }`}
+                              >
                                 ⏳ Límite confirmación:{" "}
-                                {invForm.fecha_limite_rsvp}
+                                {invForm.fecha_limite_rsvp}{" "}
+                                {isPreviewFechaLimiteVencida ? "(Caducada)" : ""}
                               </span>
                             )}
                           </div>
@@ -4452,12 +4515,18 @@ function GestorEvento({
                           }
                           className="flex-1 cursor-pointer rounded-xl py-3 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                           style={{
-                            backgroundColor:
-                              invForm.color_secundario || "#15b2f5",
+                            backgroundColor: isPreviewFechaLimiteVencida
+                              ? "#e11d48"
+                              : invForm.color_secundario || "#15b2f5",
+                            color: isPreviewFechaLimiteVencida
+                              ? "#ffffff"
+                              : "#000000",
                           }}
                           title="Haz clic para abrir y probar el formulario real de Confirmación de Asistencia"
                         >
-                          {invForm.texto_boton_rsvp || "Confirmar Asistencia"}
+                          {isPreviewFechaLimiteVencida
+                            ? "⏳ FECHA DE CONFIRMACIÓN CADUCADA"
+                            : invForm.texto_boton_rsvp || "Confirmar Asistencia"}
                         </button>
                         <a
                           href={mapLocation.externalUrl}
@@ -8357,12 +8426,22 @@ function GestorEvento({
                             ? invForm.fecha_limite_rsvp || ""
                             : ""
                         }
-                        onChange={(e) =>
+                        onChange={async (e) => {
+                          const nextDate = e.target.value;
                           setInvForm((prev) => ({
                             ...prev,
-                            fecha_limite_rsvp: e.target.value,
-                          }))
-                        }
+                            fecha_limite_rsvp: nextDate,
+                          }));
+                          if (
+                            evento.idevento &&
+                            /^\d{4}-\d{2}-\d{2}$/.test(nextDate)
+                          ) {
+                            await handleSaveEvento(null, {
+                              fecha_limite_rsvp_activa: true,
+                              fecha_limite_rsvp: nextDate,
+                            });
+                          }
+                        }}
                         className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#EAECEF] disabled:text-[#8E94A9] disabled:opacity-60"
                       />
                     </div>

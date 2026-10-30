@@ -91,7 +91,17 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
   }, [initialDate]);
 
   const updateField = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === "fecha_evento" &&
+      prev.fecha_limite_rsvp_activa &&
+      prev.fecha_limite_rsvp &&
+      value &&
+      prev.fecha_limite_rsvp > value
+        ? { fecha_limite_rsvp: value }
+        : {}),
+    }));
     setError("");
   };
 
