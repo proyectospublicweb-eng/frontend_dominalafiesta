@@ -264,7 +264,7 @@ function LandingPage() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
               <img
-                src="/logo-recuerdalo.png?v=3"
+                src="/logo-recuerdalo.png?v=6"
                 alt="Recuérdalo"
                 className="h-10 w-10 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm sm:h-11 sm:w-11"
               />
@@ -443,7 +443,7 @@ function LandingPage() {
 
                   {/* Opción 2: Instalador Descargable (.APK) */}
                   <a
-                    href="/recuerdalo.apk?v=2"
+                    href="/recuerdalo.apk?v=3"
                     download="Recuerdalo.apk"
                     onClick={handleDownloadApkNotice}
                     className="flex items-center justify-center gap-2.5 rounded-xl border border-[#17162E]/20 bg-[#17162E] px-4 py-2.5 text-left text-xs font-extrabold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#252347]"
@@ -1020,7 +1020,7 @@ function LandingPage() {
                 <span>📲 Instalador Automático (Android, iOS y Desk)</span>
               </button>
               <a
-                href="/recuerdalo.apk?v=2"
+                href="/recuerdalo.apk?v=3"
                 download="Recuerdalo.apk"
                 onClick={handleDownloadApkNotice}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#7BE7FF]/40 bg-[#7BE7FF]/15 px-5 py-3 text-xs font-extrabold text-[#7BE7FF] transition hover:bg-[#7BE7FF]/25"
@@ -1146,7 +1146,7 @@ function LandingPage() {
             <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
               <div className="flex items-center gap-3">
                 <img
-                  src="/icon-192.png"
+                  src="/app-icon-round-192.png"
                   alt="Recuérdalo App"
                   className="h-12 w-12 shrink-0 rounded-2xl border border-white/20 object-cover shadow-md"
                 />
@@ -1252,7 +1252,7 @@ function LandingPage() {
                   Descarga el archivo instalador <code className="text-[#7BE7FF]">Recuerdalo.apk</code> directamente en tu teléfono Android e instálalo manualmente.
                 </p>
                 <a
-                  href="/recuerdalo.apk?v=2"
+                  href="/recuerdalo.apk?v=3"
                   download="Recuerdalo.apk"
                   onClick={() => {
                     handleDownloadApkNotice();

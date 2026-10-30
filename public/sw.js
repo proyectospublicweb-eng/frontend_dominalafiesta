@@ -1,13 +1,14 @@
-const CACHE_NAME = "recuerdalo-pwa-v2";
+const CACHE_NAME = "recuerdalo-pwa-v3";
 const PRECACHE_ASSETS = [
   "/",
   "/index.html",
-  "/manifest.webmanifest?v=2",
-  "/favicon.png",
-  "/logo-recuerdalo.png",
-  "/icon-192.png?v=2",
-  "/icon-512.png?v=2",
-  "/icon-1024.png?v=2",
+  "/manifest-v3.webmanifest",
+  "/favicon.png?v=6",
+  "/logo-recuerdalo.png?v=6",
+  "/app-icon-round-192.png",
+  "/app-icon-round-512.png",
+  "/app-icon-round-1024.png",
+  "/app-icon-maskable-512.png",
 ];
 
 self.addEventListener("install", (event) => {

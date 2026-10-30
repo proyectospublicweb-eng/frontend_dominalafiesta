@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "mx.com.recuerdalo.app",
-        "sha256_cert_fingerprints": ["6C:64:6B:DC:4F:75:B0:6A:18:67:D9:4B:09:08:1A:CB:CC:7E:AC:E0:71:02:AC:E2:45:C7:B7:EC:D5:16:60:57"]
+        "sha256_cert_fingerprints": ["67:9B:38:83:2E:78:31:EB:C6:FB:1C:EA:56:22:B7:5B:30:47:73:89:41:36:31:3D:B0:95:B1:E2:2F:84:E8:55"]
       }
     }]

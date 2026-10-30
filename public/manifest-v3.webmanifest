@@ -1,0 +1,41 @@
+{
+  "id": "/?pwa=v3",
+  "name": "Recuerdalo.com.mx — Invitaciones y Gestión de Eventos",
+  "short_name": "Recuérdalo",
+  "description": "Plataforma integral para crear invitaciones interactivas, confirmar asistencia, álbum de recuerdos y control de acceso con código QR.",
+  "lang": "es-MX",
+  "start_url": "/?pwa=v3",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#17162E",
+  "theme_color": "#17162E",
+  "categories": ["lifestyle", "social", "productivity"],
+  "icons": [
+    {
+      "src": "/app-icon-round-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-round-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/app-icon-round-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
+
