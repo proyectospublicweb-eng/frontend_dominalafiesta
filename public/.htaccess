@@ -1,3 +1,8 @@
+<IfModule mod_mime.c>
+  AddType application/vnd.android.package-archive .apk
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /

@@ -150,6 +150,18 @@ function LandingPage() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState("login");
   const [openFaq, setOpenFaq] = useState(0);
+  const [deferredPrompt, setDeferredPrompt] = useState(
+    () => (typeof window !== "undefined" && window.__deferredPwaPrompt) || null
+  );
+  const [isPwaInstalled, setIsPwaInstalled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      window.matchMedia?.("(display-mode: standalone)")?.matches ||
+      window.navigator?.standalone === true
+    );
+  });
+  const [installModalOpen, setInstallModalOpen] = useState(false);
+  const [installNotice, setInstallNotice] = useState("");
 
   const [targetTime] = useState(() => Date.now() + 14 * 86400000 + 6 * 3600000);
   const [countdown, setCountdown] = useState(() => getTimeRemaining(targetTime));
@@ -160,6 +172,71 @@ function LandingPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [targetTime]);
+
+  useEffect(() => {
+    const syncPrompt = () => {
+      if (window.__deferredPwaPrompt) {
+        setDeferredPrompt(window.__deferredPwaPrompt);
+      }
+    };
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      window.__deferredPwaPrompt = e;
+      setDeferredPrompt(e);
+    };
+    const handleAppInstalled = () => {
+      window.__deferredPwaPrompt = null;
+      setDeferredPrompt(null);
+      setIsPwaInstalled(true);
+      setInstallNotice(
+        "✓ ¡Recuérdalo se instaló correctamente en tu dispositivo!"
+      );
+    };
+
+    syncPrompt();
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("pwa-prompt-ready", syncPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("pwa-app-installed", handleAppInstalled);
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
+      window.removeEventListener("pwa-prompt-ready", syncPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener("pwa-app-installed", handleAppInstalled);
+    };
+  }, []);
+
+  const handleAutoInstallClick = async () => {
+    setInstallNotice("");
+    const promptEvent = deferredPrompt || window.__deferredPwaPrompt;
+    if (promptEvent) {
+      try {
+        await promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        if (choice?.outcome === "accepted") {
+          window.__deferredPwaPrompt = null;
+          setDeferredPrompt(null);
+          setIsPwaInstalled(true);
+          setInstallNotice(
+            "✓ ¡Instalación automática iniciada! Ya puedes abrir Recuérdalo desde tu pantalla de inicio."
+          );
+        }
+        return;
+      } catch {
+        // Si falla el disparo nativo, abrimos el asistente visual
+      }
+    }
+    setInstallModalOpen(true);
+  };
+
+  const handleDownloadApkNotice = () => {
+    setInstallNotice(
+      "📦 Descargando Recuerdalo.apk... Al abrir el archivo en tu Android, autoriza «Instalar aplicaciones de esta fuente» para finalizar."
+    );
+  };
 
   const openLogin = () => {
     setAuthModalMode("login");
@@ -331,6 +408,63 @@ function LandingPage() {
                   <span>Cómo Funciona</span>
                   <span>→</span>
                 </a>
+              </div>
+
+              {/* Zona de Instalación de la App: Instalador Automático + Instalador Descargable */}
+              <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-white/65 bg-white/55 p-3.5 shadow-lg backdrop-blur-md lg:mx-0">
+                <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#17162E]">
+                    📱 Instala la App de Recuérdalo en tu Dispositivo
+                  </span>
+                  <span className="rounded-full bg-[#5C4EE5]/15 px-2.5 py-0.5 text-[10px] font-extrabold text-[#5C4EE5]">
+                    {isPwaInstalled
+                      ? "✓ App Instalada"
+                      : "Android • iOS • Desk"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                  {/* Opción 1: Instalador Automático */}
+                  <button
+                    type="button"
+                    onClick={handleAutoInstallClick}
+                    className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-[#5C4EE5] px-4 py-2.5 text-left text-xs font-extrabold text-white shadow-md shadow-[#5C4EE5]/25 transition hover:-translate-y-0.5 hover:bg-[#4B3DD6]"
+                  >
+                    <span className="text-base">📲</span>
+                    <div className="min-w-0 leading-tight">
+                      <span className="block text-xs font-extrabold">
+                        Instalador Automático
+                      </span>
+                      <span className="block text-[10px] font-medium text-white/85">
+                        Instalar en 1 clic (Android, iOS y Desk)
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Opción 2: Instalador Descargable (.APK) */}
+                  <a
+                    href="/recuerdalo.apk"
+                    download="Recuerdalo.apk"
+                    onClick={handleDownloadApkNotice}
+                    className="flex items-center justify-center gap-2.5 rounded-xl border border-[#17162E]/20 bg-[#17162E] px-4 py-2.5 text-left text-xs font-extrabold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#252347]"
+                  >
+                    <span className="text-base">📦</span>
+                    <div className="min-w-0 leading-tight">
+                      <span className="block text-xs font-extrabold">
+                        Instalador Descargable
+                      </span>
+                      <span className="block text-[10px] font-medium text-[#7BE7FF]">
+                        Descargar archivo .APK (Android)
+                      </span>
+                    </div>
+                  </a>
+                </div>
+
+                {installNotice && (
+                  <p className="mt-2.5 rounded-xl border border-[#5C4EE5]/30 bg-white/80 px-3 py-2 text-[11px] font-bold text-[#17162E]">
+                    {installNotice}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -851,7 +985,7 @@ function LandingPage() {
               <span>✓ Soporte para WhatsApp y QR</span>
             </div>
 
-            <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:mt-7 sm:flex-row sm:items-center sm:gap-4">
+            <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:mt-7 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               {isAuthenticated ? (
                 <Link
                   to="/home"
@@ -878,6 +1012,21 @@ function LandingPage() {
                   </button>
                 </>
               )}
+              <button
+                type="button"
+                onClick={handleAutoInstallClick}
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#5C4EE5] px-5 py-3 text-xs font-extrabold text-white shadow-md transition hover:bg-[#4B3DD6]"
+              >
+                <span>📲 Instalador Automático (Android, iOS y Desk)</span>
+              </button>
+              <a
+                href="/recuerdalo.apk"
+                download="Recuerdalo.apk"
+                onClick={handleDownloadApkNotice}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#7BE7FF]/40 bg-[#7BE7FF]/15 px-5 py-3 text-xs font-extrabold text-[#7BE7FF] transition hover:bg-[#7BE7FF]/25"
+              >
+                <span>📦 Instalador Descargable (.APK)</span>
+              </a>
             </div>
           </div>
         </div>
@@ -989,6 +1138,135 @@ function LandingPage() {
           </div>
         </footer>
       </div>
+
+      {/* Modal de Instalación de la App (Automático PWA + Descargable APK) */}
+      {installModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-lg rounded-3xl border border-[#5B5F9E]/60 bg-[#1A1936] p-5 text-white shadow-2xl sm:p-7">
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/icon-192.png"
+                  alt="Recuérdalo App"
+                  className="h-12 w-12 shrink-0 rounded-2xl border border-white/20 object-cover shadow-md"
+                />
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7BE7FF]">
+                    INSTALADOR OFICIAL
+                  </span>
+                  <h3 className="text-lg font-extrabold text-white sm:text-xl">
+                    Instalar App Recuerdalo.com.mx
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInstallModalOpen(false)}
+                className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-gray-300 hover:bg-white/20 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4 text-xs">
+              {/* Opción 1: Instalador Automático */}
+              <div className="rounded-2xl border border-[#5C4EE5]/50 bg-[#23214A] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-extrabold text-[#7BE7FF]">
+                    📲 Opción 1: Instalador Automático (Android, iOS y Desk)
+                  </span>
+                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                    Sin alertas de seguridad
+                  </span>
+                </div>
+
+                {isPwaInstalled ? (
+                  <p className="mt-2 font-semibold text-emerald-300">
+                    ✓ La aplicación ya se encuentra instalada en este
+                    dispositivo. Búscala en tu pantalla de inicio como
+                    «Recuérdalo».
+                  </p>
+                ) : deferredPrompt ? (
+                  <div className="mt-3">
+                    <p className="mb-2.5 text-gray-300">
+                      Tu navegador soporta instalación directa en 1 clic:
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleAutoInstallClick}
+                      className="w-full cursor-pointer rounded-xl bg-[#5C4EE5] py-2.5 text-center text-xs font-extrabold text-white shadow-md transition hover:bg-[#4B3DD6]"
+                    >
+                      📲 Instalar Automáticamente Ahora
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-2.5 space-y-2 text-gray-200">
+                    <p>
+                      Para agregar el acceso directo en pantalla completa desde
+                      tu navegador actual:
+                    </p>
+                    <ul className="space-y-1.5 rounded-xl bg-black/25 p-3 text-[11px] text-gray-300">
+                      <li>
+                        • <strong>En Android (Chrome / Edge):</strong> Toca el
+                        menú <strong>⋮</strong> (esquina superior derecha) y
+                        selecciona{" "}
+                        <strong className="text-white">
+                          «Instalar aplicación»
+                        </strong>{" "}
+                        o{" "}
+                        <strong className="text-white">
+                          «Agregar a la pantalla principal»
+                        </strong>
+                        .
+                      </li>
+                      <li>
+                        • <strong>En iPhone / iPad (Safari):</strong> Toca el
+                        botón <strong>Compartir ⬆️</strong> en la barra inferior
+                        y selecciona{" "}
+                        <strong className="text-white">
+                          «Agregar a inicio»
+                        </strong>
+                        .
+                      </li>
+                      <li>
+                        • <strong>En PC (Chrome / Edge):</strong> Haz clic en el
+                        ícono de instalación <strong>⊕</strong> a la derecha de
+                        la barra de direcciones.
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Opción 2: Instalador Descargable (.APK) */}
+              <div className="rounded-2xl border border-white/15 bg-[#141329] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-extrabold text-white">
+                    📦 Opción 2: Instalador Descargable (.APK)
+                  </span>
+                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-gray-300">
+                    Solo dispositivos Android
+                  </span>
+                </div>
+                <p className="mt-1.5 text-[11px] text-gray-300">
+                  Descarga el archivo instalador <code className="text-[#7BE7FF]">Recuerdalo.apk</code> directamente en tu teléfono Android e instálalo manualmente.
+                </p>
+                <a
+                  href="/recuerdalo.apk"
+                  download="Recuerdalo.apk"
+                  onClick={() => {
+                    handleDownloadApkNotice();
+                    setInstallModalOpen(false);
+                  }}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#7BE7FF]/40 bg-[#7BE7FF]/15 py-2.5 text-center text-xs font-extrabold text-[#7BE7FF] transition hover:bg-[#7BE7FF]/25"
+                >
+                  <span>📥 Descargar Recuerdalo.apk (1.8 MB)</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Autenticación */}
       <AuthModal

@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "mx.com.recuerdalo.app",
+        "sha256_cert_fingerprints": ["F3:07:1D:30:65:71:3E:D4:38:C0:48:4C:9E:F7:EF:04:32:EB:47:E6:02:8F:81:27:D0:76:7E:FA:C3:C6:12:89"]
+      }
+    }]
