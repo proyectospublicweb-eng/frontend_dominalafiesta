@@ -489,6 +489,27 @@ function GestorEvento({
     mensaje: "",
   });
   const [savingScheduledEmail, setSavingScheduledEmail] = useState(false);
+  const [reminderPreviewMode, setReminderPreviewMode] = useState("dias");
+
+  const DEFAULT_CONFIRMED_REMINDER_DIAS =
+    "¡Hola! Te recordamos que faltan {dias} días para {evento} ({fecha} a las {hora} hrs en {lugar}). ¡Te esperamos! Ver detalles del evento: {enlace}";
+  const DEFAULT_CONFIRMED_REMINDER_HORAS =
+    "¡Hola! Te recordamos que faltan {horas} horas para {evento} (hoy a las {hora} hrs en {lugar}). ¡Te esperamos! Ver detalles del evento: {enlace}";
+  const DEFAULT_PENDING_REMINDER_MSG =
+    "¡Hola {nombre}! Te invitamos a confirmar tu asistencia para {evento} ({fecha} a las {hora} hrs en {lugar}) aquí: {enlace}";
+
+  const normalizeConfirmedReminderMsg = (rawMsg, isHoras = false) => {
+    const clean = String(rawMsg || "").trim();
+    if (
+      !clean ||
+      /confirma tu asistencia|enlace personalizado|\{nombre\}/i.test(clean)
+    ) {
+      return isHoras
+        ? DEFAULT_CONFIRMED_REMINDER_HORAS
+        : DEFAULT_CONFIRMED_REMINDER_DIAS;
+    }
+    return clean;
+  };
 
   // Tab D: Logística (Seating Chart Drag & Drop, Checklist con fecha límite, Cronograma)
   const [draggedGuestId, setDraggedGuestId] = useState(null);
@@ -541,6 +562,12 @@ function GestorEvento({
             ? "Ningúno"
             : draftEvento.municipio || "Ningúno",
           fecha_evento: formatDateInput(draftEvento.fecha_evento),
+          fecha_limite_rsvp_activa: Boolean(
+            draftEvento.fecha_limite_rsvp_activa
+          ),
+          fecha_limite_rsvp: draftEvento.fecha_limite_rsvp
+            ? formatDateInput(draftEvento.fecha_limite_rsvp)
+            : "",
           color_secundario: draftEvento.color_secundario || "#6C7EE1",
           imagen_portada: draftEvento.imagen_portada || "",
           texto_boton_rsvp:
@@ -565,10 +592,18 @@ function GestorEvento({
           recordatorio_horas_activo: Boolean(
             draftEvento.recordatorio_horas_activo
           ),
-          recordatorio_mensaje:
-            draftEvento.recordatorio_mensaje ||
-            "¡Hola {nombre}! Faltan {dias} días para {evento}. Por favor confirma tu asistencia en la invitación virtual: {enlace}",
+          recordatorio_mensaje: normalizeConfirmedReminderMsg(
+            draftEvento.recordatorio_mensaje,
+            Boolean(draftEvento.recordatorio_horas_activo) &&
+              !draftEvento.recordatorio_activo
+          ),
         };
+        setReminderPreviewMode(
+          Boolean(draftEvento.recordatorio_horas_activo) &&
+            !draftEvento.recordatorio_activo
+            ? "horas"
+            : "dias"
+        );
         setDetalle({
           evento: draftObj,
           invitados: [],
@@ -626,6 +661,12 @@ function GestorEvento({
           estado_evento: esNingunoCfg ? "Ningúno" : estadoConfig,
           municipio: municipioConfig,
           fecha_evento: formatDateInput(data.evento.fecha_evento),
+          fecha_limite_rsvp_activa: Boolean(
+            data.evento.fecha_limite_rsvp_activa
+          ),
+          fecha_limite_rsvp: data.evento.fecha_limite_rsvp
+            ? formatDateInput(data.evento.fecha_limite_rsvp)
+            : "",
           color_secundario: data.evento.color_secundario || "#6C7EE1",
           imagen_portada: data.evento.imagen_portada || "",
           texto_boton_rsvp:
@@ -649,10 +690,18 @@ function GestorEvento({
           recordatorio_horas_activo: Boolean(
             data.evento.recordatorio_horas_activo
           ),
-          recordatorio_mensaje:
-            data.evento.recordatorio_mensaje ||
-            "¡Hola {nombre}! Faltan {dias} días para {evento}. Por favor confirma tu asistencia en la invitación virtual: {enlace}",
+          recordatorio_mensaje: normalizeConfirmedReminderMsg(
+            data.evento.recordatorio_mensaje,
+            Boolean(data.evento.recordatorio_horas_activo) &&
+              !data.evento.recordatorio_activo
+          ),
         });
+        setReminderPreviewMode(
+          Boolean(data.evento.recordatorio_horas_activo) &&
+            !data.evento.recordatorio_activo
+            ? "horas"
+            : "dias"
+        );
         setGuestForm((prev) => ({
           ...prev,
           modalidad_pase: modNormalizada,
@@ -685,6 +734,30 @@ function GestorEvento({
       active = false;
     };
   }, [selectedEventoId, draftEvento]);
+
+  useEffect(() => {
+    if (!invForm) return;
+    const rawMsg = String(invForm.recordatorio_mensaje || "").trim();
+    if (
+      !rawMsg ||
+      /confirma tu asistencia|enlace personalizado|\{nombre\}/i.test(rawMsg)
+    ) {
+      const isHoras =
+        reminderPreviewMode === "horas" ||
+        (Boolean(invForm.recordatorio_horas_activo) &&
+          !invForm.recordatorio_activo);
+      setInvForm((prev) =>
+        prev
+          ? {
+              ...prev,
+              recordatorio_mensaje: isHoras
+                ? DEFAULT_CONFIRMED_REMINDER_HORAS
+                : DEFAULT_CONFIRMED_REMINDER_DIAS,
+            }
+          : prev
+      );
+    }
+  }, [invForm?.recordatorio_mensaje, reminderPreviewMode]);
 
   const csvPreviewRows = useMemo(() => parseCsvRows(csvText), [csvText]);
   const mapLocation = useGoogleMapsLocation(
@@ -959,6 +1032,10 @@ function GestorEvento({
           "Amazon"
       ).trim(),
       mesa_regalos_url: normalizedGiftUrl,
+      fecha_limite_rsvp_activa: Boolean(rawPayload.fecha_limite_rsvp_activa),
+      fecha_limite_rsvp: rawPayload.fecha_limite_rsvp_activa
+        ? String(rawPayload.fecha_limite_rsvp || "").trim().slice(0, 10)
+        : "",
     };
     try {
       if (!evento.idevento) {
@@ -984,6 +1061,17 @@ function GestorEvento({
         estado_evento: data.estado_evento || payload.estado_evento || "Ningúno",
         municipio: data.municipio || payload.municipio || "Ningúno",
         fecha_evento: formatDateInput(data.fecha_evento),
+        fecha_limite_rsvp_activa: Boolean(
+          data.fecha_limite_rsvp_activa ?? payload.fecha_limite_rsvp_activa
+        ),
+        fecha_limite_rsvp:
+          data.fecha_limite_rsvp_activa ?? payload.fecha_limite_rsvp_activa
+            ? String(
+                data.fecha_limite_rsvp || payload.fecha_limite_rsvp || ""
+              )
+                .trim()
+                .slice(0, 10)
+            : "",
         confirmar_acceso_qr:
           data.confirmar_acceso_qr ?? data.permitir_acompanantes ?? true,
         mesa_regalos_habilitada: Boolean(data.mesa_regalos_habilitada),
@@ -1311,16 +1399,76 @@ function GestorEvento({
   // =========================================================================
   // HANDLERS: DIFUSIÓN Y RECORDATORIOS (TAB C)
   // =========================================================================
-  const formatGuestMessage = (templateStr, guest, customUrl = null) => {
+  const formatGuestMessage = (
+    templateStr,
+    guest,
+    customUrl = null,
+    options = {}
+  ) => {
     const link = customUrl || baseShareUrl;
-    return String(templateStr || "")
-      .replaceAll("{nombre}", guest?.nombre || "Invitado Especial")
-      .replaceAll("{evento}", evento.nombre)
-      .replaceAll("{fecha}", formatDateInput(evento.fecha_evento))
-      .replaceAll("{hora}", evento.hora_evento || "20:00")
-      .replaceAll("{lugar}", evento.lugar || "Salón Principal")
-      .replaceAll("{dias}", String(diasParaEvento))
+    const isHoras = options.mode === "horas";
+    const diasVal =
+      options.dias !== undefined
+        ? Number(options.dias)
+        : Number(invForm?.recordatorio_dias ?? diasParaEvento ?? 3);
+    const horasVal =
+      options.horas !== undefined
+        ? Number(options.horas)
+        : Number(invForm?.recordatorio_horas ?? 12);
+    let msg = String(templateStr || "");
+    if (options.adaptCountdown) {
+      if (isHoras) {
+        msg = msg
+          .replace(/\{dias\}\s*d[ií]as?/gi, "{horas} horas")
+          .replace(/faltan\s+\d+\s*d[ií]as?/gi, `faltan ${horasVal} horas`);
+      } else {
+        msg = msg
+          .replace(/\{horas\}\s*horas?/gi, "{dias} días")
+          .replace(/faltan\s+\d+\s*horas?/gi, `faltan ${diasVal} días`);
+      }
+    }
+    return msg
+      .replaceAll("{nombre}", guest?.nombre || "Invitado Confirmado")
+      .replaceAll("{evento}", invForm?.nombre || evento.nombre)
+      .replaceAll(
+        "{fecha}",
+        formatDateInput(invForm?.fecha_evento || evento.fecha_evento)
+      )
+      .replaceAll(
+        "{hora}",
+        invForm?.hora_evento || evento.hora_evento || "20:00"
+      )
+      .replaceAll(
+        "{lugar}",
+        invForm?.lugar || evento.lugar || "Salón Principal"
+      )
+      .replaceAll(
+        "{dias}",
+        String(options.useConfiguredCountdown ? diasVal : diasParaEvento)
+      )
+      .replaceAll("{horas}", String(horasVal))
+      .replaceAll(
+        "{tiempo}",
+        isHoras
+          ? `${horasVal} ${horasVal === 1 ? "hora" : "horas"}`
+          : `${diasVal} ${diasVal === 1 ? "día" : "días"}`
+      )
       .replaceAll("{enlace}", link);
+  };
+
+  const handleSwitchReminderMode = (targetMode) => {
+    setReminderPreviewMode(targetMode);
+    setInvForm((p) => {
+      const current = String(p.recordatorio_mensaje || "");
+      const adapted =
+        targetMode === "horas"
+          ? current.replace(/\{dias\}\s*d[ií]as?/gi, "{horas} horas")
+          : current.replace(/\{horas\}\s*horas?/gi, "{dias} días");
+      return {
+        ...p,
+        recordatorio_mensaje: adapted,
+      };
+    });
   };
 
   const activeEmailTemplate =
@@ -1668,8 +1816,16 @@ function GestorEvento({
   };
 
   const executeSendSilentWhatsAppReminder = async (guest) => {
+    const isPendingGuest = guest?.estado_rsvp === "Pendiente";
+    const msgTemplate = isPendingGuest
+      ? DEFAULT_PENDING_REMINDER_MSG
+      : invForm.recordatorio_mensaje;
     if (!metaWaForm.configured) {
-      const text = formatGuestMessage(invForm.recordatorio_mensaje, guest);
+      const text = formatGuestMessage(msgTemplate, guest, null, {
+        mode: reminderPreviewMode,
+        useConfiguredCountdown: !isPendingGuest,
+        adaptCountdown: !isPendingGuest,
+      });
       const cleanPhone = String(guest.telefono || "").replace(/\D/g, "");
       const waUrl = cleanPhone
         ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
@@ -1691,7 +1847,7 @@ function GestorEvento({
         guest.idinvitado,
         {
           linkUrl: selectedWhatsappLinkObj?.url || baseShareUrl,
-          customMessage: invForm.recordatorio_mensaje,
+          customMessage: msgTemplate,
           canal: "Recordatorio WhatsApp API",
         }
       );
@@ -1738,19 +1894,32 @@ function GestorEvento({
   };
 
   const executeTriggerBulkReminders = async () => {
+    const activeMode =
+      reminderPreviewMode === "horas" ||
+      (Boolean(invForm.recordatorio_horas_activo) &&
+        !invForm.recordatorio_activo)
+        ? "horas"
+        : "dias";
+    const activeCantidad =
+      activeMode === "horas"
+        ? Number(invForm.recordatorio_horas ?? 12) || 12
+        : Number(invForm.recordatorio_dias ?? 3) || 3;
+
     if (metaWaForm.configured) {
       try {
         setSendingWaBulk(true);
         showNotice(
-          `⏳ Disparando recordatorios silenciosos por API de Meta a ${pendientesList.length} invitado(s) pendiente(s)...`
+          `⏳ Disparando recordatorios silenciosos por API de Meta a ${confirmadosList.length} invitado(s) confirmado(s)...`
         );
         const { data } = await enviarRecordatoriosWhatsAppMasivoRequest(
           evento.idevento,
           {
-            estadoFiltro: "Pendiente",
+            estadoFiltro: "Confirmado",
             linkUrl: selectedWhatsappLinkObj?.url || baseShareUrl,
             customMessage: invForm.recordatorio_mensaje,
             incluirCorreo: true,
+            mode: activeMode,
+            cantidad: activeCantidad,
           }
         );
         if (Array.isArray(data?.invitados)) {
@@ -1765,7 +1934,7 @@ function GestorEvento({
           );
         } else {
           showNotice(
-            `✓ Disparo silencioso completado: ${data.waEnviadosCount} WhatsApp API enviados${
+            `✓ Disparo silencioso a Confirmados completado: ${data.waEnviadosCount} WhatsApp API enviados${
               data.emailEnviadosCount > 0
                 ? ` • ${data.emailEnviadosCount} Correos enviados`
                 : ""
@@ -1788,39 +1957,48 @@ function GestorEvento({
     }
 
     // Respaldo semiautomático si aún no se han ingresado credenciales de Meta API
-    const firstPending = pendientesList[0];
-    if (firstPending) {
+    const firstConfirmed = confirmadosList[0];
+    if (firstConfirmed) {
       const text = formatGuestMessage(
         invForm.recordatorio_mensaje,
-        firstPending
+        firstConfirmed,
+        null,
+        {
+          mode: activeMode,
+          useConfiguredCountdown: true,
+          adaptCountdown: true,
+        }
       );
-      const cleanPhone = String(firstPending.telefono || "").replace(/\D/g, "");
+      const cleanPhone = String(firstConfirmed.telefono || "").replace(
+        /\D/g,
+        ""
+      );
       const waUrl = cleanPhone
         ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
         : `https://wa.me/?text=${encodeURIComponent(text)}`;
       window.open(waUrl, "_blank", "noopener,noreferrer");
     }
     await executeBroadcastMasivo({
-      soloPendientes: true,
-      canal: "Recordatorio Automático",
-      estadoFiltro: "Pendiente",
+      soloPendientes: false,
+      canal: "Recordatorio Automático (Confirmados)",
+      estadoFiltro: "Confirmado",
     });
   };
 
   const handleTriggerBulkReminders = () => {
-    if (pendientesList.length === 0) {
+    if (confirmadosList.length === 0) {
       showNotice(
-        "ℹ️ Actualmente hay 0 invitados en estado 'Pendiente'. Solo se envía a quienes aún no han confirmado."
+        "ℹ️ Actualmente hay 0 invitados en estado 'Confirmado'. El recordatorio automático se envía a quienes ya confirmaron su asistencia."
       );
       return;
     }
-    const pendingPases = pendientesList.reduce(
+    const confirmedPases = confirmadosList.reduce(
       (acc, g) => acc + Number(g.pases || 1),
       0
     );
     validateAndWarnBeforeShare({
-      canal: "Recordatorios Masivos (WhatsApp / Correo)",
-      destinatarioLabel: `${pendientesList.length} invitado(s) en estado Pendiente (${pendingPases} pases)`,
+      canal: "Recordatorios Masivos a Confirmados (WhatsApp / Correo)",
+      destinatarioLabel: `${confirmadosList.length} invitado(s) Confirmado(s) (${confirmedPases} pases)`,
       proyectadoInvitados: totalInvitadosCount,
       proyectadoPases: totalPasesLista,
       enviadosDespuesInvitados: totalInvitadosCount,
@@ -1853,7 +2031,7 @@ function GestorEvento({
 
       const { data } = await addLogisticaRequest(evento.idevento, {
         categoria: "correo_programado",
-        titulo: "Envío Automático de Correo a Pendientes",
+        titulo: "Envío Automático de Correo a Confirmados",
         fecha_limite: fechaClean,
         hora_itinerario: horaClean,
         estado: "Programado",
@@ -1892,13 +2070,13 @@ function GestorEvento({
       );
       return;
     }
-    const pendingPases = pendientesList.reduce(
+    const confirmedPases = confirmadosList.reduce(
       (acc, g) => acc + Number(g.pases || 1),
       0
     );
     validateAndWarnBeforeShare({
       canal: `Correo Automático Programado (${fechaClean} • ${horaClean} hrs)`,
-      destinatarioLabel: `${pendientesList.length} invitado(s) en estado Pendiente (${pendingPases} pases)`,
+      destinatarioLabel: `${confirmadosList.length} invitado(s) Confirmado(s) (${confirmedPases} pases)`,
       proyectadoInvitados: totalInvitadosCount,
       proyectadoPases: totalPasesLista,
       enviadosDespuesInvitados: totalInvitadosCount,
@@ -2948,7 +3126,7 @@ function GestorEvento({
               key={t.id}
               type="button"
               onClick={() => onChangeSubTab(t.id)}
-              className={`truncate rounded-xl px-3 py-2.5 text-center text-[11px] font-extrabold transition sm:whitespace-nowrap sm:rounded-t-2xl sm:rounded-b-none sm:px-6 sm:py-3.5 sm:text-xs ${colorClass} ${
+              className={`truncate rounded-xl px-3 py-2.5 text-center text-[11px] font-extrabold transition last:col-span-2 sm:last:col-span-1 sm:whitespace-nowrap sm:rounded-t-2xl sm:rounded-b-none sm:px-4 sm:py-3.5 sm:text-xs md:px-6 ${colorClass} ${
                 active
                   ? "sm:-translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
                   : "opacity-85 hover:opacity-100"
@@ -2980,7 +3158,7 @@ function GestorEvento({
 
             {/* Banner de enlace permanente */}
             <div className="rounded-xl border border-[#6C7EE1]/30 bg-[#6C7EE1]/10 p-3 text-xs">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-bold text-[#6C7EE1]">
                   🔗 Enlace Permanente Activo
                 </span>
@@ -2990,12 +3168,12 @@ function GestorEvento({
                     navigator.clipboard.writeText(baseShareUrl);
                     showNotice("✓ Enlace copiado al portapapeles.");
                   }}
-                  className="rounded bg-[#6C7EE1] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#6C7EE1]/40"
+                  className="shrink-0 rounded bg-[#6C7EE1] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#6C7EE1]/40"
                 >
                   Copiar URL
                 </button>
               </div>
-              <p className="mt-1 truncate font-mono text-[11px] text-[#5B617A]">
+              <p className="mt-1 break-all font-mono text-[11px] text-[#5B617A] sm:truncate">
                 {baseShareUrl}
               </p>
               <p className="mt-1 text-[10px] text-[#8E94A9]">
@@ -3009,7 +3187,7 @@ function GestorEvento({
               <label className="mb-2 block text-xs font-semibold text-[#5B617A]">
                 Tema Visual y Colores de Acento / Botones
               </label>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2 sm:gap-2.5">
                 {PLANTILLAS.map((p) => (
                   <button
                     key={p.id}
@@ -3022,18 +3200,18 @@ function GestorEvento({
                         color_secundario: p.secondary,
                       }))
                     }
-                    className={`rounded-xl border p-2.5 text-left transition ${
+                    className={`min-w-0 rounded-xl border p-2.5 text-left transition ${
                       invForm.plantilla_tema === p.id
                         ? "border-[#6C7EE1] bg-[#6C7EE1]/15"
                         : "border-[#E6E9F4] bg-[#F7F8FC] hover:border-[#6C7EE1]"
                     }`}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       <span
-                        className="h-3.5 w-3.5 rounded-full"
+                        className="h-3.5 w-3.5 shrink-0 rounded-full"
                         style={{ backgroundColor: p.accent }}
                       />
-                      <span className="text-xs font-bold text-[#2D3047]">
+                      <span className="truncate text-xs font-bold text-[#2D3047]">
                         {p.name}
                       </span>
                     </div>
@@ -3142,6 +3320,112 @@ function GestorEvento({
                   }
                   className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-sm text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                  Fecha del Evento
+                </label>
+                <input
+                  type="date"
+                  value={invForm.fecha_evento || ""}
+                  onChange={(e) =>
+                    setInvForm((prev) => ({
+                      ...prev,
+                      fecha_evento: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                  Hora de Inicio
+                </label>
+                <input
+                  type="time"
+                  value={invForm.hora_evento || "20:00"}
+                  onChange={(e) =>
+                    setInvForm((prev) => ({
+                      ...prev,
+                      hora_evento: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                />
+              </div>
+
+              {/* Opción de Fecha Límite de Confirmación al Evento en Edición */}
+              <div className="sm:col-span-2 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-3.5">
+                <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                  <label
+                    className={`flex min-w-0 cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-xs font-extrabold leading-snug transition select-none ${
+                      invForm.fecha_limite_rsvp_activa
+                        ? "border-[#6C7EE1] bg-[#6C7EE1] text-white shadow-2xs"
+                        : "border-[#DCE0F0] bg-white text-[#2D3047] hover:border-[#6C7EE1]"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={Boolean(invForm.fecha_limite_rsvp_activa)}
+                      onChange={async (e) => {
+                        const checked = e.target.checked;
+                        const defaultFechaLim = checked
+                          ? invForm.fecha_limite_rsvp ||
+                            invForm.fecha_evento ||
+                            ""
+                          : "";
+                        setInvForm((prev) => ({
+                          ...prev,
+                          fecha_limite_rsvp_activa: checked,
+                          fecha_limite_rsvp: defaultFechaLim,
+                        }));
+                        if (evento.idevento) {
+                          await handleSaveEvento(null, {
+                            fecha_limite_rsvp_activa: checked,
+                            fecha_limite_rsvp: defaultFechaLim,
+                          });
+                        }
+                      }}
+                      className="h-4 w-4 shrink-0 cursor-pointer accent-[#2D3047]"
+                    />
+                    <span className="min-w-0 break-words">
+                      ⏳ Asignar Fecha Límite de confirmación al Evento
+                    </span>
+                  </label>
+
+                  <div className="min-w-0">
+                    <label className="mb-1 block text-[11px] font-bold text-[#5B617A]">
+                      Fecha Límite de Confirmación
+                    </label>
+                    <input
+                      type="date"
+                      max={invForm.fecha_evento || undefined}
+                      disabled={!invForm.fecha_limite_rsvp_activa}
+                      value={
+                        invForm.fecha_limite_rsvp_activa
+                          ? invForm.fecha_limite_rsvp || ""
+                          : ""
+                      }
+                      onChange={(e) => {
+                        const nextDate = e.target.value;
+                        setInvForm((prev) => ({
+                          ...prev,
+                          fecha_limite_rsvp: nextDate,
+                        }));
+                      }}
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#EAECEF] disabled:text-[#8E94A9] disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-[11px] text-[#8E94A9]">
+                  {invForm.fecha_limite_rsvp_activa
+                    ? `✓ Activo: Tus invitados podrán confirmar hasta el ${
+                        invForm.fecha_limite_rsvp || "día elegido"
+                      }. Después de esa fecha ya no se permitirá confirmar y se les mostrará que la fecha de confirmación caducó.`
+                    : "Marca «Asignar Fecha Límite de confirmación al Evento» para desbloquear el campo de fecha."}
+                </p>
               </div>
 
               <div>
@@ -3329,8 +3613,8 @@ function GestorEvento({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 sm:grid-cols-3">
-                  <div>
+                <div className="grid grid-cols-1 gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+                  <div className="min-w-0">
                     <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
                       Tienda del Carrito / Lista
                     </label>
@@ -3360,7 +3644,7 @@ function GestorEvento({
                     </select>
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div className="min-w-0 sm:col-span-2 xl:col-span-1 2xl:col-span-2">
                     <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
                       Link del Carrito de Compras o Mesa de Regalos del Anfitrión *
                     </label>
@@ -3736,11 +4020,11 @@ function GestorEvento({
               </div>
 
               {/* Selector de dispositivo: Móvil vs Escritorio */}
-              <div className="flex rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1">
+              <div className="grid w-full grid-cols-2 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-1 sm:flex sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setPreviewDevice("mobile")}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
+                  className={`rounded-lg px-3.5 py-1.5 text-center text-xs font-bold transition ${
                     previewDevice === "mobile"
                       ? "bg-[#6C7EE1] text-white"
                       : "text-[#8E94A9] hover:text-[#6C7EE1]"
@@ -3751,7 +4035,7 @@ function GestorEvento({
                 <button
                   type="button"
                   onClick={() => setPreviewDevice("desktop")}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
+                  className={`rounded-lg px-3.5 py-1.5 text-center text-xs font-bold transition ${
                     previewDevice === "desktop"
                       ? "bg-[#6C7EE1] text-white"
                       : "text-[#8E94A9] hover:text-[#6C7EE1]"
@@ -3766,12 +4050,12 @@ function GestorEvento({
             <div className="mt-4 flex items-start justify-center">
               {previewDevice === "mobile" ? (
                 /* SIMULADOR DE PANTALLA MÓVIL */
-                <div className="w-full max-w-[360px] rounded-[2.6rem] border-[6px] border-white/15 bg-[#0F1A45] p-3 shadow-[0_0_50px_rgba(0,0,0,0.85)]">
+                <div className="w-full max-w-[360px] rounded-[2.2rem] border-4 border-white/15 bg-[#0F1A45] p-2.5 shadow-[0_0_50px_rgba(0,0,0,0.85)] sm:rounded-[2.6rem] sm:border-[6px] sm:p-3">
                   {/* Notch de smartphone */}
                   <div className="mx-auto mb-2.5 h-1.5 w-20 rounded-full bg-white/20" />
 
                   <div
-                    className={`overflow-hidden rounded-[2rem] border bg-gradient-to-b ${tpl.bg} ${tpl.border}`}
+                    className={`overflow-hidden rounded-[1.8rem] border bg-gradient-to-b sm:rounded-[2rem] ${tpl.bg} ${tpl.border}`}
                   >
                     {invForm.imagen_portada && (
                       <div className="relative h-44 w-full overflow-hidden">
@@ -3784,7 +4068,7 @@ function GestorEvento({
                       </div>
                     )}
 
-                    <div className="p-5 text-center">
+                    <div className="p-3.5 text-center sm:p-5">
                       <span
                         className="inline-block rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white"
                         style={{
@@ -3794,11 +4078,11 @@ function GestorEvento({
                         {invForm.tipo_evento}
                       </span>
 
-                      <h2 className="font-display mt-3 text-3xl font-bold uppercase tracking-wide text-white">
+                      <h2 className="font-display mt-3 break-words text-2xl font-bold uppercase tracking-wide text-white sm:text-3xl">
                         {invForm.nombre}
                       </h2>
 
-                      <p className="mt-2 text-xs leading-relaxed text-gray-300">
+                      <p className="mt-2 break-words text-xs leading-relaxed text-gray-300">
                         {invForm.mensaje_invitacion}
                       </p>
 
@@ -3834,6 +4118,15 @@ function GestorEvento({
                         <p>
                           📅 <strong>Fecha:</strong> {invForm.fecha_evento}
                         </p>
+                        {Boolean(
+                          invForm.fecha_limite_rsvp_activa &&
+                            invForm.fecha_limite_rsvp
+                        ) && (
+                          <p className="text-amber-300">
+                            ⏳ <strong>Fecha límite para confirmar:</strong>{" "}
+                            {invForm.fecha_limite_rsvp}
+                          </p>
+                        )}
                         <p>
                           📍 <strong>Lugar:</strong>{" "}
                           {invForm.lugar || "Por confirmar"}
@@ -4037,6 +4330,15 @@ function GestorEvento({
                             <strong className="text-white">
                               {invForm.fecha_evento} • {invForm.hora_evento} hrs
                             </strong>
+                            {Boolean(
+                              invForm.fecha_limite_rsvp_activa &&
+                                invForm.fecha_limite_rsvp
+                            ) && (
+                              <span className="mt-1 block text-[11px] font-bold text-amber-300">
+                                ⏳ Límite confirmación:{" "}
+                                {invForm.fecha_limite_rsvp}
+                              </span>
+                            )}
                           </div>
                           <div>
                             <span className="block text-[10px] uppercase text-gray-400">
@@ -6716,20 +7018,20 @@ function GestorEvento({
                   </span>
                 </div>
                 <h4 className="font-display text-xl font-bold uppercase tracking-wide text-[#2D3047] sm:text-2xl">
-                  ⏰ Recordatorios Automatizados para &ldquo;Pendientes&rdquo;
+                  ⏰ Recordatorios Automatizados para Invitados Confirmados
                 </h4>
                 <p className="text-xs text-[#8E94A9]">
                   Dispara automáticamente un mensaje a los{" "}
-                  <strong className="text-[#D97706]">
-                    {pendientesList.length} invitados en estado Pendiente
+                  <strong className="text-emerald-600">
+                    {confirmadosList.length} invitados Confirmados
                   </strong>{" "}
-                  cuando falten X días o X horas para la fiesta.
+                  para recordarles cuántos días u horas faltan para la fiesta según el caso seleccionado.
                 </p>
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <div className="space-y-3.5 lg:col-span-6">
+              <div className="min-w-0 space-y-3.5 lg:col-span-5">
                 {/* 1. Disparar cuando falten (días) + su check individual */}
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
@@ -6741,27 +7043,36 @@ function GestorEvento({
                       min="1"
                       max="60"
                       value={invForm.recordatorio_dias ?? 3}
-                      onChange={(e) =>
+                      onFocus={() => handleSwitchReminderMode("dias")}
+                      onChange={(e) => {
+                        setReminderPreviewMode("dias");
                         setInvForm((p) => ({
                           ...p,
                           recordatorio_dias: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-sm font-bold text-[#D97706] outline-none focus:border-amber-400 sm:w-32"
+                          recordatorio_mensaje: String(
+                            p.recordatorio_mensaje || ""
+                          ).replace(/\{horas\}\s*horas?/gi, "{dias} días"),
+                        }));
+                      }}
+                      className="w-full shrink-0 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-sm font-bold text-[#D97706] outline-none focus:border-amber-400 sm:w-28"
                     />
-                    <label className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-[#D97706] sm:justify-start">
+                    <label className="flex min-w-0 cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs font-bold text-[#D97706] sm:flex-1 sm:justify-start">
                       <input
                         type="checkbox"
                         checked={Boolean(invForm.recordatorio_activo)}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          if (checked) handleSwitchReminderMode("dias");
                           setInvForm((p) => ({
                             ...p,
-                            recordatorio_activo: e.target.checked,
-                          }))
-                        }
-                        className="h-4 w-4 accent-amber-400"
+                            recordatorio_activo: checked,
+                          }));
+                        }}
+                        className="h-4 w-4 shrink-0 accent-amber-400"
                       />
-                      <span>Recordatorio Automático Activo</span>
+                      <span className="truncate">
+                        Recordatorio por Días Activo
+                      </span>
                     </label>
                   </div>
                 </div>
@@ -6777,49 +7088,172 @@ function GestorEvento({
                       min="1"
                       max="720"
                       value={invForm.recordatorio_horas ?? 12}
-                      onChange={(e) =>
+                      onFocus={() => handleSwitchReminderMode("horas")}
+                      onChange={(e) => {
+                        setReminderPreviewMode("horas");
                         setInvForm((p) => ({
                           ...p,
                           recordatorio_horas: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-sm font-bold text-[#D97706] outline-none focus:border-amber-400 sm:w-32"
+                          recordatorio_mensaje: String(
+                            p.recordatorio_mensaje || ""
+                          ).replace(/\{dias\}\s*d[ií]as?/gi, "{horas} horas"),
+                        }));
+                      }}
+                      className="w-full shrink-0 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-sm font-bold text-[#D97706] outline-none focus:border-amber-400 sm:w-28"
                     />
-                    <label className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-[#D97706] sm:justify-start">
+                    <label className="flex min-w-0 cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs font-bold text-[#D97706] sm:flex-1 sm:justify-start">
                       <input
                         type="checkbox"
                         checked={Boolean(invForm.recordatorio_horas_activo)}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          if (checked) handleSwitchReminderMode("horas");
                           setInvForm((p) => ({
                             ...p,
-                            recordatorio_horas_activo: e.target.checked,
-                          }))
-                        }
-                        className="h-4 w-4 accent-amber-400"
+                            recordatorio_horas_activo: checked,
+                          }));
+                        }}
+                        className="h-4 w-4 shrink-0 accent-amber-400"
                       />
-                      <span>Recordatorio Automático Activo</span>
+                      <span className="truncate">
+                        Recordatorio por Horas Activo
+                      </span>
                     </label>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col justify-between lg:col-span-6">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+              <div className="flex min-w-0 flex-col justify-between space-y-2 lg:col-span-7">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                  <label className="block text-xs font-semibold text-[#5B617A]">
                     Mensaje del Recordatorio Automático
                   </label>
-                  <textarea
-                    rows={4}
-                    value={invForm.recordatorio_mensaje || ""}
-                    onChange={(e) =>
-                      setInvForm((p) => ({
-                        ...p,
-                        recordatorio_mensaje: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2.5 text-xs text-[#2D3047] outline-none focus:border-amber-400"
-                  />
+                  <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchReminderMode("dias")}
+                      className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-center text-[10px] font-extrabold transition sm:py-1 ${
+                        reminderPreviewMode !== "horas"
+                          ? "bg-[#D97706] text-white shadow-2xs"
+                          : "border border-[#DCE0F0] bg-[#F7F8FC] text-[#5B617A] hover:border-amber-400"
+                      }`}
+                    >
+                      ⏳ Caso Días ({invForm.recordatorio_dias ?? 3} días)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchReminderMode("horas")}
+                      className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-center text-[10px] font-extrabold transition sm:py-1 ${
+                        reminderPreviewMode === "horas"
+                          ? "bg-[#D97706] text-white shadow-2xs"
+                          : "border border-[#DCE0F0] bg-[#F7F8FC] text-[#5B617A] hover:border-amber-400"
+                      }`}
+                    >
+                      ⏰ Caso Horas ({invForm.recordatorio_horas ?? 12} hrs)
+                    </button>
+                  </div>
                 </div>
+
+                {/* VISTA PREVIA DEL RECORDATORIO SEGÚN EL EVENTO */}
+                {(() => {
+                  const hasCustomThumb = Boolean(
+                    String(
+                      invForm.imagen_portada || evento.imagen_portada || ""
+                    ).trim()
+                  );
+                  const previewThumbSrc = hasCustomThumb
+                    ? invForm.imagen_portada || evento.imagen_portada
+                    : "/default-invitacion.svg";
+                  const isHorasMode = reminderPreviewMode === "horas";
+                  const cantDias = Math.max(
+                    1,
+                    Number(invForm.recordatorio_dias ?? 3) || 3
+                  );
+                  const cantHoras = Math.max(
+                    1,
+                    Number(invForm.recordatorio_horas ?? 12) || 12
+                  );
+                  const autoTemplate = isHorasMode
+                    ? DEFAULT_CONFIRMED_REMINDER_HORAS
+                    : DEFAULT_CONFIRMED_REMINDER_DIAS;
+                  const renderedReminderText = formatGuestMessage(
+                    autoTemplate,
+                    null,
+                    selectedWhatsappLinkObj?.url || baseShareUrl,
+                    {
+                      mode: isHorasMode ? "horas" : "dias",
+                      dias: cantDias,
+                      horas: cantHoras,
+                      useConfiguredCountdown: true,
+                      adaptCountdown: true,
+                    }
+                  );
+
+                  return (
+                    <div className="rounded-2xl border border-[#DCE0F0] bg-gradient-to-br from-[#2D3047] to-[#1E2238] p-3.5 text-white shadow-sm sm:p-4">
+                      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                          👁️ Vista Previa según el Evento (Invitados Confirmados)
+                        </span>
+                        <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold text-slate-200">
+                          {hasCustomThumb
+                            ? "🖼️ Miniatura del evento"
+                            : "🎴 Miniatura genérica"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-start gap-3 sm:items-center">
+                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 border-white/20 bg-[#323650] shadow-md sm:h-20 sm:w-20">
+                          <img
+                            src={previewThumbSrc}
+                            alt={invForm.nombre || evento.nombre}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "/default-invitacion.svg";
+                            }}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="rounded-full border border-amber-400/40 bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-300">
+                              {isHorasMode
+                                ? `⏰ Faltan ${cantHoras} ${
+                                    cantHoras === 1 ? "hora" : "horas"
+                                  }`
+                                : `⏳ Faltan ${cantDias} ${
+                                    cantDias === 1 ? "día" : "días"
+                                  }`}
+                            </span>
+                            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                              ✓ Confirmado
+                            </span>
+                          </div>
+                          <h5 className="mt-1 truncate text-sm font-extrabold text-white sm:text-base">
+                            {invForm.nombre || evento.nombre}
+                          </h5>
+                          <p className="mt-0.5 break-words text-[11px] text-slate-300">
+                            📅{" "}
+                            {formatDateInput(
+                              invForm.fecha_evento || evento.fecha_evento
+                            )}{" "}
+                            • ⏰{" "}
+                            {invForm.hora_evento ||
+                              evento.hora_evento ||
+                              "20:00"}{" "}
+                            hrs • 📍{" "}
+                            {invForm.lugar || evento.lugar || "Salón Principal"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 break-words rounded-xl border border-white/10 bg-white/10 p-3 text-xs leading-relaxed text-slate-100">
+                        {renderedReminderText}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
@@ -6838,8 +7272,8 @@ function GestorEvento({
                   <p className="mt-0.5 text-xs text-[#5B617A]">
                     Programa uno o varios envíos automáticos de correo electrónico
                     para los{" "}
-                    <strong className="text-[#4A4A8A]">
-                      {pendientesList.length} invitados en estado &ldquo;Pendiente&rdquo;
+                    <strong className="text-emerald-600">
+                      {confirmadosList.length} invitados en estado &ldquo;Confirmado&rdquo;
                     </strong>{" "}
                     en una fecha y hora exacta (horario CDMX), sin depender del
                     contador de días restantes.
@@ -6886,7 +7320,7 @@ function GestorEvento({
                   />
                 </div>
 
-                <div className="lg:col-span-3">
+                <div className="sm:col-span-1 lg:col-span-3">
                   <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
                     Plantilla de Correo HTML
                   </label>
@@ -6908,7 +7342,7 @@ function GestorEvento({
                   </select>
                 </div>
 
-                <div className="sm:col-span-2 lg:col-span-4">
+                <div className="sm:col-span-1 lg:col-span-4">
                   <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
                     Nota / Mensaje Personalizado (Opcional)
                   </label>
@@ -7010,7 +7444,7 @@ function GestorEvento({
                               onClick={() =>
                                 handleToggleScheduledEmailStatus(item)
                               }
-                              className="cursor-pointer rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-1.5 text-[11px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                              className="flex-1 cursor-pointer rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-1.5 text-center text-[11px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1] sm:flex-initial"
                             >
                               {isSent
                                 ? "🔄 Reprogramar"
@@ -7021,7 +7455,7 @@ function GestorEvento({
                             <button
                               type="button"
                               onClick={() => handleDeleteLogistica(item.iditem)}
-                              className="cursor-pointer rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-100"
+                              className="flex-1 cursor-pointer rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-center text-[11px] font-bold text-red-600 transition hover:bg-red-100 sm:flex-initial"
                             >
                               🗑️ Eliminar
                             </button>
@@ -7092,7 +7526,7 @@ function GestorEvento({
                                 (isNewSend ? guestPases : 0),
                               onProceed: async () => {
                                 const text = formatGuestMessage(
-                                  invForm.recordatorio_mensaje,
+                                  DEFAULT_PENDING_REMINDER_MSG,
                                   g
                                 );
                                 const cleanPhone = String(
@@ -7118,7 +7552,7 @@ function GestorEvento({
                             });
                           }}
                           title="Abrir mi WhatsApp para enviar el recordatorio manualmente"
-                          className="shrink-0 cursor-pointer rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-2 text-[10px] font-bold text-[#5B617A] transition hover:border-emerald-400 hover:text-emerald-700 sm:py-1.5"
+                          className="flex-1 shrink-0 cursor-pointer rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-2.5 py-2 text-center text-[10px] font-bold text-[#5B617A] transition hover:border-emerald-400 hover:text-emerald-700 sm:flex-initial sm:py-1.5"
                         >
                           📲 Enviar por mi WhatsApp
                         </button>
@@ -7145,7 +7579,7 @@ function GestorEvento({
               >
                 {sendingWaBulk
                   ? "⏳ Disparando por API Meta..."
-                  : `⚡ Disparar Ahora a ${pendientesList.length} Pendientes`}
+                  : `⚡ Disparar Ahora a ${confirmadosList.length} Confirmados`}
               </button>
             </div>
           </div>
@@ -7844,6 +8278,119 @@ function GestorEvento({
               </h3>
 
               <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* 0. Fecha Límite de Confirmación al Evento */}
+                <div className="flex flex-col justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4 sm:col-span-2">
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className="text-sm font-bold text-[#2D3047]">
+                        ⏳ Fecha Límite de Confirmación al Evento
+                      </h4>
+                      <span
+                        className={`rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider ${
+                          invForm.fecha_limite_rsvp_activa
+                            ? "bg-amber-500/15 text-amber-700"
+                            : "bg-slate-200 text-slate-600"
+                        }`}
+                      >
+                        {invForm.fecha_limite_rsvp_activa
+                          ? `🟢 Activa (${invForm.fecha_limite_rsvp || "Sin fecha"})`
+                          : "⚪ Sin Fecha Límite"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-[#8E94A9]">
+                      Asigna una fecha límite para que tus invitados confirmen
+                      su asistencia. Cuando pase la fecha límite, el sistema ya
+                      no permitirá confirmar y mostrará que la fecha de
+                      confirmación ya caducó.
+                    </p>
+                  </div>
+
+                  <div className="mt-3.5 grid grid-cols-1 items-end gap-3 sm:grid-cols-12">
+                    <div className="sm:col-span-6">
+                      <label
+                        className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-xs font-extrabold transition select-none ${
+                          invForm.fecha_limite_rsvp_activa
+                            ? "border-[#6C7EE1] bg-[#6C7EE1] text-white shadow-2xs"
+                            : "border-[#DCE0F0] bg-white text-[#2D3047] hover:border-[#6C7EE1]"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(invForm.fecha_limite_rsvp_activa)}
+                          onChange={async (e) => {
+                            const checked = e.target.checked;
+                            const nextFecha = checked
+                              ? invForm.fecha_limite_rsvp ||
+                                invForm.fecha_evento ||
+                                ""
+                              : "";
+                            setInvForm((prev) => ({
+                              ...prev,
+                              fecha_limite_rsvp_activa: checked,
+                              fecha_limite_rsvp: nextFecha,
+                            }));
+                            if (evento.idevento) {
+                              await handleSaveEvento(null, {
+                                fecha_limite_rsvp_activa: checked,
+                                fecha_limite_rsvp: nextFecha,
+                              });
+                            }
+                          }}
+                          className="h-4 w-4 shrink-0 cursor-pointer accent-[#2D3047]"
+                        />
+                        <span>
+                          Asignar Fecha Límite de confirmación al Evento
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label className="mb-1 block text-[10px] font-bold uppercase text-[#5B617A]">
+                        Fecha Límite
+                      </label>
+                      <input
+                        type="date"
+                        max={invForm.fecha_evento || undefined}
+                        disabled={!invForm.fecha_limite_rsvp_activa}
+                        value={
+                          invForm.fecha_limite_rsvp_activa
+                            ? invForm.fecha_limite_rsvp || ""
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setInvForm((prev) => ({
+                            ...prev,
+                            fecha_limite_rsvp: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#EAECEF] disabled:text-[#8E94A9] disabled:opacity-60"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <button
+                        type="button"
+                        disabled={!invForm.fecha_limite_rsvp_activa}
+                        onClick={async () => {
+                          if (!invForm.fecha_limite_rsvp) {
+                            showNotice(
+                              "Selecciona la fecha límite de confirmación."
+                            );
+                            return;
+                          }
+                          await handleSaveEvento(null, {
+                            fecha_limite_rsvp_activa: true,
+                            fecha_limite_rsvp: invForm.fecha_limite_rsvp,
+                          });
+                        }}
+                        className="w-full rounded-xl bg-[#6C7EE1] px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-white transition hover:bg-[#5A6CD0] disabled:cursor-not-allowed disabled:opacity-45"
+                      >
+                        💾 Guardar Fecha
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* 1. Pausar / Reanudar respuestas RSVP */}
                 <div className="flex flex-col justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4">
                   <div>

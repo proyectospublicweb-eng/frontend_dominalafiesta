@@ -57,6 +57,8 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
     tipo_evento: "Fiesta Privada",
     fecha_evento: initialDate || tomorrow,
     hora_evento: "20:00",
+    fecha_limite_rsvp_activa: false,
+    fecha_limite_rsvp: "",
     estado_evento: "Ningúno",
     municipio: "Ningúno",
     lugar: "",
@@ -102,6 +104,20 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
       if (!form.fecha_evento) {
         setError("Selecciona la fecha del evento.");
         return;
+      }
+      if (form.fecha_limite_rsvp_activa) {
+        if (!form.fecha_limite_rsvp) {
+          setError(
+            "Selecciona la fecha límite de confirmación para tus invitados."
+          );
+          return;
+        }
+        if (form.fecha_evento && form.fecha_limite_rsvp > form.fecha_evento) {
+          setError(
+            "La fecha límite de confirmación no puede ser posterior a la fecha del evento."
+          );
+          return;
+        }
       }
     }
     if (step === 2) {
@@ -329,6 +345,64 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                   onChange={(e) => updateField("hora_evento", e.target.value)}
                   className="w-full rounded-xl border border-[#E4E6EE] bg-[#F6F7F9] px-4 py-3 text-sm text-[#14141F] outline-none transition focus:border-[#4A4A8A] focus:bg-white"
                 />
+              </div>
+
+              {/* Opción de Fecha Límite de Confirmación al Evento */}
+              <div className="sm:col-span-2 rounded-2xl border border-[#E4E6EE] bg-[#F6F7F9]/80 p-4">
+                <div className="grid grid-cols-1 items-center gap-3.5 sm:grid-cols-2">
+                  <label
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-xs font-extrabold transition select-none ${
+                      form.fecha_limite_rsvp_activa
+                        ? "border-[#4A4A8A] bg-[#4A4A8A] text-white shadow-sm"
+                        : "border-[#DCE0EE] bg-white text-[#14141F] hover:border-[#4A4A8A]"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={Boolean(form.fecha_limite_rsvp_activa)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setForm((prev) => ({
+                          ...prev,
+                          fecha_limite_rsvp_activa: checked,
+                          fecha_limite_rsvp: checked
+                            ? prev.fecha_limite_rsvp || prev.fecha_evento || ""
+                            : "",
+                        }));
+                        setError("");
+                      }}
+                      className="h-4 w-4 shrink-0 cursor-pointer accent-[#FF5B4D]"
+                    />
+                    <span>⏳ Asignar Fecha Límite de confirmación al Evento</span>
+                  </label>
+
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-[#14141F]">
+                      Fecha Límite de Confirmación
+                    </label>
+                    <input
+                      type="date"
+                      max={form.fecha_evento || undefined}
+                      disabled={!form.fecha_limite_rsvp_activa}
+                      value={
+                        form.fecha_limite_rsvp_activa
+                          ? form.fecha_limite_rsvp || ""
+                          : ""
+                      }
+                      onChange={(e) =>
+                        updateField("fecha_limite_rsvp", e.target.value)
+                      }
+                      className="w-full rounded-xl border border-[#E4E6EE] bg-white px-4 py-2.5 text-sm text-[#14141F] outline-none transition focus:border-[#4A4A8A] disabled:cursor-not-allowed disabled:bg-[#EAECEF] disabled:text-[#8A8D9F] disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-[11px] text-[#8A8D9F]">
+                  {form.fecha_limite_rsvp_activa
+                    ? `✓ Activo: Los invitados podrán confirmar su asistencia hasta el ${
+                        form.fecha_limite_rsvp || "día seleccionado"
+                      }. Pasada esta fecha ya no se permitirá confirmar y se mostrará que la fecha de confirmación ya caducó.`
+                    : "Marca el botón «Asignar Fecha Límite de confirmación al Evento» para desbloquear el selector de fecha límite."}
+                </p>
               </div>
             </div>
           </div>
@@ -743,6 +817,11 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                   <strong className="text-sm text-[#86B59F]">
                     {form.fecha_evento} • {form.hora_evento} hrs
                   </strong>
+                  {form.fecha_limite_rsvp_activa && form.fecha_limite_rsvp && (
+                    <span className="mt-1 block text-[11px] font-bold text-amber-300">
+                      ⏳ Fecha límite confirmación: {form.fecha_limite_rsvp}
+                    </span>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <span className="block text-gray-400">LUGAR</span>

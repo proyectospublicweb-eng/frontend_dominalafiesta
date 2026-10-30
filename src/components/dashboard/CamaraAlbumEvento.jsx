@@ -1453,8 +1453,9 @@ export default function CamaraAlbumEvento({
           1. CABECERA DEL ÁLBUM DEL EVENTO + ACCIONES DE CÁMARA Y DESCARGA
          ===================================================================== */}
       <div className="rounded-2xl border border-[#2F324D] bg-[#222437] p-3.5 shadow-[0_12px_30px_rgba(8,9,20,0.45)] sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
+        <div className="flex flex-col gap-4">
+          {/* Fila 1 y 2: Insignias superiores, Título y Descripción a ancho completo */}
+          <div className="min-w-0 w-full">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {modoInvitado && typeof onCloseModoInvitado === "function" && (
                 <button
@@ -1488,22 +1489,22 @@ export default function CamaraAlbumEvento({
                 ? `📸 Fotos y Reels del Evento — ${evento.nombre}`
                 : `📸 Cámara y Álbum de Recuerdos — ${evento.nombre}`}
             </h2>
-            <p className="mt-1 text-xs leading-relaxed text-[#8E92B2]">
-              {modoInvitado
-                ? "El anfitrión de este evento te otorgó permiso para ver y descargar en Alta Definición las fotografías y reels oficiales por haber confirmado tu invitación."
-                : "Este álbum es exclusivo de este evento. Toma fotografías en vivo con tu cámara o súbelas desde tu galería con tu diseño de overlay personalizado."}
-            </p>
+            {modoInvitado && (
+              <p className="mt-1 text-xs leading-relaxed text-[#8E92B2]">
+                El anfitrión de este evento te otorgó permiso para ver y descargar en Alta Definición las fotografías y reels oficiales por haber confirmado tu invitación.
+              </p>
+            )}
           </div>
 
-          {/* Botonera Responsiva (Móvil: cuadrícula adaptativa, Tablet/Desk: fila flexible) */}
-          <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:flex sm:flex-row sm:flex-wrap lg:shrink-0">
+          {/* Fila Inferior: Botones de Acción organizados en una sola fila (row) debajo de los textos */}
+          <div className="grid grid-cols-1 gap-2.5 border-t border-[#2E314B] pt-3.5 min-[420px]:grid-cols-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center">
             {!modoInvitado && (
               <>
                 <button
                   type="button"
                   disabled={togglingCompartir}
                   onClick={handleToggleCompartirConInvitados}
-                  className={`inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-extrabold transition sm:w-auto ${
+                  className={`inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2.5 text-center text-xs font-extrabold transition min-[420px]:col-span-2 sm:col-span-1 sm:w-auto ${
                     compartirConInvitados
                       ? "border border-[#38CB89]/55 bg-gradient-to-r from-[#1E9E63] to-[#2ED47A] text-white shadow-[0_6px_20px_rgba(46,212,122,0.4)] hover:brightness-110"
                       : "border border-[#FFB836]/45 bg-[#FFB836]/15 text-[#FFE2B8] hover:bg-[#FFB836]/25"
@@ -1567,81 +1568,6 @@ export default function CamaraAlbumEvento({
                   : `⬇️ Descargar Álbum (.ZIP)`}
               </span>
             </button>
-          </div>
-        </div>
-
-        {/* Estado del Permiso para Invitados Confirmados (Solo visible para el Anfitrión) */}
-        {!modoInvitado && (
-          <div
-            className={`mt-4 flex flex-col gap-2.5 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5 ${
-              compartirConInvitados
-                ? "border-[#38CB89]/40 bg-[#38CB89]/10 text-[#D1FAE5]"
-                : "border-[#343857] bg-[#181A2C] text-[#9CA0C3]"
-            }`}
-          >
-            <div className="flex items-start gap-2.5">
-              <span className="text-base leading-none">
-                {compartirConInvitados ? "🟢" : "🔒"}
-              </span>
-              <div className="text-[11px] leading-relaxed">
-                <strong className="text-white">
-                  {compartirConInvitados
-                    ? "Permiso activo para invitados confirmados:"
-                    : "Álbum privado (solo visible para ti como anfitrión):"}
-                </strong>{" "}
-                {compartirConInvitados
-                  ? "Todos los invitados que confirmaron su invitación en este evento pueden ver y descargar estas fotos y reels desde su sesión en la sección «💌 Mis Invitaciones»."
-                  : "Activa el botón «🤝 Compartir Fotos y Reels a Invitados» cuando quieras que los invitados que confirmaron asistencia puedan ver las fotos y reels desde «💌 Mis Invitaciones»."}
-              </div>
-            </div>
-            <button
-              type="button"
-              disabled={togglingCompartir}
-              onClick={handleToggleCompartirConInvitados}
-              className={`shrink-0 cursor-pointer rounded-full px-3.5 py-1.5 text-[11px] font-extrabold transition ${
-                compartirConInvitados
-                  ? "border border-white/20 bg-[#141526]/80 text-[#FCA5A5] hover:bg-[#F25767] hover:text-white"
-                  : "bg-[#38CB89] text-[#0E131F] hover:brightness-110"
-              }`}
-            >
-              {compartirConInvitados
-                ? "Ocultar a Invitados"
-                : "Otorgar Permiso Ahora"}
-            </button>
-          </div>
-        )}
-
-        {/* =====================================================================
-            2. AVISO VISIBLE DE VIGENCIA DE 30 DÍAS PARA DESCARGAR AL DISPOSITIVO
-           ===================================================================== */}
-        <div className="mt-4 rounded-2xl border border-[#FFAE73]/30 bg-gradient-to-r from-[#2B2239] via-[#26233A] to-[#2B2438] p-3 sm:p-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFB836]/20 text-base leading-none text-[#FFB836] ring-1 ring-[#FFB836]/35">
-                ⏳
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs font-extrabold text-[#FFE2B8]">
-                  Importante: Tienes un periodo de {retention.retentionDays} días para descargar tus fotografías a tu dispositivo
-                </p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-[#B8B5D1]">
-                  Puedes tomar y subir fotografías{" "}
-                  <strong className="text-white">de forma ilimitada</strong> en este evento. Pasando los{" "}
-                  <strong className="text-[#FFB836]">{retention.retentionDays} días</strong> (fecha programada
-                  de autolimpieza:{" "}
-                  <strong className="text-white">{formatShortDate(retention.expiresAt)}</strong>), el álbum
-                  de este evento se eliminará automáticamente del servidor para
-                  liberar espacio.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2 self-start rounded-full border border-[#FFAE73]/40 bg-[#141526] px-3.5 py-1.5 text-xs font-extrabold text-[#FFE2B8] shadow-2xs md:self-center">
-              <span>🗓️ Restan:</span>
-              <span className="text-sm text-[#FFB836]">
-                {retention.daysRemaining} días
-              </span>
-            </div>
           </div>
         </div>
 
@@ -1759,48 +1685,76 @@ export default function CamaraAlbumEvento({
           5. CUADRÍCULA DE GALERÍA DEL EVENTO (MINIATURAS LIGERAS + ACCIONES HD)
          ===================================================================== */}
       <div className="rounded-2xl border border-[#2F324D] bg-[#222437] p-3.5 shadow-[0_12px_30px_rgba(8,9,20,0.45)] sm:p-6">
-        <div className="mb-4 flex flex-col gap-2.5 border-b border-[#2E314B] pb-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#4BA6FF] to-[#2B82EB] text-xs shadow-[0_4px_12px_rgba(75,166,255,0.35)]">
-              🖼️
-            </span>
-            <div className="min-w-0">
+        <div className="mb-4 flex flex-col gap-3 border-b border-[#2E314B] pb-4">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#4BA6FF] to-[#2B82EB] text-xs shadow-[0_4px_12px_rgba(75,166,255,0.35)]">
+                🖼️
+              </span>
               <h3 className="text-sm font-extrabold uppercase tracking-wider text-white">
                 Galería Fotográfica del Evento ({fotos.length})
               </h3>
-              <p className="text-[11px] text-[#8E92B2]">
-                La cuadrícula muestra miniaturas ligeras para carga instantánea. Toca
-                cualquier foto para abrirla o descargarla en Alta Definición.
-              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              {!modoInvitado && (
+                <button
+                  type="button"
+                  onClick={handleOpenReelCreator}
+                  disabled={fotos.length === 0 && reels.length === 0}
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-white/15 bg-black px-4 py-2 text-center text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(0,0,0,0.65)] transition hover:border-white/30 hover:bg-[#141414] disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
+                  title="Abrir el creador flotante de Reels 9:16 para Instagram"
+                >
+                  <span>
+                    🎬 Crear Reel para Instagram
+                    {reels.length > 0 ? ` (${reels.length})` : ""}
+                  </span>
+                </button>
+              )}
+              {fotos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleDownloadZip}
+                  disabled={downloadingZip}
+                  className="w-full cursor-pointer rounded-full border border-[#343857] bg-[#141526] px-4 py-2 text-center text-xs font-extrabold text-[#D5D8F0] transition hover:border-[#8A4FFF] hover:bg-[#1B1D34] hover:text-white sm:w-auto"
+                >
+                  {downloadingZip
+                    ? "⏳ Generando archivo .ZIP..."
+                    : `⬇️ Descargar las ${fotos.length} fotos en .ZIP`}
+                </button>
+              )}
             </div>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:self-center">
-            {!modoInvitado && (
-              <button
-                type="button"
-                onClick={handleOpenReelCreator}
-                disabled={fotos.length === 0 && reels.length === 0}
-                className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] px-4 py-2 text-center text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(225,48,108,0.38)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
-                title="Abrir el creador flotante de Reels 9:16 para Instagram"
-              >
-                <span>
-                  🎬 Crear Reel para Instagram
-                  {reels.length > 0 ? ` (${reels.length})` : ""}
+
+          {/* Tarjeta de aviso de vigencia de 30 días reemplazando el texto descriptivo anterior */}
+          <div className="rounded-2xl border border-[#FFAE73]/30 bg-gradient-to-r from-[#2B2239] via-[#26233A] to-[#2B2438] p-3 sm:p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFB836]/20 text-base leading-none text-[#FFB836] ring-1 ring-[#FFB836]/35">
+                  ⏳
                 </span>
-              </button>
-            )}
-            {fotos.length > 0 && (
-              <button
-                type="button"
-                onClick={handleDownloadZip}
-                disabled={downloadingZip}
-                className="w-full cursor-pointer rounded-full border border-[#343857] bg-[#141526] px-4 py-2 text-center text-xs font-extrabold text-[#D5D8F0] transition hover:border-[#8A4FFF] hover:bg-[#1B1D34] hover:text-white sm:w-auto"
-              >
-                {downloadingZip
-                  ? "⏳ Generando archivo .ZIP..."
-                  : `⬇️ Descargar las ${fotos.length} fotos en .ZIP`}
-              </button>
-            )}
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold text-[#FFE2B8]">
+                    Importante: Tienes un periodo de {retention.retentionDays} días para descargar tus fotografías a tu dispositivo
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-[#B8B5D1]">
+                    Puedes tomar y subir fotografías{" "}
+                    <strong className="text-white">de forma ilimitada</strong> en este evento. Pasando los{" "}
+                    <strong className="text-[#FFB836]">{retention.retentionDays} días</strong> (fecha programada
+                    de autolimpieza:{" "}
+                    <strong className="text-white">{formatShortDate(retention.expiresAt)}</strong>), el álbum
+                    de este evento se eliminará automáticamente del servidor para
+                    liberar espacio.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2 self-start rounded-full border border-[#FFAE73]/40 bg-[#141526] px-3.5 py-1.5 text-xs font-extrabold text-[#FFE2B8] shadow-2xs md:self-center">
+                <span>🗓️ Restan:</span>
+                <span className="text-sm text-[#FFB836]">
+                  {retention.daysRemaining} días
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1953,7 +1907,7 @@ export default function CamaraAlbumEvento({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {reels.map((reel, idx) => {
                 const thumbSrc =
                   reel.localThumbUrl ||
@@ -2027,14 +1981,14 @@ export default function CamaraAlbumEvento({
                           onClick={() =>
                             setGuestActiveReel(isPlayingInline ? null : reel)
                           }
-                          className="flex-1 cursor-pointer rounded-full bg-[#4BA6FF]/15 px-2.5 py-1.5 text-[10px] font-extrabold text-[#5EB2FF] ring-1 ring-[#4BA6FF]/30 transition hover:bg-[#4BA6FF] hover:text-white"
+                          className="flex-1 cursor-pointer whitespace-nowrap rounded-full bg-[#4BA6FF]/15 px-2 py-1.5 text-center text-[10px] font-extrabold text-[#5EB2FF] ring-1 ring-[#4BA6FF]/30 transition hover:bg-[#4BA6FF] hover:text-white"
                         >
-                          {isPlayingInline ? "⏹ Cerrar Video" : "▶ Ver Reel"}
+                          {isPlayingInline ? "⏹ Detener" : "▶ Ver Reel"}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDownloadSavedReel(reel, idx)}
-                          className="flex-1 cursor-pointer rounded-full bg-[#38CB89]/15 px-2.5 py-1.5 text-[10px] font-extrabold text-[#3CE7B6] ring-1 ring-[#38CB89]/30 transition hover:bg-[#38CB89] hover:text-white"
+                          className="flex-1 cursor-pointer whitespace-nowrap rounded-full bg-[#38CB89]/15 px-2 py-1.5 text-center text-[10px] font-extrabold text-[#3CE7B6] ring-1 ring-[#38CB89]/30 transition hover:bg-[#38CB89] hover:text-white"
                         >
                           ⬇️ Descargar
                         </button>

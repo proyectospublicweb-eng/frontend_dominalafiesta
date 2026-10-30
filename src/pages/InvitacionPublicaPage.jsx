@@ -215,6 +215,7 @@ function InvitacionPublicaPage() {
   const [showRsvpForm, setShowRsvpForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState("");
+  const [expiredRsvpMsg, setExpiredRsvpMsg] = useState("");
 
   const [form, setForm] = useState({
     nombre: "",
@@ -348,6 +349,20 @@ function InvitacionPublicaPage() {
   const tpl =
     PLANTILLAS.find((p) => p.id === evento.plantilla_tema) || PLANTILLAS[0];
   const fechaStr = formatDateInput(evento.fecha_evento);
+  const fechaLimiteRsvpStr = evento.fecha_limite_rsvp_activa
+    ? formatDateInput(evento.fecha_limite_rsvp)
+    : "";
+  const todayMxStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Mexico_City",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const isFechaLimiteVencida = Boolean(
+    evento.fecha_limite_rsvp_activa &&
+      fechaLimiteRsvpStr &&
+      (evento.fecha_limite_rsvp_vencida || todayMxStr > fechaLimiteRsvpStr)
+  );
   const diasParaEvento = Math.max(
     0,
     Math.ceil(
@@ -387,11 +402,31 @@ function InvitacionPublicaPage() {
       ? String(invitado.grupo).trim().toUpperCase()
       : "GENERAL";
 
+  const handleOpenRsvpAttempt = () => {
+    if (isFechaLimiteVencida) {
+      setShowRsvpForm(false);
+      setExpiredRsvpMsg(
+        `⚠️ La fecha de confirmación del evento ya caducó (Fecha límite: ${fechaLimiteRsvpStr}). Ya no es posible confirmar asistencia.`
+      );
+      return;
+    }
+    setExpiredRsvpMsg("");
+    setShowRsvpForm(true);
+  };
+
   const handleConfirmSubmit = async (e) => {
     e.preventDefault();
+    if (isFechaLimiteVencida) {
+      setShowRsvpForm(false);
+      setExpiredRsvpMsg(
+        `⚠️ La fecha de confirmación del evento ya caducó (Fecha límite: ${fechaLimiteRsvpStr}). Ya no es posible confirmar asistencia.`
+      );
+      return;
+    }
     if (!form.nombre.trim()) return;
     setSubmitting(true);
     setFeedbackMsg("");
+    setExpiredRsvpMsg("");
     try {
       const { data } = await confirmarRsvpPublicoRequest(evento.idevento, {
         guestToken: invitado?.token_invitacion || guestToken,
@@ -420,10 +455,18 @@ function InvitacionPublicaPage() {
       setFeedbackMsg(data.message);
       setShowRsvpForm(false);
     } catch (err) {
-      setFeedbackMsg(
-        err.response?.data?.message ||
-          "Ocurrió un error al registrar tu confirmación."
-      );
+      if (err.response?.data?.fecha_limite_rsvp_vencida) {
+        setShowRsvpForm(false);
+        setExpiredRsvpMsg(
+          err.response?.data?.message ||
+            "La fecha de confirmación del evento ya caducó."
+        );
+      } else {
+        setFeedbackMsg(
+          err.response?.data?.message ||
+            "Ocurrió un error al registrar tu confirmación."
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -509,6 +552,19 @@ function InvitacionPublicaPage() {
               <p>
                 📅 <strong>Fecha:</strong> {fechaStr}
               </p>
+              {Boolean(
+                evento.fecha_limite_rsvp_activa && fechaLimiteRsvpStr
+              ) && (
+                <p
+                  className={
+                    isFechaLimiteVencida ? "text-rose-300" : "text-amber-300"
+                  }
+                >
+                  ⏳ <strong>Fecha límite de confirmación:</strong>{" "}
+                  {fechaLimiteRsvpStr}{" "}
+                  {isFechaLimiteVencida ? "(Caducada)" : ""}
+                </p>
+              )}
               <p>
                 📍 <strong>Lugar:</strong> {evento.lugar || "Por confirmar"}
               </p>
@@ -638,6 +694,23 @@ function InvitacionPublicaPage() {
               </div>
             )}
 
+            {/* Aviso cuando la fecha límite de confirmación ya caducó */}
+            {(isFechaLimiteVencida || expiredRsvpMsg) && (
+              <div className="mt-4 rounded-2xl border border-rose-400/50 bg-rose-500/20 p-4 text-center shadow-lg">
+                <span className="inline-block rounded-full bg-rose-500 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                  ⏳ FECHA DE CONFIRMACIÓN CADUCADA
+                </span>
+                <p className="mt-2 text-xs font-extrabold text-rose-100">
+                  {expiredRsvpMsg ||
+                    `La fecha de confirmación del evento ya caducó (Fecha límite: ${fechaLimiteRsvpStr}).`}
+                </p>
+                <p className="mt-1 text-[11px] text-rose-200/90">
+                  Ya no es posible confirmar asistencia porque venció la fecha
+                  límite establecida por el anfitrión.
+                </p>
+              </div>
+            )}
+
             {/* Si el invitado ya confirmó su asistencia, mostramos su Pase Digital con QR */}
             {invitado && invitado.estado_rsvp === "Confirmado" && !showRsvpForm ? (
               <div className="mt-5 rounded-2xl border border-[#15B2F5]/40 bg-[#0F1A45] p-5 text-center">
@@ -698,13 +771,15 @@ function InvitacionPublicaPage() {
                   </>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => setShowRsvpForm(true)}
-                  className="mt-4 w-full rounded-xl border border-white/15 bg-white/10 py-2 text-[11px] font-bold text-gray-200 transition hover:bg-white/20"
-                >
-                  ✏️ Modificar mi respuesta o datos
-                </button>
+                {!isFechaLimiteVencida && (
+                  <button
+                    type="button"
+                    onClick={handleOpenRsvpAttempt}
+                    className="mt-4 w-full rounded-xl border border-white/15 bg-white/10 py-2 text-[11px] font-bold text-gray-200 transition hover:bg-white/20"
+                  >
+                    ✏️ Modificar mi respuesta o datos
+                  </button>
+                )}
               </div>
             ) : invitado && invitado.estado_rsvp === "Rechazado" && !showRsvpForm ? (
               <div className="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-center">
@@ -714,13 +789,15 @@ function InvitacionPublicaPage() {
                 <p className="mt-2 text-xs text-gray-300">
                   Has notificado que no podrás asistir a este evento.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setShowRsvpForm(true)}
-                  className="mt-3 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20"
-                >
-                  Cambiar mi respuesta a Confirmado
-                </button>
+                {!isFechaLimiteVencida && (
+                  <button
+                    type="button"
+                    onClick={handleOpenRsvpAttempt}
+                    className="mt-3 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20"
+                  >
+                    Cambiar mi respuesta a Confirmado
+                  </button>
+                )}
               </div>
             ) : null}
 
@@ -730,12 +807,18 @@ function InvitacionPublicaPage() {
                 <button
                   type="button"
                   disabled={!evento.rsvp_habilitado}
-                  onClick={() => setShowRsvpForm(true)}
-                  className="mt-5 w-full cursor-pointer rounded-xl bg-[#15B2F5] py-3.5 text-xs font-extrabold uppercase tracking-widest text-white shadow-lg transition hover:bg-[#0E9DE0] disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={handleOpenRsvpAttempt}
+                  className={`mt-5 w-full cursor-pointer rounded-xl py-3.5 text-xs font-extrabold uppercase tracking-widest text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    isFechaLimiteVencida
+                      ? "bg-rose-600/80 hover:bg-rose-600"
+                      : "bg-[#15B2F5] hover:bg-[#0E9DE0]"
+                  }`}
                 >
-                  {evento.rsvp_habilitado
-                    ? evento.texto_boton_rsvp || "CONFIRMAR ASISTENCIA"
-                    : "CONFIRMACIONES CERRADAS"}
+                  {!evento.rsvp_habilitado
+                    ? "CONFIRMACIONES CERRADAS"
+                    : isFechaLimiteVencida
+                    ? "⏳ FECHA DE CONFIRMACIÓN CADUCADA"
+                    : evento.texto_boton_rsvp || "CONFIRMAR ASISTENCIA"}
                 </button>
               )}
 

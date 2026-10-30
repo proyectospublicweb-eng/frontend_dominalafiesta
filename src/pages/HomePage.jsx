@@ -372,7 +372,29 @@ function HomePage() {
 
           {/* Navegación Principal */}
           <nav className="mt-2 space-y-1.5 px-4">
-            {/* 1. Resumen / Mis Eventos */}
+            {/* 1. Crear Evento (Wizard) */}
+            <button
+              type="button"
+              onClick={() => {
+                setWizardInitialDate("");
+                setActiveSection("wizard");
+                setSidebarOpen(false);
+                navigate("/home");
+              }}
+              className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-xs font-semibold transition ${
+                activeSection === "wizard"
+                  ? "bg-[#23263A] font-bold text-white shadow-inner"
+                  : "text-[#8E94B2] hover:bg-[#23263A]/50 hover:text-white"
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                <span className="text-sm">✨</span>
+                <span>Crear Evento</span>
+              </span>
+              <span className="text-[10px] text-[#4CE0B3]">＋</span>
+            </button>
+
+            {/* 2. Resumen / Mis Eventos */}
             <button
               type="button"
               onClick={() => {
@@ -395,7 +417,7 @@ function HomePage() {
               </span>
             </button>
 
-            {/* 1.B Mis Invitaciones (Invitaciones recibidas/confirmadas con el correo de la cuenta) */}
+            {/* 3. Mis Invitaciones (Invitaciones recibidas/confirmadas con el correo de la cuenta) */}
             <button
               type="button"
               onClick={() => {
@@ -418,28 +440,6 @@ function HomePage() {
               <span className="rounded-full bg-[#4CE0B3]/25 px-2 py-0.5 text-[10px] font-bold text-[#4CE0B3]">
                 {misInvitaciones.length}
               </span>
-            </button>
-
-            {/* 2. Crear Evento (Wizard) */}
-            <button
-              type="button"
-              onClick={() => {
-                setWizardInitialDate("");
-                setActiveSection("wizard");
-                setSidebarOpen(false);
-                navigate("/home");
-              }}
-              className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-xs font-semibold transition ${
-                activeSection === "wizard"
-                  ? "bg-[#23263A] font-bold text-white shadow-inner"
-                  : "text-[#8E94B2] hover:bg-[#23263A]/50 hover:text-white"
-              }`}
-            >
-              <span className="flex items-center gap-3">
-                <span className="text-sm">✨</span>
-                <span>Crear Evento</span>
-              </span>
-              <span className="text-[10px] text-[#4CE0B3]">＋</span>
             </button>
 
             {/* 3. Calendario de Eventos */}
@@ -898,13 +898,13 @@ function HomePage() {
                               className={`group relative flex min-h-[148px] w-full min-w-0 cursor-pointer items-center justify-between gap-3.5 overflow-hidden rounded-[22px] bg-gradient-to-br p-4 transition duration-200 hover:-translate-y-0.5 hover:scale-[1.01] sm:p-5 ${cardTheme.cardClass}`}
                             >
                               <div className="flex h-full min-w-0 flex-1 flex-col justify-between gap-1.5">
-                                <div className="flex min-w-0 items-center gap-1.5">
+                                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                                   <span
-                                    className={`truncate rounded-xl px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider ${cardTheme.badgeClass}`}
+                                    className={`max-w-full truncate rounded-xl px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider ${cardTheme.badgeClass}`}
                                   >
                                     {inv.tipo_evento || "Evento"}
                                   </span>
-                                  <span className="shrink-0 rounded-xl bg-white/90 px-2 py-1 text-[9px] font-extrabold text-black shadow-2xs">
+                                  <span className="max-w-full shrink-0 truncate rounded-xl bg-white/90 px-2 py-1 text-[9px] font-extrabold text-black shadow-2xs">
                                     {inv.estado_rsvp === "Confirmado"
                                       ? `🟢 Confirmado (${inv.pases} pase${
                                           Number(inv.pases) === 1 ? "" : "s"
@@ -934,12 +934,12 @@ function HomePage() {
                                         e.stopPropagation();
                                         setSelectedInvitacionAlbum(inv);
                                       }}
-                                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#090C24] px-3 py-1.5 text-[10px] font-extrabold text-white shadow-md ring-1 ring-white/30 transition hover:bg-[#1C224A]"
+                                      className="inline-flex max-w-full flex-wrap cursor-pointer items-center gap-1.5 rounded-xl bg-[#090C24] px-3 py-1.5 text-left text-[10px] font-extrabold text-white shadow-md ring-1 ring-white/30 transition hover:bg-[#1C224A]"
                                       title="El anfitrión compartió las fotos y reels de este evento contigo"
                                     >
-                                      <span>📸 Ver Fotos y Reels</span>
+                                      <span className="truncate">📸 Ver Fotos y Reels</span>
                                       {(numFotos > 0 || numReels > 0) && (
-                                        <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-[9px] text-[#3CE7B6]">
+                                        <span className="shrink-0 rounded-md bg-white/15 px-1.5 py-0.5 text-[9px] text-[#3CE7B6]">
                                           {numFotos}📷 · {numReels}🎬
                                         </span>
                                       )}
