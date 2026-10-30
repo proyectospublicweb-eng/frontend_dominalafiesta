@@ -6,6 +6,7 @@
 
 $rawId = isset($_GET['id']) ? trim((string)$_GET['id']) : '';
 $cleanId = preg_replace('/[^0-9]/', '', $rawId);
+$slugParam = isset($_GET['slug']) ? trim((string)$_GET['slug']) : '';
 $guestToken = isset($_GET['guest']) ? trim((string)$_GET['guest']) : '';
 $action = isset($_GET['action']) ? trim((string)$_GET['action']) : '';
 
@@ -82,12 +83,21 @@ function fetchBinaryUrl($url) {
 }
 
 $apiData = null;
-if ($cleanId !== '') {
-    $apiUrl = $baseUrl . '/apiproyectoeventos/rsvp/' . rawurlencode($cleanId);
+if ($cleanId !== '' || $slugParam !== '') {
+    $idOrNuevo = $cleanId !== '' ? $cleanId : 'nuevo';
+    $qsParts = [];
     if ($guestToken !== '') {
-        $apiUrl .= '?guest=' . rawurlencode($guestToken);
+        $qsParts[] = 'guest=' . rawurlencode($guestToken);
     }
+    if ($slugParam !== '') {
+        $qsParts[] = 'slug=' . rawurlencode($slugParam);
+    }
+    $apiUrl = $baseUrl . '/apiproyectoeventos/rsvp/' . rawurlencode($idOrNuevo)
+        . (!empty($qsParts) ? ('?' . implode('&', $qsParts)) : '');
     $apiData = fetchLocalApiJson($apiUrl);
+    if ($cleanId === '' && is_array($apiData) && isset($apiData['evento']['idevento'])) {
+        $cleanId = (string)$apiData['evento']['idevento'];
+    }
 }
 
 $evento = (is_array($apiData) && isset($apiData['evento']) && is_array($apiData['evento']))

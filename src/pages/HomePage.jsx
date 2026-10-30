@@ -46,7 +46,12 @@ const EVENT_CARD_THEMES = [
 function HomePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { eventoId: routeEventoId, tab: routeTab } = useParams();
+  const {
+    id: routeIdParam,
+    eventoId: routeEventoIdParam,
+    tab: routeTab,
+  } = useParams();
+  const routeEventoId = routeIdParam || routeEventoIdParam;
 
   // Control del panel lateral en dispositivos móviles
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -154,11 +159,11 @@ function HomePage() {
     navigate(`/events/${targetId}/${validTab}`);
   };
 
-  // Preparar borrador de evento desde el Wizard y redirigir al Gestor para guardarlo con "Guardar Evento"
+  // Crear el evento inmediatamente en la base de datos desde el Wizard y redirigir al Gestor con su ID real
   const handleCreateEvento = async (formData) => {
     const esNinguno =
       !formData.estado_evento || formData.estado_evento === "Ningúno";
-    setDraftEvento({
+    const payload = {
       ...formData,
       estado_evento: esNinguno ? "Ningúno" : formData.estado_evento,
       municipio: esNinguno ? "Ningúno" : formData.municipio || "Ningúno",
@@ -168,11 +173,11 @@ function HomePage() {
       modalidad_invitados: formData.modalidad_invitados || "Adultos + Niños",
       mesa_regalos_habilitada: Boolean(formData.mesa_regalos_habilitada),
       rsvp_habilitado: true,
-    });
-    setSelectedEventoId(null);
-    setGestorSubTab("invitation");
-    setActiveSection("gestor");
-    setSidebarOpen(false);
+    };
+    const { data: createdEvento } = await createEventoRequest(payload);
+    setDraftEvento(null);
+    await fetchEventos();
+    openEventManager(createdEvento.idevento, "invitation");
   };
 
   const handleDraftSaved = async (savedEvento) => {

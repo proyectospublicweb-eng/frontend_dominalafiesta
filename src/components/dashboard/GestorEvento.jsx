@@ -1074,7 +1074,7 @@ function GestorEvento({
         } else {
           onEventoUpdated();
         }
-        return;
+        return data;
       }
       const { data } = await updateEventoRequest(evento.idevento, payload);
       setDetalle((prev) => ({ ...prev, evento: data }));
@@ -1109,12 +1109,23 @@ function GestorEvento({
       });
       onEventoUpdated();
       showNotice("✓ Evento guardado correctamente.");
+      return data;
     } catch (err) {
       showNotice(
         err.response?.data?.message ||
           "Error al guardar el evento"
       );
+      return null;
     }
+  };
+
+  const ensureRealShareUrl = async () => {
+    if (evento.idevento) return baseShareUrl;
+    const saved = await handleSaveEvento(null);
+    if (saved?.idevento) {
+      return `${window.location.origin}/${eventoSlug}/e${saved.idevento}`;
+    }
+    return null;
   };
 
   const handlePosterFileUpload = (e) => {
@@ -3191,8 +3202,10 @@ function GestorEvento({
                 </span>
                 <button
                   type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(baseShareUrl);
+                  onClick={async () => {
+                    const urlToCopy = await ensureRealShareUrl();
+                    if (!urlToCopy) return;
+                    navigator.clipboard.writeText(urlToCopy);
                     showNotice("✓ Enlace copiado al portapapeles.");
                   }}
                   className="shrink-0 rounded bg-[#6C7EE1] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#6C7EE1]/40"
@@ -4281,9 +4294,12 @@ function GestorEvento({
 
                       <button
                         type="button"
-                        onClick={() =>
-                          window.open(baseShareUrl, "_blank", "noopener,noreferrer")
-                        }
+                        onClick={async () => {
+                          const realUrl = await ensureRealShareUrl();
+                          if (realUrl) {
+                            window.open(realUrl, "_blank", "noopener,noreferrer");
+                          }
+                        }}
                         className="mt-4 w-full cursor-pointer rounded-xl py-2.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                         style={{
                           backgroundColor: isPreviewFechaLimiteVencida
@@ -4510,9 +4526,12 @@ function GestorEvento({
                       <div className="mt-6 flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:gap-3">
                         <button
                           type="button"
-                          onClick={() =>
-                            window.open(baseShareUrl, "_blank", "noopener,noreferrer")
-                          }
+                          onClick={async () => {
+                            const realUrl = await ensureRealShareUrl();
+                            if (realUrl) {
+                              window.open(realUrl, "_blank", "noopener,noreferrer");
+                            }
+                          }}
                           className="flex-1 cursor-pointer rounded-xl py-3 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                           style={{
                             backgroundColor: isPreviewFechaLimiteVencida
@@ -4553,14 +4572,18 @@ function GestorEvento({
                   {baseShareUrl}
                 </code>
               </div>
-              <a
-                href={baseShareUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl bg-[#15b2f5]/20 px-4 py-2 text-center text-xs font-bold text-[#15b2f5] transition hover:bg-[#15b2f5] hover:text-black"
+              <button
+                type="button"
+                onClick={async () => {
+                  const realUrl = await ensureRealShareUrl();
+                  if (realUrl) {
+                    window.open(realUrl, "_blank", "noopener,noreferrer");
+                  }
+                }}
+                className="cursor-pointer rounded-xl bg-[#15b2f5]/20 px-4 py-2 text-center text-xs font-bold text-[#15b2f5] transition hover:bg-[#15b2f5] hover:text-black"
               >
                 🚀 Abrir Invitación Pública en Vivo ↗
-              </a>
+              </button>
             </div>
           </div>
 

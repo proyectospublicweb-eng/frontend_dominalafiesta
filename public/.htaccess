@@ -24,7 +24,7 @@
   # 4. Rutas públicas de invitación (/rsvp/:id, /invitacion/:id y /:eventoSlug/e:id):
   #    Inyecta etiquetas Open Graph (miniatura para WhatsApp, título y descripción) y entrega la SPA
   RewriteRule ^(rsvp|invitacion)/([eE]?[0-9]+)/?$ og-invitacion.php?id=$2 [QSA,L]
-  RewriteRule ^([a-zA-Z0-9_-]+)/([eE]?[0-9]+)/?$ og-invitacion.php?slug=$1&id=$2 [QSA,L]
+  RewriteRule ^([a-zA-Z0-9_-]+)/([eE]?[0-9]+|[eE]?nuevo)/?$ og-invitacion.php?slug=$1&id=$2 [QSA,L]
 
   # 5. Cualquier otra ruta la maneja React Router
   RewriteRule ^ index.html [L]

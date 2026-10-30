@@ -185,7 +185,7 @@ function parsePublicGiftItem(item) {
 
 function InvitacionPublicaPage() {
   const { user } = useAuth();
-  const { id: rawId } = useParams();
+  const { id: rawId, eventoSlug = "" } = useParams();
   const id = String(rawId || "").replace(/^e/i, "");
   const [searchParams] = useSearchParams();
   const guestToken = searchParams.get("guest") || searchParams.get("pase") || "";
@@ -233,7 +233,11 @@ function InvitacionPublicaPage() {
       setLoading(true);
       setError("");
       try {
-        const { data } = await getInvitacionPublicaRequest(id, guestToken);
+        const { data } = await getInvitacionPublicaRequest(
+          id,
+          guestToken,
+          eventoSlug
+        );
         if (!active) return;
         setEvento(data.evento);
         setInvitado(data.invitado);
@@ -306,7 +310,7 @@ function InvitacionPublicaPage() {
     return () => {
       active = false;
     };
-  }, [id, guestToken, urlMod, urlAdultos, urlNinos]);
+  }, [id, guestToken, eventoSlug, urlMod, urlAdultos, urlNinos]);
 
   const qrMatrix = useMemo(
     () =>
