@@ -502,9 +502,9 @@ function HomePage() {
       </aside>
 
       {/* =====================================================================
-          ÁREA PRINCIPAL DERECHA (ESTILO Y PALETA "TRIPLER": #86B59F, #4A4A8A, #FF5B4D)
+          ÁREA PRINCIPAL DERECHA (ESTILO Y PALETA DE REFERENCIA: #EBF0F7, #FFFFFF, #DCE5F2, #2B7FFF)
          ===================================================================== */}
-      <div className="font-wallet flex min-w-0 flex-1 flex-col bg-[#F6F7F9] text-black">
+      <div className="font-wallet flex min-w-0 flex-1 flex-col bg-[#EBF0F7] text-[#1E2235]">
         {/* Barra Superior Limpia (Saludo Editorial, Iconos y Avatar) */}
         <header className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-4 sm:gap-4 sm:px-6 sm:py-5 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
@@ -552,59 +552,93 @@ function HomePage() {
         {/* Contenido Dinámico */}
         <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-3 pb-10 sm:px-6 lg:px-8">
           {/* =================================================================
-              SECCIÓN 1: INICIO / MIS EVENTOS (MISMA ORGANIZACIÓN + ESTILO "TRIPLER")
+              SECCIÓN 1: INICIO / MIS EVENTOS (PESTAÑAS Y CONTENEDOR ESTILO IMAGEN DE REFERENCIA)
              ================================================================= */}
           {activeSection === "inicio" && (
-            <div className="space-y-6 text-black">
-              {/* PESTAÑAS TIPO CARPETA + CONTENEDOR BLANCO DE EVENTOS */}
+            <div className="space-y-6 text-[#1E2235]">
+              {/* PESTAÑAS TIPO CARPETA CURVA + CONTENEDOR BLANCO GENERAL */}
               <div>
-                {/* Pestañas Superiores Estilo Carpeta con la Paleta Tripler (#86B59F, #4A4A8A, #FF5B4D) */}
-                <div className="grid grid-cols-1 gap-1.5 sm:flex sm:flex-wrap sm:items-end sm:gap-2">
+                {/* Pestañas Superiores Estilo Carpeta (Activa en Blanco #FFFFFF, Inactivas en Azul Pastel #DCE5F2 / #CBD7EB / #C1CEE6) */}
+                <div className="flex flex-nowrap items-end gap-0">
                   {[
                     {
                       id: "all",
                       label: `Mis Eventos (${eventos.length})`,
-                      colorClass:
-                        "bg-[#86B59F] text-black shadow-[#86B59F]/35",
+                      inactiveBg: "#DCE5F2",
+                      zIndexBase: "z-10",
                     },
                     {
                       id: "active",
                       label: "Eventos Activos/En Curso",
-                      colorClass:
-                        "bg-[#4A4A8A] text-black shadow-[#4A4A8A]/35",
+                      inactiveBg: "#CBD7EB",
+                      zIndexBase: "z-[9]",
                     },
                     {
                       id: "paused",
                       label: "Eventos Pausados",
-                      colorClass:
-                        "bg-[#FF5B4D] text-black shadow-[#FF5B4D]/35",
+                      inactiveBg: "#C1CEE6",
+                      zIndexBase: "z-[8]",
                     },
-                  ].map((tab) => {
+                  ].map((tab, idx) => {
                     const isTabActive = folderTab === tab.id;
+                    const fillHex = isTabActive ? "#FFFFFF" : tab.inactiveBg;
                     return (
                       <button
                         key={tab.id}
                         type="button"
                         onClick={() => setFolderTab(tab.id)}
-                        className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs font-bold tracking-tight transition sm:rounded-t-2xl sm:rounded-b-none sm:px-6 sm:py-3 ${tab.colorClass} ${
+                        style={{ backgroundColor: fillHex }}
+                        className={`group relative min-w-0 cursor-pointer rounded-t-[14px] rounded-b-none px-2.5 py-2.5 text-[10px] tracking-tight transition sm:rounded-t-[18px] sm:px-5 sm:py-3 sm:text-xs md:px-7 md:py-3.5 md:text-[13px] lg:px-8 ${
+                          idx > 0 ? "-ml-1.5 sm:-ml-2" : ""
+                        } ${
                           isTabActive
-                            ? "sm:-translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
-                            : "opacity-85 hover:opacity-100"
+                            ? "z-20 -mb-px font-extrabold text-[#1E2235] shadow-[0_-4px_12px_rgba(30,42,70,0.04)]"
+                            : `${tab.zIndexBase} font-medium text-[#55617C] hover:text-[#1E2235]`
                         }`}
                       >
-                        {tab.label}
+                        {/* Curva cóncava izquierda estilo pestaña de carpeta */}
+                        {idx > 0 && (
+                          <svg
+                            viewBox="0 0 12 12"
+                            className="pointer-events-none absolute bottom-0 -left-2.5 h-2.5 w-2.5 sm:-left-3 sm:h-3 sm:w-3"
+                            fill="none"
+                          >
+                            <path
+                              d="M12 0C12 6.62742 6.62742 12 0 12H12V0Z"
+                              fill={fillHex}
+                            />
+                          </svg>
+                        )}
+                        <span className="block truncate">{tab.label}</span>
+                        {/* Curva cóncava derecha estilo pestaña de carpeta */}
+                        <svg
+                          viewBox="0 0 12 12"
+                          className="pointer-events-none absolute -right-2.5 bottom-0 h-2.5 w-2.5 sm:-right-3 sm:h-3 sm:w-3"
+                          fill="none"
+                        >
+                          <path
+                            d="M0 0C0 6.62742 5.37258 12 12 12H0V0Z"
+                            fill={fillHex}
+                          />
+                        </svg>
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Panel Blanco Principal */}
-                <div className="mt-2 rounded-3xl border border-[#ECEEF2] bg-white p-4 text-black shadow-[0_14px_38px_rgba(20,20,31,0.05)] sm:mt-0 sm:rounded-b-[30px] sm:rounded-tr-[30px] sm:rounded-tl-none sm:p-8">
-                  {/* Barra de Búsqueda, Filtro y Botón "+ Crear Evento" */}
-                  <div className="flex flex-col justify-between gap-4 border-b border-[#ECEEF2] pb-6 lg:flex-row lg:items-center">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
-                        <label className="text-xs font-bold text-black">
+                {/* Contenedor General Blanco de "Mis Eventos" */}
+                <div
+                  className={`rounded-b-[20px] rounded-tr-[20px] bg-white p-3 text-[#1E2235] shadow-[0_10px_30px_rgba(30,42,70,0.04)] sm:p-7 lg:p-8 ${
+                    folderTab === "all"
+                      ? "rounded-tl-none"
+                      : "rounded-tl-[16px] sm:rounded-tl-[20px]"
+                  }`}
+                >
+                  {/* Barra de Búsqueda, Filtro y Botón "+ Crear Evento" (mismos colores y estilos que la imagen de referencia) */}
+                  <div className="flex flex-col justify-between gap-4 pb-6 lg:flex-row lg:items-center">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+                        <label className="text-xs font-bold text-[#1E2235] sm:text-[13px]">
                           Nombre del Evento
                         </label>
                         <input
@@ -612,18 +646,18 @@ function HomePage() {
                           value={searchKeyword}
                           onChange={(e) => setSearchKeyword(e.target.value)}
                           placeholder="Buscar por nombre o lugar..."
-                          className="w-full rounded-xl border border-[#E4E6EE] bg-[#F6F7F9] px-4 py-2 text-xs font-medium text-black placeholder:text-black/60 outline-none transition focus:border-[#4A4A8A] focus:bg-white sm:w-56"
+                          className="w-full rounded-lg border border-[#DCE0E8] bg-white px-3.5 py-2 text-xs font-medium text-[#1E2235] placeholder:text-[#B4BAC8] outline-none transition focus:border-[#2B7FFF] focus:ring-2 focus:ring-[#2B7FFF]/15 sm:w-56"
                         />
                       </div>
 
-                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
-                        <label className="text-xs font-bold text-black">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+                        <label className="text-xs font-bold text-[#1E2235] sm:text-[13px]">
                           Categoría
                         </label>
                         <select
                           value={typeFilter}
                           onChange={(e) => setTypeFilter(e.target.value)}
-                          className="w-full rounded-xl border border-[#E4E6EE] bg-[#F6F7F9] px-4 py-2 text-xs font-semibold text-black outline-none transition focus:border-[#4A4A8A] focus:bg-white sm:w-44"
+                          className="w-full rounded-lg border border-[#DCE0E8] bg-white px-3.5 py-2 text-xs font-medium text-[#1E2235] outline-none transition focus:border-[#2B7FFF] focus:ring-2 focus:ring-[#2B7FFF]/15 sm:w-48"
                         >
                           {eventTypes.map((t) => (
                             <option key={t} value={t}>
@@ -640,7 +674,7 @@ function HomePage() {
                           setTypeFilter("Todos");
                           setFolderTab("all");
                         }}
-                        className="w-full cursor-pointer rounded-xl border border-[#4A4A8A]/30 bg-[#F4F4FA] px-5 py-2 text-xs font-bold text-black transition hover:bg-[#4A4A8A]/20 sm:w-auto"
+                        className="w-full cursor-pointer rounded-lg border border-[#2B7FFF] bg-white px-5 py-2 text-xs font-semibold text-[#2B7FFF] transition hover:bg-[#2B7FFF]/8 sm:w-auto"
                       >
                         Ver Todos
                       </button>
@@ -649,46 +683,45 @@ function HomePage() {
                     <button
                       type="button"
                       onClick={() => setActiveSection("wizard")}
-                      className="w-full cursor-pointer rounded-2xl bg-[#FF5B4D] px-6 py-2.5 text-center text-xs font-bold text-black shadow-[0_10px_22px_rgba(255,91,77,0.34)] transition hover:bg-[#F24C3E] sm:w-auto sm:self-start lg:self-auto"
+                      className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-[#2B7FFF] px-5 py-2.5 text-center text-xs font-semibold text-white shadow-[0_4px_12px_rgba(43,127,255,0.28)] transition hover:bg-[#1A6FEF] sm:w-auto sm:self-start lg:self-auto"
                     >
-                      ＋ Crear Evento
+                      <span>＋ Crear Evento</span>
                     </button>
                   </div>
 
-                  {/* Cuadrícula de Tarjetas de Eventos (3 por fila en desktop) */}
+                  {/* Cuadrícula de Tarjetas de Eventos */}
                   {loadingEventos ? (
-                    <p className="py-12 text-center text-sm font-medium text-black">
+                    <p className="py-12 text-center text-sm font-medium text-[#55617C]">
                       Cargando tus eventos...
                     </p>
                   ) : filteredEventos.length === 0 ? (
                     <div className="py-12 text-center">
-                      <h3 className="text-lg font-bold text-black">
+                      <h3 className="text-lg font-bold text-[#1E2235]">
                         No se encontraron eventos en esta vista
                       </h3>
-                      <p className="mt-1 text-xs font-medium text-black">
+                      <p className="mt-1 text-xs font-medium text-[#55617C]">
                         Crea un nuevo evento con el Wizard paso a paso o cambia
                         los filtros de búsqueda.
                       </p>
                       <button
                         type="button"
                         onClick={() => setActiveSection("wizard")}
-                        className="mt-5 cursor-pointer rounded-2xl bg-[#FF5B4D] px-6 py-2.5 text-xs font-bold text-black shadow-[0_10px_22px_rgba(255,91,77,0.34)] transition hover:bg-[#F24C3E]"
+                        className="mt-5 cursor-pointer rounded-lg bg-[#2B7FFF] px-6 py-2.5 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(43,127,255,0.28)] transition hover:bg-[#1A6FEF]"
                       >
                         ＋ Iniciar Wizard de Creación
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-5 pt-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {filteredEventos.map((ev, index) => {
+                    <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-2xl bg-[#EAECF3] p-2.5 sm:gap-5 sm:rounded-3xl sm:p-5 lg:gap-6 lg:p-6 xl:grid-cols-3">
+                      {filteredEventos.map((ev) => {
                         const fechaStr = String(ev.fecha_evento || "").slice(
                           0,
                           10
                         );
-                        const cardTheme =
-                          EVENT_CARD_THEMES[index % EVENT_CARD_THEMES.length];
                         const coverThumb =
                           String(ev.imagen_portada || "").trim() ||
                           DEFAULT_INVITACION_THUMB;
+                        const rsvpActive = ev.rsvp_habilitado !== false;
 
                         return (
                           <div
@@ -696,30 +729,10 @@ function HomePage() {
                             onClick={() =>
                               openEventManager(ev.idevento, "invitation")
                             }
-                            className={`group relative flex h-[142px] w-full min-w-0 cursor-pointer items-center justify-between gap-3.5 overflow-hidden rounded-[22px] bg-gradient-to-br p-4 transition duration-200 hover:-translate-y-0.5 hover:scale-[1.01] sm:p-5 ${cardTheme.cardClass}`}
+                            className="group relative flex w-full min-w-0 cursor-pointer flex-col overflow-hidden rounded-[16px] bg-white shadow-[0_10px_28px_rgba(20,24,45,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(20,24,45,0.14)] sm:rounded-[22px]"
                           >
-                            <div className="flex h-full min-w-0 flex-1 flex-col justify-between">
-                              <div className="flex min-w-0 items-center justify-between">
-                                <span
-                                  className={`truncate rounded-xl px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider ${cardTheme.badgeClass}`}
-                                >
-                                  {ev.tipo_evento}
-                                </span>
-                              </div>
-                              <div
-                                className={`truncate text-[14.5px] font-extrabold tracking-tight ${cardTheme.titleClass}`}
-                              >
-                                {ev.nombre}
-                              </div>
-                              <div
-                                className={`truncate text-[10px] font-semibold ${cardTheme.metaClass}`}
-                              >
-                                📅 {fechaStr} • ⏰ {ev.hora_evento} hrs
-                              </div>
-                            </div>
-
-                            {/* Miniatura de la invitación virtual (o imagen genérica automática si no tiene) */}
-                            <div className="relative h-[104px] w-[78px] shrink-0 overflow-hidden rounded-2xl border-2 border-white/90 bg-[#2D3047] shadow-md sm:w-[84px]">
+                            {/* Imagen superior del evento */}
+                            <div className="relative h-28 w-full overflow-hidden bg-[#181B2C] sm:h-48 xl:h-52">
                               <img
                                 src={coverThumb}
                                 alt={`Invitación de ${ev.nombre}`}
@@ -729,8 +742,71 @@ function HomePage() {
                                   e.currentTarget.src =
                                     DEFAULT_INVITACION_THUMB;
                                 }}
-                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                               />
+                            </div>
+
+                            {/* Cuerpo inferior blanco estilo tarjeta de referencia */}
+                            <div className="relative -mt-3.5 flex flex-1 flex-col justify-between rounded-t-[14px] bg-white px-2.5 pt-2.5 pb-3 text-left sm:-mt-4 sm:rounded-t-[18px] sm:px-5 sm:pt-4 sm:pb-5">
+                              {/* Avatar circular superpuesto en el borde derecho entre imagen y texto */}
+                              <div className="absolute -top-4 right-2.5 h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-[#2D3047] shadow-md sm:-top-6 sm:right-5 sm:h-12 sm:w-12 sm:border-[3px]">
+                                <img
+                                  src={coverThumb}
+                                  alt={ev.nombre}
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src =
+                                      DEFAULT_INVITACION_THUMB;
+                                  }}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+
+                              <div>
+                                {/* Subtítulo superior + punto verde de estado */}
+                                <div className="flex items-center gap-1 pr-9 sm:gap-1.5 sm:pr-14">
+                                  <span className="truncate text-[9px] font-medium text-[#7B819A] sm:text-xs">
+                                    {ev.tipo_evento || "Evento"}
+                                  </span>
+                                  <span
+                                    className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2 ${
+                                      rsvpActive
+                                        ? "bg-[#4ADE80]"
+                                        : "bg-[#F87171]"
+                                    }`}
+                                    title={
+                                      rsvpActive
+                                        ? "Evento Activo"
+                                        : "Evento Pausado"
+                                    }
+                                  />
+                                </div>
+
+                                {/* Título principal en negro/carbón oscuro */}
+                                <h3 className="mt-1 truncate pr-1 text-[12px] font-extrabold tracking-tight text-[#1E2029] sm:mt-1.5 sm:pr-2 sm:text-[17px]">
+                                  {ev.nombre}
+                                </h3>
+                              </div>
+
+                              {/* Fila inferior de 2 columnas con etiquetas grises y valores en negrita */}
+                              <div className="mt-2 grid grid-cols-2 gap-1.5 pt-0.5 sm:mt-4 sm:gap-3 sm:pt-1">
+                                <div className="min-w-0">
+                                  <span className="block truncate text-[8px] font-medium text-[#8C92A8] sm:text-[11px]">
+                                    Fecha del Evento
+                                  </span>
+                                  <span className="mt-0.5 block truncate text-[10px] font-extrabold text-[#1E2029] sm:text-[15px]">
+                                    {fechaStr || "Por definir"}
+                                  </span>
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="block truncate text-[8px] font-medium text-[#8C92A8] sm:text-[11px]">
+                                    Hora / Lugar
+                                  </span>
+                                  <span className="mt-0.5 block truncate text-[10px] font-extrabold text-[#1E2029] sm:text-[15px]">
+                                    {ev.hora_evento || "20:00"} hrs
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         );
@@ -783,7 +859,7 @@ function HomePage() {
                           key={tab.id}
                           type="button"
                           onClick={() => setInvFolderTab(tab.id)}
-                          className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs font-bold tracking-tight transition sm:rounded-t-2xl sm:rounded-b-none sm:px-6 sm:py-3 ${tab.colorClass} ${
+                          className={`cursor-pointer rounded-none px-4 py-2.5 text-xs font-bold tracking-tight transition sm:px-6 sm:py-3 ${tab.colorClass} ${
                             isTabActive
                               ? "sm:-translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
                               : "opacity-85 hover:opacity-100"
@@ -871,14 +947,12 @@ function HomePage() {
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 gap-5 pt-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {filteredMisInvitaciones.map((inv, index) => {
+                      <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-2xl bg-[#EAECF3] p-2.5 sm:gap-5 sm:rounded-3xl sm:p-5 lg:gap-6 lg:p-6 xl:grid-cols-3">
+                        {filteredMisInvitaciones.map((inv) => {
                           const fechaStr = String(inv.fecha_evento || "").slice(
                             0,
                             10
                           );
-                          const cardTheme =
-                            EVENT_CARD_THEMES[index % EVENT_CARD_THEMES.length];
                           const coverThumb =
                             String(inv.imagen_portada || "").trim() ||
                             DEFAULT_INVITACION_THUMB;
@@ -892,6 +966,12 @@ function HomePage() {
                             Boolean(inv.compartir_album_invitados);
                           const numFotos = Number(inv.total_fotos_evento || 0);
                           const numReels = Number(inv.total_reels_evento || 0);
+                          const statusDotColor =
+                            inv.estado_rsvp === "Confirmado"
+                              ? "bg-[#4ADE80]"
+                              : inv.estado_rsvp === "Rechazado"
+                              ? "bg-[#F87171]"
+                              : "bg-[#FBBF24]";
 
                           return (
                             <div
@@ -903,61 +983,10 @@ function HomePage() {
                                   "noopener,noreferrer"
                                 )
                               }
-                              className={`group relative flex min-h-[148px] w-full min-w-0 cursor-pointer items-center justify-between gap-3.5 overflow-hidden rounded-[22px] bg-gradient-to-br p-4 transition duration-200 hover:-translate-y-0.5 hover:scale-[1.01] sm:p-5 ${cardTheme.cardClass}`}
+                              className="group relative flex w-full min-w-0 cursor-pointer flex-col overflow-hidden rounded-[16px] bg-white shadow-[0_10px_28px_rgba(20,24,45,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(20,24,45,0.14)] sm:rounded-[22px]"
                             >
-                              <div className="flex h-full min-w-0 flex-1 flex-col justify-between gap-1.5">
-                                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                                  <span
-                                    className={`max-w-full truncate rounded-xl px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider ${cardTheme.badgeClass}`}
-                                  >
-                                    {inv.tipo_evento || "Evento"}
-                                  </span>
-                                  <span className="max-w-full shrink-0 truncate rounded-xl bg-white/90 px-2 py-1 text-[9px] font-extrabold text-black shadow-2xs">
-                                    {inv.estado_rsvp === "Confirmado"
-                                      ? `🟢 Confirmado (${inv.pases} pase${
-                                          Number(inv.pases) === 1 ? "" : "s"
-                                        })`
-                                      : inv.estado_rsvp === "Rechazado"
-                                      ? "🔴 No asistiré"
-                                      : "🟡 Pendiente"}
-                                  </span>
-                                </div>
-                                <div
-                                  className={`truncate text-[14.5px] font-extrabold tracking-tight ${cardTheme.titleClass}`}
-                                >
-                                  {inv.nombre}
-                                </div>
-                                <div
-                                  className={`truncate text-[10px] font-semibold ${cardTheme.metaClass}`}
-                                >
-                                  📅 {fechaStr} • ⏰ {inv.hora_evento} hrs • 🎟️
-                                  Ver Pase ↗
-                                </div>
-
-                                {puedeVerAlbum && (
-                                  <div className="pt-0.5">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedInvitacionAlbum(inv);
-                                      }}
-                                      className="inline-flex max-w-full flex-wrap cursor-pointer items-center gap-1.5 rounded-xl bg-[#090C24] px-3 py-1.5 text-left text-[10px] font-extrabold text-white shadow-md ring-1 ring-white/30 transition hover:bg-[#1C224A]"
-                                      title="El anfitrión compartió las fotos y reels de este evento contigo"
-                                    >
-                                      <span className="truncate">📸 Ver Fotos y Reels</span>
-                                      {(numFotos > 0 || numReels > 0) && (
-                                        <span className="shrink-0 rounded-md bg-white/15 px-1.5 py-0.5 text-[9px] text-[#3CE7B6]">
-                                          {numFotos}📷 · {numReels}🎬
-                                        </span>
-                                      )}
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Miniatura de la invitación virtual (o imagen genérica automática si no tiene) */}
-                              <div className="relative h-[104px] w-[78px] shrink-0 overflow-hidden rounded-2xl border-2 border-white/90 bg-[#2D3047] shadow-md sm:w-[84px]">
+                              {/* Imagen superior del evento */}
+                              <div className="relative h-28 w-full overflow-hidden bg-[#181B2C] sm:h-48 xl:h-52">
                                 <img
                                   src={coverThumb}
                                   alt={`Invitación de ${inv.nombre}`}
@@ -967,8 +996,90 @@ function HomePage() {
                                     e.currentTarget.src =
                                       DEFAULT_INVITACION_THUMB;
                                   }}
-                                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                                 />
+                              </div>
+
+                              {/* Cuerpo inferior blanco estilo tarjeta de referencia */}
+                              <div className="relative -mt-3.5 flex flex-1 flex-col justify-between rounded-t-[14px] bg-white px-2.5 pt-2.5 pb-3 text-left sm:-mt-4 sm:rounded-t-[18px] sm:px-5 sm:pt-4 sm:pb-5">
+                                {/* Avatar circular superpuesto en el borde derecho */}
+                                <div className="absolute -top-4 right-2.5 h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-[#2D3047] shadow-md sm:-top-6 sm:right-5 sm:h-12 sm:w-12 sm:border-[3px]">
+                                  <img
+                                    src={coverThumb}
+                                    alt={inv.nombre}
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null;
+                                      e.currentTarget.src =
+                                        DEFAULT_INVITACION_THUMB;
+                                    }}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+
+                                <div>
+                                  {/* Subtítulo superior + punto verde/ámbar/rojo de estado */}
+                                  <div className="flex items-center gap-1 pr-9 sm:gap-1.5 sm:pr-14">
+                                    <span className="truncate text-[9px] font-medium text-[#7B819A] sm:text-xs">
+                                      {inv.tipo_evento || "Evento"} •{" "}
+                                      {inv.estado_rsvp === "Confirmado"
+                                        ? `Confirmado (${inv.pases})`
+                                        : inv.estado_rsvp === "Rechazado"
+                                        ? "No asistiré"
+                                        : "Pendiente"}
+                                    </span>
+                                    <span
+                                      className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2 ${statusDotColor}`}
+                                    />
+                                  </div>
+
+                                  {/* Título principal en negro/carbón oscuro */}
+                                  <h3 className="mt-1 truncate pr-1 text-[12px] font-extrabold tracking-tight text-[#1E2029] sm:mt-1.5 sm:pr-2 sm:text-[17px]">
+                                    {inv.nombre}
+                                  </h3>
+                                </div>
+
+                                {/* Fila inferior de 2 columnas con etiquetas grises y valores en negrita */}
+                                <div className="mt-2 grid grid-cols-2 gap-1.5 pt-0.5 sm:mt-4 sm:gap-3 sm:pt-1">
+                                  <div className="min-w-0">
+                                    <span className="block truncate text-[8px] font-medium text-[#8C92A8] sm:text-[11px]">
+                                      Fecha del Evento
+                                    </span>
+                                    <span className="mt-0.5 block truncate text-[10px] font-extrabold text-[#1E2029] sm:text-[15px]">
+                                      {fechaStr || "Por definir"}
+                                    </span>
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className="block truncate text-[8px] font-medium text-[#8C92A8] sm:text-[11px]">
+                                      Hora / Pase QR
+                                    </span>
+                                    <span className="mt-0.5 block truncate text-[10px] font-extrabold text-[#1E2029] sm:text-[15px]">
+                                      {inv.hora_evento || "20:00"} hrs ↗
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {puedeVerAlbum && (
+                                  <div className="mt-3.5 border-t border-[#ECEFF6] pt-3">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedInvitacionAlbum(inv);
+                                      }}
+                                      className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#1E2029] px-3 py-2 text-center text-[11px] font-extrabold text-white shadow-sm transition hover:bg-[#2D3047]"
+                                      title="El anfitrión compartió las fotos y reels de este evento contigo"
+                                    >
+                                      <span className="truncate">
+                                        📸 Ver Fotos y Reels
+                                      </span>
+                                      {(numFotos > 0 || numReels > 0) && (
+                                        <span className="shrink-0 rounded-md bg-white/15 px-1.5 py-0.5 text-[9px] text-[#4ADE80]">
+                                          {numFotos}📷 · {numReels}🎬
+                                        </span>
+                                      )}
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );

@@ -3260,33 +3260,78 @@ function GestorEvento({
         </div>
       </div>
 
-      {/* Pestañas Superiores Estilo Carpeta con la Paleta de Colores (#86B59F, #4A4A8A, #FF5B4D, #C9B16B) */}
-      <div className="grid grid-cols-2 gap-1.5 border-b border-[#DCE0F0] pb-2 sm:flex sm:flex-wrap sm:items-end sm:gap-2 sm:pb-0">
-        {GESTOR_TABS.filter((t) => !t.hidden).map((t, idx) => {
-          const active = currentTab === t.id;
-          const tabPalette = [
-            "bg-[#86B59F] text-white shadow-[#86B59F]/35",
-            "bg-[#4A4A8A] text-white shadow-[#4A4A8A]/35",
-            "bg-[#FF5B4D] text-white shadow-[#FF5B4D]/35",
-            "bg-[#C9B16B] text-white shadow-[#C9B16B]/35",
-          ];
-          const colorClass = tabPalette[idx % tabPalette.length];
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => onChangeSubTab(t.id)}
-              className={`truncate rounded-xl px-3 py-2.5 text-center text-[11px] font-extrabold transition last:col-span-2 sm:last:col-span-1 sm:whitespace-nowrap sm:rounded-t-2xl sm:rounded-b-none sm:px-4 sm:py-3.5 sm:text-xs md:px-6 ${colorClass} ${
-                active
-                  ? "sm:-translate-y-0.5 shadow-lg ring-2 ring-white brightness-105"
-                  : "opacity-85 hover:opacity-100"
-              }`}
-            >
-              {t.short}
-            </button>
-          );
-        })}
-      </div>
+      {/* =====================================================================
+          PESTAÑAS ESTILO CARPETA CURVA + CONTENEDOR GENERAL BLANCO DE EDICIÓN DEL EVENTO
+         ===================================================================== */}
+      <div>
+        <div className="grid grid-cols-2 gap-1.5 md:flex md:flex-nowrap md:items-end md:gap-0">
+          {GESTOR_TABS.filter((t) => !t.hidden).map((t, idx) => {
+            const active = currentTab === t.id;
+            const inactiveBgs = [
+              "#DCE5F2",
+              "#D1DCEF",
+              "#C7D4EC",
+              "#BDD0E8",
+              "#B4C8E4",
+            ];
+            const zIndexes = ["z-10", "z-[9]", "z-[8]", "z-[7]", "z-[6]"];
+            const fillHex = active
+              ? "#FFFFFF"
+              : inactiveBgs[idx % inactiveBgs.length];
+            const zIndexBase = zIndexes[idx % zIndexes.length];
+
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => onChangeSubTab(t.id)}
+                style={{ backgroundColor: fillHex }}
+                className={`group relative min-w-0 cursor-pointer rounded-xl px-3 py-2.5 text-center text-[11px] tracking-tight transition last:col-span-2 md:last:col-span-1 md:rounded-t-[18px] md:rounded-b-none md:px-3.5 md:py-3 md:text-[11px] lg:px-4 lg:text-xs xl:px-6 xl:py-3.5 xl:text-[13px] ${
+                  idx > 0 ? "md:-ml-2" : ""
+                } ${
+                  active
+                    ? "z-20 font-extrabold text-[#1E2235] shadow-[0_-4px_12px_rgba(30,42,70,0.04)] md:-mb-px"
+                    : `${zIndexBase} font-medium text-[#55617C] hover:text-[#1E2235]`
+                }`}
+              >
+                {/* Curva cóncava izquierda estilo pestaña de carpeta (visible en md+) */}
+                {idx > 0 && (
+                  <svg
+                    viewBox="0 0 12 12"
+                    className="pointer-events-none absolute bottom-0 -left-3 hidden h-3 w-3 md:block"
+                    fill="none"
+                  >
+                    <path
+                      d="M12 0C12 6.62742 6.62742 12 0 12H12V0Z"
+                      fill={fillHex}
+                    />
+                  </svg>
+                )}
+                <span className="block truncate">{t.short}</span>
+                {/* Curva cóncava derecha estilo pestaña de carpeta (visible en md+) */}
+                <svg
+                  viewBox="0 0 12 12"
+                  className="pointer-events-none absolute -right-3 bottom-0 hidden h-3 w-3 md:block"
+                  fill="none"
+                >
+                  <path
+                    d="M0 0C0 6.62742 5.37258 12 12 12H0V0Z"
+                    fill={fillHex}
+                  />
+                </svg>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Contenedor General Blanco de la Vista de Edición del Evento */}
+        <div
+          className={`mt-2 rounded-2xl bg-white p-3.5 text-[#1E2235] shadow-[0_10px_30px_rgba(30,42,70,0.04)] sm:p-5 md:mt-0 md:rounded-b-[20px] md:rounded-tr-[20px] lg:p-7 ${
+            currentTab === "invitation"
+              ? "md:rounded-tl-none"
+              : "md:rounded-tl-[20px]"
+          }`}
+        >
 
       {/* =====================================================================
           TAB A: 📇 DISEÑO E INVITACIÓN VIRTUAL (/events/[id]/invitation)
@@ -8880,6 +8925,8 @@ function GestorEvento({
       {currentTab === "memories" && (
         <CamaraAlbumEvento evento={evento} onShowNotice={showNotice} />
       )}
+        </div>
+      </div>
     </div>
   );
 }
