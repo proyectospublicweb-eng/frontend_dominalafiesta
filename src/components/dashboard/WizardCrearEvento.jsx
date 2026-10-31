@@ -224,30 +224,18 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
     {
       num: 1,
       title: "Datos Básicos",
-      colorClass:
-        "bg-[#86B59F] shadow-[0_12px_24px_rgba(134,181,159,0.36)]",
-      badgeClass: "bg-white text-[#679A82]",
     },
     {
       num: 2,
       title: "Lugar y Aforo",
-      colorClass:
-        "bg-[#4A4A8A] shadow-[0_12px_24px_rgba(74,74,138,0.36)]",
-      badgeClass: "bg-white text-[#4A4A8A]",
     },
     {
       num: 3,
       title: "Diseño de Invitación",
-      colorClass:
-        "bg-[#FF5B4D] shadow-[0_12px_24px_rgba(255,91,77,0.36)]",
-      badgeClass: "bg-white text-[#FF5B4D]",
     },
     {
       num: 4,
       title: "Confirmación",
-      colorClass:
-        "bg-[#C9B16B] shadow-[0_12px_24px_rgba(201,177,107,0.36)]",
-      badgeClass: "bg-white text-[#8C732B]",
     },
   ];
 
@@ -256,7 +244,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
   const mapLocation = useGoogleMapsLocation(form.lugar, form.direccion);
 
   return (
-    <div className="font-wallet mx-auto max-w-4xl min-w-0">
+    <div className="font-wallet mx-auto max-w-5xl min-w-0">
       {/* Cabecera del Wizard */}
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -278,8 +266,8 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
         )}
       </div>
 
-      {/* Barra de progreso de pasos con colores e insignias estilo Tripler */}
-      <div className="mb-8 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+      {/* Barra de progreso de pasos estilo tarjetas rectangulares (Normal: Azul #3C66E6 / Hover y Activo: Blanco con círculo e info azul) */}
+      <div className="mb-8 grid grid-cols-2 gap-2.5 sm:gap-3.5 lg:grid-cols-4 lg:gap-3 xl:gap-4">
         {stepsInfo.map((s) => {
           const isActive = step === s.num;
           const isDone = step > s.num;
@@ -288,30 +276,43 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
               key={s.num}
               type="button"
               onClick={() => {
-                if (s.num < step) setStep(s.num);
+                if (s.num <= step) setStep(s.num);
               }}
-              className={`group flex min-w-0 items-center gap-2 rounded-[20px] px-3 py-2.5 text-left text-white transition sm:gap-3 sm:px-4 sm:py-3.5 ${s.colorClass} ${
+              className={`group flex min-w-0 cursor-pointer items-center gap-2 rounded-[3px] px-2.5 py-3 text-left transition-all duration-200 sm:gap-3.5 sm:px-4 sm:py-4 lg:gap-2.5 lg:px-3 lg:py-3.5 xl:gap-3.5 xl:px-4 xl:py-4 ${
                 isActive
-                  ? "-translate-y-0.5 ring-2 ring-white brightness-105"
-                  : "opacity-90 hover:opacity-100"
+                  ? "bg-white shadow-[0_8px_22px_rgba(30,42,70,0.12)] ring-1 ring-[#3C66E6]/15"
+                  : "bg-[#3C66E6] shadow-[0_6px_16px_rgba(38,68,160,0.22)] hover:bg-white hover:shadow-[0_8px_22px_rgba(30,42,70,0.12)]"
               }`}
             >
               <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-extrabold shadow-2xs sm:h-8 sm:w-8 ${s.badgeClass}`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold transition-colors duration-200 sm:h-11 sm:w-11 sm:text-base lg:h-10 lg:w-10 lg:text-sm xl:h-11 xl:w-11 xl:text-base ${
+                  isActive
+                    ? "bg-[#3C66E6] text-white"
+                    : "bg-white text-[#3C66E6] group-hover:bg-[#3C66E6] group-hover:text-white"
+                }`}
               >
                 {isDone ? "✓" : s.num}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-white/85">
-                  Paso {s.num}
+                <p
+                  className={`text-[9px] font-bold uppercase tracking-wider transition-colors duration-200 sm:text-[10px] lg:text-[9.5px] xl:text-[10.5px] ${
+                    isActive
+                      ? "text-[#5584D6]"
+                      : "text-white/95 group-hover:text-[#5584D6]"
+                  }`}
+                >
+                  PASO {s.num}
                 </p>
-                <p className="truncate text-xs font-extrabold tracking-tight text-white">
+                <p
+                  className={`mt-0.5 text-[11px] font-extrabold leading-tight tracking-tight transition-colors duration-200 sm:text-[13px] lg:text-[11.5px] xl:text-[13px] ${
+                    isActive
+                      ? "text-[#3C66E6]"
+                      : "text-white group-hover:text-[#3C66E6]"
+                  }`}
+                >
                   {s.title}
                 </p>
               </div>
-              <span className="hidden text-xs font-bold text-white/90 transition-transform group-hover:translate-x-0.5 sm:inline">
-                →
-              </span>
             </button>
           );
         })}
