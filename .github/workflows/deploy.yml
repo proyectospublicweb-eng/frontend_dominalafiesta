@@ -50,17 +50,48 @@ jobs:
           walk(distDir);
 
           (async () => {
-            console.log(`Enviando ${Object.keys(files).length} archivos compilados a https://recuerdalo.com.mx/deploy-hook.php ...`);
-            const res = await fetch("https://recuerdalo.com.mx/deploy-hook.php", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Deploy-Token": (process.env.DEPLOY_TOKEN || "").trim(),
-              },
-              body: JSON.stringify({ target: "frontend", files }),
+            const entries = Object.entries(files);
+            // Ordenar para que index.html y sw.js se suban al final, cuando los nuevos assets ya existen
+            entries.sort(([a], [b]) => {
+              const isLastA = a === "index.html" || a === "sw.js" ? 1 : 0;
+              const isLastB = b === "index.html" || b === "sw.js" ? 1 : 0;
+              return isLastA - isLastB;
             });
-            const text = await res.text();
-            console.log("Respuesta HTTP:", res.status, text);
-            if (!res.ok) process.exit(1);
+
+            const MAX_BATCH_BYTES = 2.5 * 1024 * 1024; // 2.5 MB por lote (evita límite post_max_size 8M de PHP/cPanel)
+            const batches = [];
+            let currentBatch = {};
+            let currentBytes = 0;
+
+            for (const [relPath, b64] of entries) {
+              const itemBytes = relPath.length + b64.length + 16;
+              if (currentBytes + itemBytes > MAX_BATCH_BYTES && Object.keys(currentBatch).length > 0) {
+                batches.push(currentBatch);
+                currentBatch = {};
+                currentBytes = 0;
+              }
+              currentBatch[relPath] = b64;
+              currentBytes += itemBytes;
+            }
+            if (Object.keys(currentBatch).length > 0) {
+              batches.push(currentBatch);
+            }
+
+            console.log(`Enviando ${entries.length} archivos en ${batches.length} lotes a https://recuerdalo.com.mx/deploy-hook.php ...`);
+            for (let i = 0; i < batches.length; i++) {
+              const batch = batches[i];
+              console.log(`Subiendo lote ${i + 1}/${batches.length} (${Object.keys(batch).length} archivos)...`);
+              const res = await fetch("https://recuerdalo.com.mx/deploy-hook.php", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Deploy-Token": (process.env.DEPLOY_TOKEN || "").trim(),
+                },
+                body: JSON.stringify({ target: "frontend", files: batch }),
+              });
+              const text = await res.text();
+              console.log(`Lote ${i + 1} HTTP ${res.status}:`, text);
+              if (!res.ok) process.exit(1);
+            }
           })();
           EOF

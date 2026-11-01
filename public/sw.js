@@ -1,4 +1,4 @@
-const CACHE_NAME = "recuerdalo-pwa-v3";
+const CACHE_NAME = "recuerdalo-pwa-v4";
 const PRECACHE_ASSETS = [
   "/",
   "/index.html",
