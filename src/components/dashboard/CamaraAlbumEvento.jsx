@@ -188,6 +188,8 @@ export default function CamaraAlbumEvento({
   const [cameraError, setCameraError] = useState("");
   const [captionText, setCaptionText] = useState("");
   const [capturing, setCapturing] = useState(false);
+  const [cameraFlash, setCameraFlash] = useState(false);
+  const [cameraSavedNotice, setCameraSavedNotice] = useState("");
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState(null);
@@ -221,11 +223,11 @@ export default function CamaraAlbumEvento({
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const cameraSectionRef = useRef(null);
+  const gallerySectionRef = useRef(null);
   const fileInputRef = useRef(null);
   const nativeCameraInputRef = useRef(null);
   const reelAudioInputRef = useRef(null);
   const reelAudioPlayerRef = useRef(null);
-  const liveOverlayCanvasRef = useRef(null);
   const lightboxCanvasRef = useRef(null);
   const lightboxBaseImgRef = useRef(null);
   const reelPreviewCanvasRef = useRef(null);
@@ -267,8 +269,9 @@ export default function CamaraAlbumEvento({
   const activeLightboxPhoto =
     lightboxIndex !== null && fotos[lightboxIndex] ? fotos[lightboxIndex] : null;
 
-  // Bloquear el scroll vertical del Dashboard mientras el Visor de Fotografías o el Creador de Reels estén activos
-  const isModalOverlayOpen = Boolean(activeLightboxPhoto) || reelModalOpen;
+  // Bloquear el scroll vertical del Dashboard mientras el Visor de Fotografías, el Creador de Reels o la Cámara en Pantalla Completa estén activos
+  const isModalOverlayOpen =
+    Boolean(activeLightboxPhoto) || reelModalOpen || cameraOpen;
   useEffect(() => {
     if (!isModalOverlayOpen || typeof document === "undefined") return undefined;
 
@@ -485,25 +488,6 @@ export default function CamaraAlbumEvento({
     }
   };
 
-  // Dibujar superposición del Overlay sobre el visor de cámara en vivo cuando esté activo
-  useEffect(() => {
-    const liveCanvas = liveOverlayCanvasRef.current;
-    if (liveCanvas && cameraOpen) {
-      const lw = 960;
-      const lh = 720;
-      liveCanvas.width = lw;
-      liveCanvas.height = lh;
-      const lctx = liveCanvas.getContext("2d");
-      if (lctx) {
-        lctx.clearRect(0, 0, lw, lh);
-        drawPhotoOverlayOnCanvas(lctx, lw, lh, {
-          ...activeOverlayConfig,
-          isLiveOverlay: true,
-        });
-      }
-    }
-  }, [activeOverlayConfig, cameraOpen]);
-
   const fetchAlbum = async () => {
     if (!evento?.idevento) {
       setLoading(false);
@@ -666,14 +650,32 @@ export default function CamaraAlbumEvento({
     }
   };
 
+  const handleGoToGalleryFromCamera = () => {
+    stopCameraStream();
+    setCameraOpen(false);
+    setTimeout(() => {
+      gallerySectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+  };
+
   const handleCaptureFromLiveVideo = async () => {
     if (!videoRef.current || !evento?.idevento) return;
     setCapturing(true);
+    setCameraFlash(true);
+    setTimeout(() => setCameraFlash(false), 180);
     try {
+      // Siempre capturar la fotografía en vivo limpia (sin overlay); los overlays los aplica el usuario después cuando lo desee
+      const cleanCaptureConfig = {
+        ...activeOverlayConfig,
+        designId: "none",
+      };
       const optimized = captureVideoFrameDual(
         videoRef.current,
         photoQuality,
-        activeOverlayConfig
+        cleanCaptureConfig
       );
       const { data } = await addFotoAlbumEventoRequest(evento.idevento, {
         titulo:
@@ -684,7 +686,7 @@ export default function CamaraAlbumEvento({
         hdDataUrl: optimized.hdDataUrl,
         thumbDataUrl: optimized.thumbDataUrl,
         origDataUrl: optimized.origDataUrl,
-        overlayId: optimized.overlayId,
+        overlayId: "none",
         width: optimized.width,
         height: optimized.height,
       });
@@ -701,7 +703,9 @@ export default function CamaraAlbumEvento({
         setRetention(data.retention);
       }
       setCaptionText("");
-      notify("📸 ¡Fotografía capturada con tu diseño y guardada en Alta Definición!");
+      setCameraSavedNotice("✓ ¡Foto guardada en la Galería!");
+      setTimeout(() => setCameraSavedNotice(""), 2400);
+      notify("📸 ¡Fotografía capturada en Alta Definición! Puedes aplicarle un overlay cuando gustes al abrirla en la galería.");
     } catch (err) {
       notify(
         err.response?.data?.message ||
@@ -721,11 +725,15 @@ export default function CamaraAlbumEvento({
     let uploadedCount = 0;
 
     try {
+      const cleanUploadConfig = {
+        ...activeOverlayConfig,
+        designId: "none",
+      };
       for (const file of fileList) {
         const optimized = await optimizeImageFileDual(
           file,
           photoQuality,
-          activeOverlayConfig
+          cleanUploadConfig
         );
         const cleanFileName = String(file.name || "")
           .replace(/\.[^/.]+$/, "")
@@ -742,7 +750,7 @@ export default function CamaraAlbumEvento({
           hdDataUrl: optimized.hdDataUrl,
           thumbDataUrl: optimized.thumbDataUrl,
           origDataUrl: optimized.origDataUrl,
-          overlayId: optimized.overlayId,
+          overlayId: "none",
           width: optimized.width,
           height: optimized.height,
         });
@@ -1465,8 +1473,6 @@ export default function CamaraAlbumEvento({
 
   const activePreset =
     QUALITY_PRESETS[photoQuality] || QUALITY_PRESETS.hd;
-  const activeDesignObj =
-    OVERLAY_DESIGNS.find((d) => d.id === overlayDesignId) || OVERLAY_DESIGNS[1];
 
   return (
     <div className="space-y-4 rounded-2xl border border-[#2A2C4A] bg-[#141526] p-2.5 text-[#F4F5FB] shadow-[0_24px_65px_rgba(12,9,34,0.75)] sm:space-y-5 sm:rounded-3xl sm:p-5">
@@ -1626,99 +1632,131 @@ export default function CamaraAlbumEvento({
         )}
 
         {/* =====================================================================
-            3. VISOR DE CÁMARA EN VIVO INTEGRADA CON OVERLAY SUPERPUESTO
+            3. CÁMARA EN VIVO EN PANTALLA COMPLETA (TOMA LIMPIA EN HD CON TOMAR FOTO, IR A GALERÍA Y CERRAR)
            ===================================================================== */}
         {cameraOpen && (
           <div
             ref={cameraSectionRef}
-            className="mt-5 overflow-hidden rounded-2xl border-2 border-[#38CB89]/60 bg-[#141526] p-3 text-white shadow-[0_16px_40px_rgba(8,9,22,0.75)] sm:p-5"
+            className="fixed inset-0 z-[70] flex h-[100dvh] w-screen flex-col justify-between overflow-hidden bg-black text-white overscroll-none select-none"
           >
-            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2">
+            {/* Video en vivo ocupando toda la pantalla en móvil y tablet (object-cover) y centrado en escritorio */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 h-full w-full object-cover lg:object-contain"
+            />
+
+            {/* Destello blanco de obturador al tomar la fotografía */}
+            {cameraFlash && (
+              <div className="pointer-events-none absolute inset-0 z-30 bg-white/80 transition-opacity duration-150" />
+            )}
+
+            {/* Barra Superior Flotante (Indicador HD, Girar Cámara y Cerrar) */}
+            <div className="relative z-20 flex items-center justify-between gap-2 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-3.5 pt-[max(0.9rem,env(safe-area-inset-top))] pb-5 sm:px-6 sm:pt-5">
+              <div className="flex min-w-0 items-center gap-2 rounded-full border border-white/15 bg-black/55 px-3 py-1.5 backdrop-blur-md">
                 <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-[#38CB89]" />
-                <span className="truncate text-xs font-extrabold uppercase tracking-wider text-[#3CE7B6]">
-                  Visor de Cámara en Vivo · {activeDesignObj.shortName}
+                <span className="truncate text-[11px] font-extrabold uppercase tracking-wider text-white sm:text-xs">
+                  Cámara HD · {evento.nombre}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex shrink-0 items-center gap-2">
                 <button
                   type="button"
                   onClick={handleSwitchCameraFacing}
-                  className="flex-1 cursor-pointer rounded-full border border-[#323552] bg-[#222437] px-3 py-1.5 text-[11px] font-bold text-[#F4F5FB] transition hover:border-[#4BA6FF] hover:bg-[#2A2D46] sm:flex-initial sm:px-3.5"
+                  className="flex cursor-pointer items-center gap-1.5 rounded-full border border-white/20 bg-black/55 px-3 py-2 text-xs font-extrabold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95 sm:px-4"
+                  title="Cambiar entre cámara trasera y frontal"
                 >
-                  🔄 Girar Cámara ({facingMode === "environment" ? "Trasera" : "Frontal"})
+                  <span>🔄</span>
+                  <span>
+                    {facingMode === "environment" ? "Frontal" : "Trasera"}
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={handleToggleCameraOpen}
-                  className="cursor-pointer rounded-full border border-[#F25767]/40 bg-[#F25767]/20 px-3.5 py-1.5 text-[11px] font-bold text-[#FF9AA6] transition hover:bg-[#F25767] hover:text-white"
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-black/60 text-sm font-extrabold text-white backdrop-blur-md transition hover:bg-[#F25767] active:scale-95 sm:h-10 sm:w-10"
+                  title="Cerrar cámara"
+                  aria-label="Cerrar cámara"
                 >
-                  ✕ Cerrar
+                  ✕
                 </button>
               </div>
             </div>
 
-            <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-[#2D304B] bg-[#0B0C17]">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={
-                  overlayDesignId === "club-party"
-                    ? { filter: "contrast(1.22) brightness(0.92) saturate(1.15)" }
-                    : overlayDesignId === "kinetic"
-                    ? { filter: "contrast(1.18) brightness(0.95) saturate(1.14)" }
-                    : overlayDesignId === "vortex"
-                    ? { filter: "contrast(1.26) brightness(0.92) saturate(0.42)" }
-                    : overlayDesignId === "color-veil"
-                    ? { filter: "contrast(1.16) brightness(0.95) saturate(1.12)" }
-                    : overlayDesignId === "haze"
-                    ? { filter: "contrast(1.08) brightness(0.95) saturate(0.88) sepia(0.14)" }
-                    : overlayDesignId === "prisma"
-                    ? { filter: "contrast(1.22) brightness(0.94) saturate(1.20)" }
-                    : overlayDesignId === "solstice"
-                    ? { filter: "contrast(1.16) brightness(0.96) saturate(1.14)" }
-                    : overlayDesignId === "shadows"
-                    ? { filter: "grayscale(100%) contrast(1.42) brightness(0.86)" }
-                    : overlayDesignId === "polar"
-                    ? { filter: "grayscale(100%) contrast(1.22) brightness(0.96)" }
-                    : overlayDesignId === "metro"
-                    ? { filter: "contrast(1.20) brightness(0.93) saturate(1.12)" }
-                    : undefined
-                }
-                className="max-h-[52dvh] w-full object-contain sm:max-h-[440px]"
-              />
-              {/* Superposición en vivo del Overlay directamente sobre el video */}
-              {overlayDesignId !== "none" && (
-                <canvas
-                  ref={liveOverlayCanvasRef}
-                  className="pointer-events-none absolute inset-0 h-full w-full object-contain"
-                />
-              )}
-            </div>
+            {/* Aviso flotante central cuando se guarda una foto */}
+            {cameraSavedNotice && (
+              <div className="pointer-events-none relative z-20 mx-auto rounded-full border border-[#38CB89]/50 bg-black/75 px-4 py-2 text-xs font-extrabold text-[#3CE7B6] shadow-lg backdrop-blur-md sm:text-sm">
+                {cameraSavedNotice}
+              </div>
+            )}
 
-            <div className="mx-auto mt-3.5 flex max-w-2xl flex-col gap-2.5 sm:mt-4 sm:flex-row sm:items-center">
-              <input
-                type="text"
-                value={captionText}
-                onChange={(e) => setCaptionText(e.target.value)}
-                placeholder="✏️ Etiqueta en galería (opcional, ej. Brindis de honor, Mesa 3...)"
-                maxLength={140}
-                className="w-full flex-1 rounded-full border border-[#313452] bg-[#0D0E1B] px-4 py-2.5 text-xs text-white placeholder-[#6E7293] outline-none focus:border-[#38CB89]"
-              />
-              <button
-                type="button"
-                onClick={handleCaptureFromLiveVideo}
-                disabled={capturing}
-                className="inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#2ED47A] to-[#38CB89] px-6 py-2.5 text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(56,203,137,0.4)] transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
-              >
-                <span>
-                  {capturing
-                    ? "⏳ Guardando HD..."
-                    : "📸 Tomar Foto y Guardar en HD"}
-                </span>
-              </button>
+            {/* Barra Inferior de Opciones Básicas: Ir a Galería | Tomar Foto | Cerrar */}
+            <div className="relative z-20 bg-gradient-to-t from-black/90 via-black/65 to-transparent px-5 pt-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] sm:px-10 sm:pt-8 sm:pb-10">
+              <div className="mx-auto flex w-full max-w-md items-center justify-between gap-4 sm:max-w-lg">
+                {/* Opción 1: Ir a Galería */}
+                <button
+                  type="button"
+                  onClick={handleGoToGalleryFromCamera}
+                  className="group flex min-w-[72px] cursor-pointer flex-col items-center gap-1.5 text-white transition active:scale-95 sm:min-w-[84px]"
+                  title="Cerrar cámara e ir a la Galería de Fotos"
+                >
+                  <div className="relative">
+                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/80 bg-black/60 shadow-lg backdrop-blur-md transition group-hover:border-[#3CE7B6] sm:h-14 sm:w-14">
+                      {fotos.length > 0 ? (
+                        <img
+                          src={getAlbumPhotoUrl(fotos[0].thumbUrl)}
+                          alt="Última foto"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xl sm:text-2xl">🖼️</span>
+                      )}
+                    </div>
+                    <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full border border-black/40 bg-[#2B7FFF] px-1 text-[10px] font-extrabold text-white shadow-md">
+                      {fotos.length}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-extrabold tracking-tight text-white/95 drop-shadow sm:text-xs">
+                    Ir a Galería
+                  </span>
+                </button>
+
+                {/* Opción 2: Botón Central de Obturador para Tomar Foto */}
+                <button
+                  type="button"
+                  onClick={handleCaptureFromLiveVideo}
+                  disabled={capturing}
+                  className="group flex cursor-pointer flex-col items-center gap-1.5 disabled:opacity-50"
+                  title="Tomar Foto en Alta Definición"
+                >
+                  <span className="flex h-18 w-18 items-center justify-center rounded-full border-4 border-white bg-white/20 p-1.5 shadow-[0_0_28px_rgba(255,255,255,0.35)] backdrop-blur-xs transition duration-150 group-hover:scale-105 group-active:scale-90 sm:h-22 sm:w-22">
+                    <span className="flex h-full w-full items-center justify-center rounded-full bg-white text-2xl text-[#141526] shadow-inner transition group-active:bg-[#3CE7B6] sm:text-3xl">
+                      {capturing ? "⏳" : "📸"}
+                    </span>
+                  </span>
+                  <span className="text-xs font-extrabold tracking-wide text-white drop-shadow sm:text-sm">
+                    {capturing ? "Guardando..." : "Tomar Foto"}
+                  </span>
+                </button>
+
+                {/* Opción 3: Cerrar Cámara */}
+                <button
+                  type="button"
+                  onClick={handleToggleCameraOpen}
+                  className="group flex min-w-[72px] cursor-pointer flex-col items-center gap-1.5 text-white transition active:scale-95 sm:min-w-[84px]"
+                  title="Cerrar Cámara en Vivo"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-white/35 bg-black/60 text-lg font-extrabold text-white shadow-lg backdrop-blur-md transition group-hover:border-[#F25767] group-hover:bg-[#F25767] sm:h-14 sm:w-14 sm:text-xl">
+                    ✕
+                  </div>
+                  <span className="text-[11px] font-extrabold tracking-tight text-white/95 drop-shadow sm:text-xs">
+                    Cerrar
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1727,7 +1765,10 @@ export default function CamaraAlbumEvento({
       {/* =====================================================================
           5. CUADRÍCULA DE GALERÍA DEL EVENTO (MINIATURAS LIGERAS + ACCIONES HD)
          ===================================================================== */}
-      <div className="rounded-2xl border border-[#2F324D] bg-[#222437] p-3.5 shadow-[0_12px_30px_rgba(8,9,20,0.45)] sm:p-6">
+      <div
+        ref={gallerySectionRef}
+        className="rounded-2xl border border-[#2F324D] bg-[#222437] p-3.5 shadow-[0_12px_30px_rgba(8,9,20,0.45)] sm:p-6"
+      >
         <div className="mb-4 flex flex-col gap-3 border-b border-[#2E314B] pb-4">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2.5">
