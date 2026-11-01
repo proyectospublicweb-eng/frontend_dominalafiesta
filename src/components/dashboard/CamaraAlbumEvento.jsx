@@ -71,6 +71,8 @@ export default function CamaraAlbumEvento({
   onShowNotice,
   modoInvitado = false,
   onCloseModoInvitado,
+  shortcutAction = null,
+  onConsumeShortcut,
 }) {
   const [loading, setLoading] = useState(true);
   const [fotos, setFotos] = useState([]);
@@ -218,6 +220,7 @@ export default function CamaraAlbumEvento({
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const cameraSectionRef = useRef(null);
   const fileInputRef = useRef(null);
   const nativeCameraInputRef = useRef(null);
   const reelAudioInputRef = useRef(null);
@@ -615,6 +618,46 @@ export default function CamaraAlbumEvento({
     await startCameraStream(facingMode);
   };
 
+  // Ejecutar acción directa desde los iconos de acceso rápido (Cámara en Vivo o Creador de Reel)
+  useEffect(() => {
+    if (!shortcutAction?.type || !evento?.idevento) return;
+
+    if (shortcutAction.type === "camera") {
+      setReelModalOpen(false);
+      setLightboxIndex(null);
+      if (!cameraOpen) {
+        startCameraStream(facingMode);
+      }
+      setTimeout(() => {
+        cameraSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 150);
+      if (typeof onConsumeShortcut === "function") {
+        onConsumeShortcut();
+      }
+      return;
+    }
+
+    if (shortcutAction.type === "reel" && !loading) {
+      setLightboxIndex(null);
+      if (cameraOpen) {
+        stopCameraStream();
+        setCameraOpen(false);
+      }
+      setReelSelectedIds((prev) =>
+        prev.length > 0 ? prev : fotos.length > 0 ? [fotos[0].idFoto] : []
+      );
+      setActivePreviewReel(null);
+      setReelModalOpen(true);
+      if (typeof onConsumeShortcut === "function") {
+        onConsumeShortcut();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shortcutAction?.ts, loading, evento?.idevento]);
+
   const handleSwitchCameraFacing = async () => {
     const nextFacing = facingMode === "environment" ? "user" : "environment";
     setFacingMode(nextFacing);
@@ -712,6 +755,9 @@ export default function CamaraAlbumEvento({
             setTotalMb(Number((kbSum / 1024).toFixed(2)));
             return next;
           });
+          setReelSelectedIds((prev) =>
+            prev.includes(data.foto.idFoto) ? prev : [...prev, data.foto.idFoto]
+          );
         }
         if (data?.retention) {
           setRetention(data.retention);
@@ -866,13 +912,7 @@ export default function CamaraAlbumEvento({
   // CREADOR DE REELS 9:16 PARA INSTAGRAM (GUARDADOS EN EL ÁLBUM CON VIGENCIA DE 30 DÍAS)
   // ===========================================================================
   const handleOpenReelCreator = () => {
-    if (fotos.length === 0 && reels.length === 0) {
-      notify(
-        "Agrega o captura al menos una fotografía en el álbum para crear un Reel."
-      );
-      return;
-    }
-    // Al entrar al creador de Reels, seleccionar únicamente la primera fotografía por defecto
+    // Al entrar al creador de Reels, seleccionar únicamente la primera fotografía por defecto si existe
     setReelSelectedIds(fotos.length > 0 ? [fotos[0].idFoto] : []);
     setActivePreviewReel(null);
     setReelModalOpen(true);
@@ -1589,7 +1629,10 @@ export default function CamaraAlbumEvento({
             3. VISOR DE CÁMARA EN VIVO INTEGRADA CON OVERLAY SUPERPUESTO
            ===================================================================== */}
         {cameraOpen && (
-          <div className="mt-5 overflow-hidden rounded-2xl border-2 border-[#38CB89]/60 bg-[#141526] p-3 text-white shadow-[0_16px_40px_rgba(8,9,22,0.75)] sm:p-5">
+          <div
+            ref={cameraSectionRef}
+            className="mt-5 overflow-hidden rounded-2xl border-2 border-[#38CB89]/60 bg-[#141526] p-3 text-white shadow-[0_16px_40px_rgba(8,9,22,0.75)] sm:p-5"
+          >
             <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-[#38CB89]" />
@@ -1700,8 +1743,7 @@ export default function CamaraAlbumEvento({
                 <button
                   type="button"
                   onClick={handleOpenReelCreator}
-                  disabled={fotos.length === 0 && reels.length === 0}
-                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-white/15 bg-black px-4 py-2 text-center text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(0,0,0,0.65)] transition hover:border-white/30 hover:bg-[#141414] disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-white/15 bg-black px-4 py-2 text-center text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(0,0,0,0.65)] transition hover:border-white/30 hover:bg-[#141414] sm:w-auto"
                   title="Abrir el creador flotante de Reels 9:16 para Instagram"
                 >
                   <span>
@@ -2567,53 +2609,92 @@ export default function CamaraAlbumEvento({
                       Toca las miniaturas en el orden en que deseas que aparezcan en tu Reel de Instagram:
                     </p>
 
-                    <div
-                      onScroll={handleSmartScroll}
-                      className="smart-glass-scroll grid max-h-[260px] grid-cols-3 gap-2 overflow-y-auto pr-1 sm:max-h-[290px] sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5"
-                    >
-                      {fotos.map((foto) => {
-                        const orderIdx = reelSelectedIds.indexOf(foto.idFoto);
-                        const isSelected = orderIdx !== -1;
-                        return (
+                    {fotos.length === 0 ? (
+                      <div className="rounded-[16px] border border-dashed border-white/15 bg-[#151923] p-4 text-center">
+                        <p className="text-xs font-bold text-white/95">
+                          Aún no hay fotografías en el álbum de este evento
+                        </p>
+                        <p className="mt-1 text-[11px] text-[#9AA4B8]">
+                          Sube fotografías desde tu dispositivo o toma una foto en vivo para armar tu Reel:
+                        </p>
+                        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                           <button
-                            key={foto.idFoto}
                             type="button"
-                            onClick={() => handleToggleReelPhoto(foto.idFoto)}
-                            className={`group relative aspect-square cursor-pointer overflow-hidden rounded-[14px] border text-left transition-all sm:rounded-[16px] ${
-                              isSelected
-                                ? "border-[#56B4FC] shadow-[0_6px_18px_rgba(56,189,248,0.28)] ring-2 ring-[#56B4FC]/40"
-                                : "border-white/[0.08] opacity-75 hover:border-white/25 hover:opacity-100"
-                            }`}
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingFiles}
+                            className="cursor-pointer rounded-full bg-gradient-to-r from-[#8A4FFF] to-[#6E38E0] px-4 py-2 text-xs font-extrabold text-white shadow-md transition hover:brightness-110 disabled:opacity-50"
                           >
-                            <img
-                              src={getAlbumPhotoUrl(foto.thumbUrl)}
-                              alt={foto.titulo}
-                              loading="lazy"
-                              className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
-                            />
-                            <div
-                              className={`absolute inset-0 transition ${
+                            {uploadingFiles
+                              ? "⏳ Subiendo foto(s)..."
+                              : "⬆️ Subir Foto(s) Ahora"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReelModalOpen(false);
+                              startCameraStream(facingMode);
+                              setTimeout(() => {
+                                cameraSectionRef.current?.scrollIntoView({
+                                  behavior: "smooth",
+                                  block: "center",
+                                });
+                              }, 150);
+                            }}
+                            className="cursor-pointer rounded-full bg-gradient-to-r from-[#2ED47A] to-[#1E9E63] px-4 py-2 text-xs font-extrabold text-white shadow-md transition hover:brightness-110"
+                          >
+                            📷 Ir a Cámara en Vivo
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onScroll={handleSmartScroll}
+                        className="smart-glass-scroll grid max-h-[260px] grid-cols-3 gap-2 overflow-y-auto pr-1 sm:max-h-[290px] sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5"
+                      >
+                        {fotos.map((foto) => {
+                          const orderIdx = reelSelectedIds.indexOf(foto.idFoto);
+                          const isSelected = orderIdx !== -1;
+                          return (
+                            <button
+                              key={foto.idFoto}
+                              type="button"
+                              onClick={() => handleToggleReelPhoto(foto.idFoto)}
+                              className={`group relative aspect-square cursor-pointer overflow-hidden rounded-[14px] border text-left transition-all sm:rounded-[16px] ${
                                 isSelected
-                                  ? "bg-gradient-to-t from-[#0F141D]/80 via-transparent to-[#0F141D]/30"
-                                  : "bg-black/25"
-                              }`}
-                            />
-                            <span
-                              className={`absolute right-1.5 top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold shadow-md ${
-                                isSelected
-                                  ? "bg-[#38BDF8] text-[#0F141D]"
-                                  : "border border-white/30 bg-[#181C26]/80 text-white/90"
+                                  ? "border-[#56B4FC] shadow-[0_6px_18px_rgba(56,189,248,0.28)] ring-2 ring-[#56B4FC]/40"
+                                  : "border-white/[0.08] opacity-75 hover:border-white/25 hover:opacity-100"
                               }`}
                             >
-                              {isSelected ? `#${orderIdx + 1}` : "+"}
-                            </span>
-                            <span className="absolute inset-x-1.5 bottom-1.5 truncate text-[10px] font-medium text-white/95 drop-shadow">
-                              {foto.titulo}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                              <img
+                                src={getAlbumPhotoUrl(foto.thumbUrl)}
+                                alt={foto.titulo}
+                                loading="lazy"
+                                className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
+                              />
+                              <div
+                                className={`absolute inset-0 transition ${
+                                  isSelected
+                                    ? "bg-gradient-to-t from-[#0F141D]/80 via-transparent to-[#0F141D]/30"
+                                    : "bg-black/25"
+                                }`}
+                              />
+                              <span
+                                className={`absolute right-1.5 top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold shadow-md ${
+                                  isSelected
+                                    ? "bg-[#38BDF8] text-[#0F141D]"
+                                    : "border border-white/30 bg-[#181C26]/80 text-white/90"
+                                }`}
+                              >
+                                {isSelected ? `#${orderIdx + 1}` : "+"}
+                              </span>
+                              <span className="absolute inset-x-1.5 bottom-1.5 truncate text-[10px] font-medium text-white/95 drop-shadow">
+                                {foto.titulo}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* PASO 3: Subir Audio / Música para el Reel (Bloqueado si no hay fotos seleccionadas) */}

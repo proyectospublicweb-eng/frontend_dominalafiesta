@@ -92,6 +92,7 @@ function HomePage() {
   const [deletingEvento, setDeletingEvento] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [wizardInitialDate, setWizardInitialDate] = useState("");
+  const [memoriesShortcutAction, setMemoriesShortcutAction] = useState(null);
 
   const fetchEventos = async () => {
     try {
@@ -158,6 +159,13 @@ function HomePage() {
     setActiveSection("gestor");
     setSidebarOpen(false);
     navigate(`/events/${targetId}/${validTab}`);
+  };
+
+  // Acceso directo desde los iconos de cabecera y flotantes laterales hacia Cámara en Vivo o Creación de Reel
+  const handleTriggerMemoriesShortcut = (actionType) => {
+    setSelectedInvitacionAlbum(null);
+    setMemoriesShortcutAction({ type: actionType, ts: Date.now() });
+    openEventManager(selectedEventoId, "memories");
   };
 
   // Crear o actualizar el evento inmediatamente en la base de datos desde el Wizard y redirigir al Gestor con su ID real
@@ -506,37 +514,59 @@ function HomePage() {
          ===================================================================== */}
       <div className="font-wallet flex min-w-0 flex-1 flex-col bg-[#EBF0F7] text-[#1E2235]">
         {/* Barra Superior Limpia (Saludo Editorial, Iconos y Avatar) */}
-        <header className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-4 sm:gap-4 sm:px-6 sm:py-5 lg:px-8">
-          <div className="flex min-w-0 items-center gap-3">
+        <header className="flex flex-wrap items-center justify-between gap-2.5 px-3 py-3.5 sm:flex-nowrap sm:gap-4 sm:px-6 sm:py-5 lg:px-8">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="rounded-xl border border-[#ECEEF2] bg-white p-2 text-black shadow-2xs lg:hidden"
+              className="shrink-0 rounded-xl border border-[#ECEEF2] bg-white p-2 text-black shadow-2xs lg:hidden"
               aria-label="Abrir menú"
             >
               ☰
             </button>
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-extrabold tracking-tight text-black sm:text-3xl">
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-lg font-extrabold tracking-tight text-black sm:text-3xl">
                 ¡Hola! {user?.username || "Organizador"}
               </h1>
-              <p className="text-[11px] font-medium text-black sm:text-xs">
+              <p className="truncate text-[10px] font-medium text-black sm:text-xs">
                 Administra tus invitaciones, confirmaciones y accesos en tiempo real ✨
               </p>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+            {/* Acceso directo 1: Cámara en Vivo (tomar fotos rápido) */}
+            <button
+              type="button"
+              onClick={() => handleTriggerMemoriesShortcut("camera")}
+              title="Acceso directo a Cámara en Vivo para tomar fotos rápido"
+              aria-label="Abrir Cámara en Vivo"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-[#2ED47A] to-[#1E9E63] text-xs text-white shadow-[0_6px_16px_rgba(46,212,122,0.34)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 active:scale-95 sm:h-9 sm:w-9 sm:text-sm"
+            >
+              📷
+            </button>
+
+            {/* Acceso directo 2: Formulario / Sección de Creación de Reel */}
+            <button
+              type="button"
+              onClick={() => handleTriggerMemoriesShortcut("reel")}
+              title="Acceso directo al formulario de Creación de Reel"
+              aria-label="Crear Reel"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] text-xs text-white shadow-[0_6px_16px_rgba(225,48,108,0.34)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 active:scale-95 sm:h-9 sm:w-9 sm:text-sm"
+            >
+              🎬
+            </button>
+
             <button
               type="button"
               onClick={() => openEventManager(selectedEventoId, "settings")}
               title="Ajustes del evento"
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[#4A4A8A] text-xs text-black shadow-[0_6px_16px_rgba(74,74,138,0.28)] transition hover:bg-[#3F3F7A]"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[#4A4A8A] text-xs text-black shadow-[0_6px_16px_rgba(74,74,138,0.28)] transition hover:bg-[#3F3F7A] active:scale-95 sm:h-9 sm:w-9"
             >
               ⚙️
             </button>
 
-            <div className="flex items-center gap-2 rounded-full border border-[#ECEEF2] bg-white p-1 shadow-2xs sm:gap-2.5 sm:py-1 sm:pl-1.5 sm:pr-3.5">
+            <div className="flex items-center gap-2 rounded-full border border-[#ECEEF2] bg-white p-0.5 shadow-2xs sm:gap-2.5 sm:p-1 sm:pl-1.5 sm:pr-3.5">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FF5B4D] text-xs font-extrabold text-black shadow-2xs">
                 {String(user?.username || "U")
                   .slice(0, 1)
@@ -1179,6 +1209,8 @@ function HomePage() {
                 setEventoToDelete(ev);
               }}
               onGoToWizard={() => setActiveSection("wizard")}
+              memoriesShortcutAction={memoriesShortcutAction}
+              onConsumeMemoriesShortcut={() => setMemoriesShortcutAction(null)}
             />
           )}
 
@@ -1187,6 +1219,39 @@ function HomePage() {
              ================================================================= */}
           {activeSection === "admin" && user?.isAdmin && <PanelAdminGlobal />}
         </main>
+      </div>
+
+      {/* =====================================================================
+          ICONOS FLOTANTES FIJOS DEL LADO DERECHO (CENTRADOS VERTICALMENTE EN COLUMNA: CÁMARA ARRIBA, REEL ABAJO)
+         ===================================================================== */}
+      <div className="fixed right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col items-center gap-2 sm:right-3.5 sm:gap-3 lg:right-5">
+        {/* Icono 1 (Arriba): Acceso directo a Cámara en Vivo */}
+        <button
+          type="button"
+          onClick={() => handleTriggerMemoriesShortcut("camera")}
+          title="Abrir Cámara en Vivo para tomar fotos rápido"
+          aria-label="Abrir Cámara en Vivo"
+          className="group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#2ED47A] to-[#1E9E63] text-base text-white shadow-[0_8px_22px_rgba(30,158,99,0.42)] transition duration-200 hover:scale-110 hover:brightness-110 active:scale-95 sm:h-11 sm:w-11 sm:text-lg lg:h-12 lg:w-12 lg:text-xl"
+        >
+          <span>📷</span>
+          <span className="pointer-events-none absolute right-full mr-2.5 hidden whitespace-nowrap rounded-lg bg-[#1E2235] px-2.5 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 sm:block">
+            📷 Cámara en Vivo
+          </span>
+        </button>
+
+        {/* Icono 2 (Abajo): Acceso directo a Creación de Reel */}
+        <button
+          type="button"
+          onClick={() => handleTriggerMemoriesShortcut("reel")}
+          title="Ir directo a Creación de Reel"
+          aria-label="Crear Reel"
+          className="group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] text-base text-white shadow-[0_8px_22px_rgba(225,48,108,0.42)] transition duration-200 hover:scale-110 hover:brightness-110 active:scale-95 sm:h-11 sm:w-11 sm:text-lg lg:h-12 lg:w-12 lg:text-xl"
+        >
+          <span>🎬</span>
+          <span className="pointer-events-none absolute right-full mr-2.5 hidden whitespace-nowrap rounded-lg bg-[#1E2235] px-2.5 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 sm:block">
+            🎬 Crear Reel
+          </span>
+        </button>
       </div>
 
       {/* Formulario Flotante de Confirmación para Eliminar Evento */}

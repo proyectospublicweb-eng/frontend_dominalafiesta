@@ -398,6 +398,8 @@ function GestorEvento({
   onEventoDeleted,
   onRequestDeleteEvento,
   onGoToWizard,
+  memoriesShortcutAction,
+  onConsumeMemoriesShortcut,
 }) {
   const currentTab = normalizeGestorTab(activeSubTab);
 
@@ -8923,7 +8925,12 @@ function GestorEvento({
           TAB D: 📸 CÁMARA EN VIVO Y ÁLBUM DE RECUERDOS HD (/events/[id]/memories)
          ===================================================================== */}
       {currentTab === "memories" && (
-        <CamaraAlbumEvento evento={evento} onShowNotice={showNotice} />
+        <CamaraAlbumEvento
+          evento={evento}
+          onShowNotice={showNotice}
+          shortcutAction={memoriesShortcutAction}
+          onConsumeShortcut={onConsumeMemoriesShortcut}
+        />
       )}
         </div>
       </div>
