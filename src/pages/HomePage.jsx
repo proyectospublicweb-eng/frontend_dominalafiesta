@@ -535,27 +535,31 @@ function HomePage() {
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
-            {/* Acceso directo 1: Cámara en Vivo (tomar fotos rápido) */}
-            <button
-              type="button"
-              onClick={() => handleTriggerMemoriesShortcut("camera")}
-              title="Acceso directo a Cámara en Vivo para tomar fotos rápido"
-              aria-label="Abrir Cámara en Vivo"
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-[#2ED47A] to-[#1E9E63] text-xs text-white shadow-[0_6px_16px_rgba(46,212,122,0.34)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 active:scale-95 sm:h-9 sm:w-9 sm:text-sm"
-            >
-              📷
-            </button>
+            {activeSection === "gestor" && (
+              <>
+                {/* Acceso directo 1: Cámara en Vivo (tomar fotos rápido) */}
+                <button
+                  type="button"
+                  onClick={() => handleTriggerMemoriesShortcut("camera")}
+                  title="Acceso directo a Cámara en Vivo para tomar fotos rápido"
+                  aria-label="Abrir Cámara en Vivo"
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-[#2ED47A] to-[#1E9E63] text-xs text-white shadow-[0_6px_16px_rgba(46,212,122,0.34)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 active:scale-95 sm:h-9 sm:w-9 sm:text-sm"
+                >
+                  📷
+                </button>
 
-            {/* Acceso directo 2: Formulario / Sección de Creación de Reel */}
-            <button
-              type="button"
-              onClick={() => handleTriggerMemoriesShortcut("reel")}
-              title="Acceso directo al formulario de Creación de Reel"
-              aria-label="Crear Reel"
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] text-xs text-white shadow-[0_6px_16px_rgba(225,48,108,0.34)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 active:scale-95 sm:h-9 sm:w-9 sm:text-sm"
-            >
-              🎬
-            </button>
+                {/* Acceso directo 2: Formulario / Sección de Creación de Reel */}
+                <button
+                  type="button"
+                  onClick={() => handleTriggerMemoriesShortcut("reel")}
+                  title="Acceso directo al formulario de Creación de Reel"
+                  aria-label="Crear Reel"
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] text-xs text-white shadow-[0_6px_16px_rgba(225,48,108,0.34)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 active:scale-95 sm:h-9 sm:w-9 sm:text-sm"
+                >
+                  🎬
+                </button>
+              </>
+            )}
 
             <button
               type="button"
@@ -1223,36 +1227,39 @@ function HomePage() {
 
       {/* =====================================================================
           ICONOS FLOTANTES FIJOS DEL LADO DERECHO (CENTRADOS VERTICALMENTE EN COLUMNA: CÁMARA ARRIBA, REEL ABAJO)
+          Solo visibles cuando el usuario entra a la configuración/gestor de un evento desde Mis Eventos
          ===================================================================== */}
-      <div className="fixed right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col items-center gap-2 sm:right-3.5 sm:gap-3 lg:right-5">
-        {/* Icono 1 (Arriba): Acceso directo a Cámara en Vivo */}
-        <button
-          type="button"
-          onClick={() => handleTriggerMemoriesShortcut("camera")}
-          title="Abrir Cámara en Vivo para tomar fotos rápido"
-          aria-label="Abrir Cámara en Vivo"
-          className="group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#2ED47A] to-[#1E9E63] text-base text-white shadow-[0_8px_22px_rgba(30,158,99,0.42)] transition duration-200 hover:scale-110 hover:brightness-110 active:scale-95 sm:h-11 sm:w-11 sm:text-lg lg:h-12 lg:w-12 lg:text-xl"
-        >
-          <span>📷</span>
-          <span className="pointer-events-none absolute right-full mr-2.5 hidden whitespace-nowrap rounded-lg bg-[#1E2235] px-2.5 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 sm:block">
-            📷 Cámara en Vivo
-          </span>
-        </button>
+      {activeSection === "gestor" && (
+        <div className="fixed right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col items-center gap-2 sm:right-3.5 sm:gap-3 lg:right-5">
+          {/* Icono 1 (Arriba): Acceso directo a Cámara en Vivo */}
+          <button
+            type="button"
+            onClick={() => handleTriggerMemoriesShortcut("camera")}
+            title="Abrir Cámara en Vivo para tomar fotos rápido"
+            aria-label="Abrir Cámara en Vivo"
+            className="group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#2ED47A] to-[#1E9E63] text-base text-white shadow-[0_8px_22px_rgba(30,158,99,0.42)] transition duration-200 hover:scale-110 hover:brightness-110 active:scale-95 sm:h-11 sm:w-11 sm:text-lg lg:h-12 lg:w-12 lg:text-xl"
+          >
+            <span>📷</span>
+            <span className="pointer-events-none absolute right-full mr-2.5 hidden whitespace-nowrap rounded-lg bg-[#1E2235] px-2.5 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 sm:block">
+              📷 Cámara en Vivo
+            </span>
+          </button>
 
-        {/* Icono 2 (Abajo): Acceso directo a Creación de Reel */}
-        <button
-          type="button"
-          onClick={() => handleTriggerMemoriesShortcut("reel")}
-          title="Ir directo a Creación de Reel"
-          aria-label="Crear Reel"
-          className="group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] text-base text-white shadow-[0_8px_22px_rgba(225,48,108,0.42)] transition duration-200 hover:scale-110 hover:brightness-110 active:scale-95 sm:h-11 sm:w-11 sm:text-lg lg:h-12 lg:w-12 lg:text-xl"
-        >
-          <span>🎬</span>
-          <span className="pointer-events-none absolute right-full mr-2.5 hidden whitespace-nowrap rounded-lg bg-[#1E2235] px-2.5 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 sm:block">
-            🎬 Crear Reel
-          </span>
-        </button>
-      </div>
+          {/* Icono 2 (Abajo): Acceso directo a Creación de Reel */}
+          <button
+            type="button"
+            onClick={() => handleTriggerMemoriesShortcut("reel")}
+            title="Ir directo a Creación de Reel"
+            aria-label="Crear Reel"
+            className="group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] text-base text-white shadow-[0_8px_22px_rgba(225,48,108,0.42)] transition duration-200 hover:scale-110 hover:brightness-110 active:scale-95 sm:h-11 sm:w-11 sm:text-lg lg:h-12 lg:w-12 lg:text-xl"
+          >
+            <span>🎬</span>
+            <span className="pointer-events-none absolute right-full mr-2.5 hidden whitespace-nowrap rounded-lg bg-[#1E2235] px-2.5 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 sm:block">
+              🎬 Crear Reel
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Formulario Flotante de Confirmación para Eliminar Evento */}
       {eventoToDelete && (
