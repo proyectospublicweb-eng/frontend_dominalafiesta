@@ -1,5 +1,12 @@
 export const GESTOR_TABS = [
   {
+    id: "config",
+    route: "config",
+    label: "🛠️ Configuración del Evento",
+    short: "🛠️ Configuración",
+    pathHint: "/events/[id]/config",
+  },
+  {
     id: "invitation",
     route: "invitation",
     label: "Tab A: 📇 Diseño e Invitación Virtual",
@@ -46,8 +53,8 @@ export const GESTOR_TABS = [
   {
     id: "settings",
     route: "settings",
-    label: "Tab E: ⚙️ Ajustes del Evento",
-    short: "⚙️ Ajustes y QR",
+    label: "Tab E: ⚙️ Ajustes y Acceso QR",
+    short: "⚙️ Ajustes y Acceso QR",
     pathHint: "/events/[id]/settings",
   },
 ];
@@ -57,6 +64,8 @@ export function normalizeGestorTab(rawTab) {
   const map = {
     invitation: "invitation",
     invitacion: "invitation",
+    config: "config",
+    configuracion: "config",
     guests: "guests",
     invitados: "guests",
     broadcast: "broadcast",
@@ -70,7 +79,7 @@ export function normalizeGestorTab(rawTab) {
     budget: "invitation", // Redirige a invitation mientras Presupuesto esté oculto
     presupuesto: "invitation",
     settings: "settings",
-    configuracion: "settings",
+    ajustes: "settings",
   };
   return map[String(rawTab).toLowerCase()] || "invitation";
 }

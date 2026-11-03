@@ -180,7 +180,7 @@ function HomePage() {
       municipio: esNinguno ? "Ningúno" : formData.municipio || "Ningúno",
       color_secundario: formData.color_secundario || "#6C7EE1",
       imagen_portada: formData.imagen_portada || "",
-      texto_boton_rsvp: formData.texto_boton_rsvp || "Confirmar Asistencia",
+      texto_boton_rsvp: "Confirmar Asistencia",
       modalidad_invitados: formData.modalidad_invitados || "Adultos + Niños",
       mesa_regalos_habilitada: Boolean(formData.mesa_regalos_habilitada),
       rsvp_habilitado: true,
@@ -190,13 +190,13 @@ function HomePage() {
       : await createEventoRequest(payload);
     setDraftEvento(null);
     await fetchEventos();
-    openEventManager(savedEvento.idevento, "invitation");
+    openEventManager(savedEvento.idevento, "config");
   };
 
   const handleDraftSaved = async (savedEvento) => {
     setDraftEvento(null);
     await fetchEventos();
-    openEventManager(savedEvento.idevento, "invitation");
+    openEventManager(savedEvento.idevento, "config");
   };
 
   const handleEventoDuplicated = async (newEventoId) => {
@@ -834,9 +834,9 @@ function HomePage() {
                                 </h3>
                               </div>
 
-                              {/* Fila inferior de 2 columnas con etiquetas grises y valores en negrita */}
-                              <div className="mt-2 grid grid-cols-2 gap-1.5 pt-0.5 sm:mt-4 sm:gap-3 sm:pt-1">
-                                <div className="min-w-0">
+                              {/* Fila inferior responsiva: Fecha, Hora/Lugar e icono de eliminar en esquina inferior derecha */}
+                              <div className="mt-2 flex items-end justify-between gap-1.5 pt-0.5 sm:mt-4 sm:gap-3 sm:pt-1">
+                                <div className="min-w-0 flex-1">
                                   <span className="block truncate text-[8px] font-medium text-[#8C92A8] sm:text-[11px]">
                                     Fecha del Evento
                                   </span>
@@ -844,7 +844,7 @@ function HomePage() {
                                     {fechaStr || "Por definir"}
                                   </span>
                                 </div>
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                   <span className="block truncate text-[8px] font-medium text-[#8C92A8] sm:text-[11px]">
                                     Hora / Lugar
                                   </span>
@@ -852,6 +852,36 @@ function HomePage() {
                                     {ev.hora_evento || "20:00"} hrs
                                   </span>
                                 </div>
+
+                                {/* Icono pequeño de basura en la esquina inferior derecha para eliminar evento */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteError("");
+                                    setEventoToDelete(ev);
+                                  }}
+                                  title={`Eliminar evento "${ev.nombre}"`}
+                                  aria-label={`Eliminar evento ${ev.nombre}`}
+                                  className="-mr-0.5 -mb-0.5 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent text-[#8C92A8] transition duration-200 hover:border-[#F98880]/40 hover:bg-[#FFF2F1] hover:text-[#E05349] active:scale-95 sm:-mr-1 sm:-mb-1 sm:h-7 sm:w-7 md:h-8 md:w-8"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                                  >
+                                    <path d="M3 6h18" />
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                    <line x1="10" x2="10" y1="11" y2="17" />
+                                    <line x1="14" x2="14" y1="11" y2="17" />
+                                  </svg>
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -1327,21 +1357,25 @@ function HomePage() {
               </p>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-[#ECEFFA] bg-[#F7F8FC] p-4 text-xs text-[#6E748A]">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-[#2D3047]">Evento:</span>
-                <span>{eventoToDelete.nombre}</span>
-              </div>
-              <div className="mt-1.5 flex items-center justify-between">
-                <span className="font-bold text-[#2D3047]">Fecha:</span>
-                <span>
-                  {String(eventoToDelete.fecha_evento || "").slice(0, 10)} •{" "}
-                  {eventoToDelete.hora_evento} hrs
+            <div className="mt-4 rounded-2xl border border-[#ECEFFA] bg-[#F7F8FC] p-3.5 text-xs text-[#6E748A] sm:mt-5 sm:p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="shrink-0 font-bold text-[#2D3047]">Evento:</span>
+                <span className="truncate text-right font-semibold text-[#1E2235]">
+                  {eventoToDelete.nombre}
                 </span>
               </div>
-              <div className="mt-1.5 flex items-center justify-between">
-                <span className="font-bold text-[#2D3047]">Lugar:</span>
-                <span>{eventoToDelete.lugar || "Por definir"}</span>
+              <div className="mt-1.5 flex items-center justify-between gap-3">
+                <span className="shrink-0 font-bold text-[#2D3047]">Fecha:</span>
+                <span className="truncate text-right">
+                  {String(eventoToDelete.fecha_evento || "").slice(0, 10)} •{" "}
+                  {eventoToDelete.hora_evento || "20:00"} hrs
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-center justify-between gap-3">
+                <span className="shrink-0 font-bold text-[#2D3047]">Lugar:</span>
+                <span className="truncate text-right">
+                  {eventoToDelete.nombre_lugar || eventoToDelete.lugar || "Por definir"}
+                </span>
               </div>
             </div>
 
@@ -1351,19 +1385,19 @@ function HomePage() {
               </p>
             )}
 
-            <div className="mt-6 flex items-center justify-end gap-3">
+            <div className="mt-5 flex flex-col-reverse gap-2.5 sm:mt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
               <button
                 type="button"
                 disabled={deletingEvento}
                 onClick={() => setEventoToDelete(null)}
-                className="flex-1 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-4 py-3 text-xs font-extrabold text-[#2D3047] transition hover:bg-[#ECEFFA] disabled:opacity-60"
+                className="w-full cursor-pointer rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-4 py-3 text-xs font-extrabold text-[#2D3047] transition hover:bg-[#ECEFFA] disabled:opacity-60 sm:flex-1"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={deletingEvento}
-                className="flex-1 rounded-xl bg-gradient-to-r from-[#FA938B] to-[#E05349] px-4 py-3 text-xs font-extrabold text-white shadow-[0_10px_24px_rgba(249,136,128,0.35)] transition hover:opacity-95 disabled:opacity-60"
+                className="w-full cursor-pointer rounded-xl bg-gradient-to-r from-[#FA938B] to-[#E05349] px-4 py-3 text-xs font-extrabold text-white shadow-[0_10px_24px_rgba(249,136,128,0.35)] transition hover:opacity-95 disabled:opacity-60 sm:flex-1"
               >
                 {deletingEvento ? "Eliminando..." : "Sí, Eliminar Evento"}
               </button>

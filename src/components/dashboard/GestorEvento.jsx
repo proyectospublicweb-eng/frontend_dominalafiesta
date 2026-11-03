@@ -572,8 +572,7 @@ function GestorEvento({
             : "",
           color_secundario: draftEvento.color_secundario || "#6C7EE1",
           imagen_portada: draftEvento.imagen_portada || "",
-          texto_boton_rsvp:
-            draftEvento.texto_boton_rsvp || "Confirmar Asistencia",
+          texto_boton_rsvp: "Confirmar Asistencia",
           modalidad_invitados: normalizeModalidad(
             draftEvento.modalidad_invitados
           ),
@@ -693,8 +692,7 @@ function GestorEvento({
             : "",
           color_secundario: data.evento.color_secundario || "#6C7EE1",
           imagen_portada: data.evento.imagen_portada || "",
-          texto_boton_rsvp:
-            data.evento.texto_boton_rsvp || "Confirmar Asistencia",
+          texto_boton_rsvp: "Confirmar Asistencia",
           modalidad_invitados: modNormalizada,
           permitir_acompanantes:
             data.evento.permitir_acompanantes ?? true,
@@ -822,7 +820,7 @@ function GestorEvento({
       color_acento: invForm.color_acento || "#6C7EE1",
       color_secundario: invForm.color_secundario || "#6C7EE1",
       imagen_portada: invForm.imagen_portada || "",
-      texto_boton_rsvp: invForm.texto_boton_rsvp || "Confirmar Asistencia",
+      texto_boton_rsvp: "Confirmar Asistencia",
       rsvp_habilitado: invForm.rsvp_habilitado !== false,
       permitir_acompanantes: Boolean(
         invForm.confirmar_acceso_qr ?? invForm.permitir_acompanantes ?? true
@@ -1156,6 +1154,7 @@ function GestorEvento({
     }
     const payload = {
       ...rawPayload,
+      texto_boton_rsvp: "Confirmar Asistencia",
       capacidad: Math.max(
         1,
         Number(rawPayload.capacidad ?? evento?.capacidad ?? 100) || 100
@@ -1642,7 +1641,7 @@ function GestorEvento({
       selectedEmailLinkObj.adultos + selectedEmailLinkObj.ninos > 0
         ? selectedEmailLinkObj.adultos + selectedEmailLinkObj.ninos
         : guest?.pases || 2;
-    const btnText = invForm?.texto_boton_rsvp || "Confirmar Asistencia";
+    const btnText = "Confirmar Asistencia";
 
     return `<!DOCTYPE html>
 <html lang="es">
@@ -3068,11 +3067,11 @@ function GestorEvento({
                 type="button"
                 onClick={() => {
                   setGuestLimitWarningModal(null);
-                  onChangeSubTab("settings");
+                  onChangeSubTab("config");
                 }}
                 className="cursor-pointer rounded-xl border border-[#6C7EE1]/40 bg-[#6C7EE1]/10 px-3.5 py-2.5 text-xs font-extrabold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
               >
-                ⚙️ Ajustar Límite en Configuración
+                🛠️ Ajustar Límite en Configuración
               </button>
 
               <div className="flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center">
@@ -3178,7 +3177,7 @@ function GestorEvento({
                 {isGuestLimitExceeded && (
                   <button
                     type="button"
-                    onClick={() => onChangeSubTab("settings")}
+                    onClick={() => onChangeSubTab("config")}
                     className="cursor-pointer rounded-full border border-amber-400 bg-amber-100 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-800 transition hover:bg-amber-200"
                     title="El número de invitados/pases supera el límite configurado"
                   >
@@ -3266,17 +3265,25 @@ function GestorEvento({
           PESTAÑAS ESTILO CARPETA CURVA + CONTENEDOR GENERAL BLANCO DE EDICIÓN DEL EVENTO
          ===================================================================== */}
       <div>
-        <div className="grid grid-cols-2 gap-1.5 md:flex md:flex-nowrap md:items-end md:gap-0">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2 lg:flex lg:flex-nowrap lg:items-end lg:gap-0">
           {GESTOR_TABS.filter((t) => !t.hidden).map((t, idx) => {
             const active = currentTab === t.id;
             const inactiveBgs = [
               "#DCE5F2",
-              "#D1DCEF",
-              "#C7D4EC",
-              "#BDD0E8",
-              "#B4C8E4",
+              "#D4DFEE",
+              "#CBD8EA",
+              "#C3D1E6",
+              "#BBCBE2",
+              "#B3C4DE",
             ];
-            const zIndexes = ["z-10", "z-[9]", "z-[8]", "z-[7]", "z-[6]"];
+            const zIndexes = [
+              "z-10",
+              "z-[9]",
+              "z-[8]",
+              "z-[7]",
+              "z-[6]",
+              "z-[5]",
+            ];
             const fillHex = active
               ? "#FFFFFF"
               : inactiveBgs[idx % inactiveBgs.length];
@@ -3288,19 +3295,19 @@ function GestorEvento({
                 type="button"
                 onClick={() => onChangeSubTab(t.id)}
                 style={{ backgroundColor: fillHex }}
-                className={`group relative min-w-0 cursor-pointer rounded-xl px-3 py-2.5 text-center text-[11px] tracking-tight transition last:col-span-2 md:last:col-span-1 md:rounded-t-[18px] md:rounded-b-none md:px-3.5 md:py-3 md:text-[11px] lg:px-4 lg:text-xs xl:px-6 xl:py-3.5 xl:text-[13px] ${
-                  idx > 0 ? "md:-ml-2" : ""
+                className={`group relative min-w-0 cursor-pointer rounded-xl px-2.5 py-2.5 text-center text-[11px] tracking-tight transition sm:px-3 sm:py-3 sm:text-xs lg:flex-1 lg:rounded-t-[18px] lg:rounded-b-none lg:px-3 lg:py-3 lg:text-[11px] xl:flex-initial xl:px-5 xl:py-3.5 xl:text-[13px] ${
+                  idx > 0 ? "lg:-ml-2" : ""
                 } ${
                   active
-                    ? "z-20 font-extrabold text-[#1E2235] shadow-[0_-4px_12px_rgba(30,42,70,0.04)] md:-mb-px"
+                    ? "z-20 font-extrabold text-[#1E2235] shadow-[0_-4px_12px_rgba(30,42,70,0.04)] lg:-mb-px"
                     : `${zIndexBase} font-medium text-[#55617C] hover:text-[#1E2235]`
                 }`}
               >
-                {/* Curva cóncava izquierda estilo pestaña de carpeta (visible en md+) */}
+                {/* Curva cóncava izquierda estilo pestaña de carpeta (visible en lg+) */}
                 {idx > 0 && (
                   <svg
                     viewBox="0 0 12 12"
-                    className="pointer-events-none absolute bottom-0 -left-3 hidden h-3 w-3 md:block"
+                    className="pointer-events-none absolute bottom-0 -left-3 hidden h-3 w-3 lg:block"
                     fill="none"
                   >
                     <path
@@ -3310,10 +3317,10 @@ function GestorEvento({
                   </svg>
                 )}
                 <span className="block truncate">{t.short}</span>
-                {/* Curva cóncava derecha estilo pestaña de carpeta (visible en md+) */}
+                {/* Curva cóncava derecha estilo pestaña de carpeta (visible en lg+) */}
                 <svg
                   viewBox="0 0 12 12"
-                  className="pointer-events-none absolute -right-3 bottom-0 hidden h-3 w-3 md:block"
+                  className="pointer-events-none absolute -right-3 bottom-0 hidden h-3 w-3 lg:block"
                   fill="none"
                 >
                   <path
@@ -3328,10 +3335,10 @@ function GestorEvento({
 
         {/* Contenedor General Blanco de la Vista de Edición del Evento */}
         <div
-          className={`mt-2 rounded-2xl bg-white p-3.5 text-[#1E2235] shadow-[0_10px_30px_rgba(30,42,70,0.04)] sm:p-5 md:mt-0 md:rounded-b-[20px] md:rounded-tr-[20px] lg:p-7 ${
-            currentTab === "invitation"
-              ? "md:rounded-tl-none"
-              : "md:rounded-tl-[20px]"
+          className={`mt-2 rounded-2xl bg-white p-3.5 text-[#1E2235] shadow-[0_10px_30px_rgba(30,42,70,0.04)] sm:p-5 lg:mt-0 lg:rounded-b-[20px] lg:rounded-tr-[20px] lg:p-7 ${
+            currentTab === "config"
+              ? "lg:rounded-tl-none"
+              : "lg:rounded-tl-[20px]"
           }`}
         >
 
@@ -3562,157 +3569,6 @@ function GestorEvento({
                 />
               </div>
 
-              {/* Opción de Fecha Límite de Confirmación al Evento en Edición */}
-              <div className="sm:col-span-2 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] p-3.5">
-                <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                  <label
-                    className={`flex min-w-0 cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-xs font-extrabold leading-snug transition select-none ${
-                      invForm.fecha_limite_rsvp_activa
-                        ? "border-[#6C7EE1] bg-[#6C7EE1] text-white shadow-2xs"
-                        : "border-[#DCE0F0] bg-white text-[#2D3047] hover:border-[#6C7EE1]"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={Boolean(invForm.fecha_limite_rsvp_activa)}
-                      onChange={async (e) => {
-                        const checked = e.target.checked;
-                        const defaultFechaLim = checked
-                          ? invForm.fecha_limite_rsvp ||
-                            invForm.fecha_evento ||
-                            ""
-                          : "";
-                        setInvForm((prev) => ({
-                          ...prev,
-                          fecha_limite_rsvp_activa: checked,
-                          fecha_limite_rsvp: defaultFechaLim,
-                        }));
-                        if (evento.idevento) {
-                          await handleSaveEvento(null, {
-                            fecha_limite_rsvp_activa: checked,
-                            fecha_limite_rsvp: defaultFechaLim,
-                          });
-                        }
-                      }}
-                      className="h-4 w-4 shrink-0 cursor-pointer accent-[#2D3047]"
-                    />
-                    <span className="min-w-0 break-words">
-                      ⏳ Asignar Fecha Límite de confirmación al Evento
-                    </span>
-                  </label>
-
-                  <div className="min-w-0">
-                    <label className="mb-1 block text-[11px] font-bold text-[#5B617A]">
-                      Fecha Límite de Confirmación
-                    </label>
-                    <input
-                      type="date"
-                      max={invForm.fecha_evento || undefined}
-                      disabled={!invForm.fecha_limite_rsvp_activa}
-                      value={
-                        invForm.fecha_limite_rsvp_activa
-                          ? invForm.fecha_limite_rsvp || ""
-                          : ""
-                      }
-                      onChange={async (e) => {
-                        const nextDate = e.target.value;
-                        setInvForm((prev) => ({
-                          ...prev,
-                          fecha_limite_rsvp: nextDate,
-                        }));
-                        if (
-                          evento.idevento &&
-                          /^\d{4}-\d{2}-\d{2}$/.test(nextDate)
-                        ) {
-                          await handleSaveEvento(null, {
-                            fecha_limite_rsvp_activa: true,
-                            fecha_limite_rsvp: nextDate,
-                          });
-                        }
-                      }}
-                      className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#EAECEF] disabled:text-[#8E94A9] disabled:opacity-60"
-                    />
-                  </div>
-                </div>
-                <p className="mt-2 text-[11px] text-[#8E94A9]">
-                  {invForm.fecha_limite_rsvp_activa
-                    ? `✓ Activo: Tus invitados podrán confirmar hasta el ${
-                        invForm.fecha_limite_rsvp || "día elegido"
-                      }. Después de esa fecha ya no se permitirá confirmar y se les mostrará que la fecha de confirmación caducó.`
-                    : "Marca «Asignar Fecha Límite de confirmación al Evento» para desbloquear el campo de fecha."}
-                </p>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
-                  Código de Vestimenta
-                </label>
-                <input
-                  type="text"
-                  value={invForm.codigo_vestimenta || ""}
-                  onChange={(e) =>
-                    setInvForm((prev) => ({
-                      ...prev,
-                      codigo_vestimenta: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
-                  Texto del Botón de Confirmación
-                </label>
-                <input
-                  type="text"
-                  value={invForm.texto_boton_rsvp || ""}
-                  onChange={(e) =>
-                    setInvForm((prev) => ({
-                      ...prev,
-                      texto_boton_rsvp: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="mb-1 flex flex-wrap items-center justify-between gap-1 text-xs font-semibold text-[#0d23ad]">
-                  <span style={{ color: "#0d23ad" }}>
-                    👥 Número de Invitados Permitidos (Límite del Evento)
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
-                      isGuestLimitExceeded
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-emerald-100 text-emerald-700"
-                    }`}
-                  >
-                    {isGuestLimitExceeded
-                      ? `⚠️ Superado: ${totalInvitadosCount} invitados registrados / ${totalPasesLista} lugares`
-                      : `✓ En lista ahora: ${totalInvitadosCount} invitados registrados / ${totalPasesLista} lugares`}
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={10000}
-                  value={invForm.capacidad ?? evento.capacidad ?? 100}
-                  onChange={(e) =>
-                    setInvForm((prev) => ({
-                      ...prev,
-                      capacidad: e.target.value,
-                    }))
-                  }
-                  placeholder="Ej. 100"
-                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-xs font-bold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                />
-                <span className="mt-1 block text-[11px] text-[#8E94A9]">
-                  Si al compartir las invitaciones virtuales por WhatsApp o Correo se sobrepasa este número, el sistema mostrará una advertencia.
-                </span>
-              </div>
-
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
                   Mensaje de Invitación para los Asistentes
@@ -3731,485 +3587,19 @@ function GestorEvento({
               </div>
 
               <div className="sm:col-span-2">
-                <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-3 text-xs transition hover:border-[#6C7EE1]">
-                  <div>
-                    <span className="block font-bold text-[#2D3047]">
-                      🔳 ¿Confirmar Acceso el día del evento?
-                    </span>
-                    <span className="mt-0.5 block text-[11px] text-[#8E94A9]">
-                      Si está activado, al invitado se le mostrará un Código QR
-                      después de confirmar su asistencia en la invitación virtual.
-                    </span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(
-                      invForm.confirmar_acceso_qr ??
-                        invForm.permitir_acompanantes ??
-                        true
-                    )}
-                    onChange={async (e) => {
-                      const checked = e.target.checked;
-                      setInvForm((prev) => ({
-                        ...prev,
-                        confirmar_acceso_qr: checked,
-                        permitir_acompanantes: checked,
-                      }));
-                      if (evento.idevento) {
-                        await handleSaveEvento(null, {
-                          confirmar_acceso_qr: checked,
-                          permitir_acompanantes: checked,
-                        });
-                      }
-                    }}
-                    className="h-4 w-4 shrink-0 cursor-pointer accent-[#6C7EE1]"
-                  />
+                <label className="mb-1 block text-xs font-semibold text-[#5B617A]">
+                  Código de Vestimenta
                 </label>
-              </div>
-
-              {/* Checkbox: ¿Tendrá Mesa de Regalos? */}
-              <div className="sm:col-span-2">
-                <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-3 text-xs transition hover:border-[#6C7EE1]">
-                  <div>
-                    <span className="block font-bold text-[#2D3047]">
-                      🎁 ¿Tu evento tendrá Mesa de Regalos?
-                    </span>
-                    <span className="mt-0.5 block text-[11px] text-[#8E94A9]">
-                      Activa esta opción para agregar un único link al carrito
-                      de compras o lista de regalos del anfitrión (Amazon,
-                      Mercado Libre, IKEA, Liverpool, etc.) y mostrarlo en tu
-                      invitación digital.
-                    </span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(invForm.mesa_regalos_habilitada)}
-                    onChange={async (e) => {
-                      const checked = e.target.checked;
-                      setInvForm((prev) => ({
-                        ...prev,
-                        mesa_regalos_habilitada: checked,
-                      }));
-                      if (evento.idevento) {
-                        await handleSaveEvento(null, {
-                          mesa_regalos_habilitada: checked,
-                        });
-                      }
-                    }}
-                    className="h-4 w-4 shrink-0 cursor-pointer accent-[#6C7EE1]"
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Panel de Mesa de Regalos: Link único del Carrito / Lista del Anfitrión */}
-            {Boolean(invForm.mesa_regalos_habilitada) && (
-              <div className="space-y-3.5 rounded-2xl border border-[#6C7EE1]/35 bg-[#F7F8FC] p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
-                      🎁 LINK DE MESA DE REGALOS / CARRITO DEL ANFITRIÓN
-                    </span>
-                    <h4 className="text-xs font-extrabold text-[#2D3047]">
-                      Agrega el enlace del carrito de compras o lista de regalos
-                      (Amazon, Mercado Libre, IKEA, Liverpool, etc.)
-                    </h4>
-                  </div>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
-                      String(invForm.mesa_regalos_url || "").trim()
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-[#6C7EE1]/15 text-[#6C7EE1]"
-                    }`}
-                  >
-                    {String(invForm.mesa_regalos_url || "").trim()
-                      ? "✓ Link configurado"
-                      : "Pendiente de link"}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
-                  <div className="min-w-0">
-                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                      Tienda del Carrito / Lista
-                    </label>
-                    <select
-                      value={
-                        TIENDAS_MESA_REGALOS.includes(
-                          invForm.mesa_regalos_tienda || "Amazon"
-                        )
-                          ? invForm.mesa_regalos_tienda || "Amazon"
-                          : "Otra tienda"
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setInvForm((prev) => ({
-                          ...prev,
-                          mesa_regalos_tienda:
-                            val === "Otra tienda" ? "Tienda Externa" : val,
-                        }));
-                      }}
-                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                    >
-                      {TIENDAS_MESA_REGALOS.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="min-w-0 sm:col-span-2 xl:col-span-1 2xl:col-span-2">
-                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                      Link del Carrito de Compras o Mesa de Regalos del Anfitrión *
-                    </label>
-                    <input
-                      type="url"
-                      value={invForm.mesa_regalos_url || ""}
-                      onChange={(e) => {
-                        if (giftError) setGiftError("");
-                        const nextUrl = e.target.value;
-                        const detected = detectStoreFromUrl(nextUrl);
-                        setInvForm((prev) => ({
-                          ...prev,
-                          mesa_regalos_url: nextUrl,
-                          mesa_regalos_tienda:
-                            detected || prev.mesa_regalos_tienda || "Amazon",
-                        }));
-                      }}
-                      placeholder="https://www.amazon.com.mx/... o link del carrito de Mercado Libre..."
-                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                    />
-                  </div>
-
-                  {!TIENDAS_MESA_REGALOS.slice(0, -1).includes(
-                    invForm.mesa_regalos_tienda || "Amazon"
-                  ) && (
-                    <div className="sm:col-span-3">
-                      <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                        Nombre personalizado de la Tienda
-                      </label>
-                      <input
-                        type="text"
-                        value={
-                          invForm.mesa_regalos_tienda === "Otra tienda"
-                            ? ""
-                            : invForm.mesa_regalos_tienda || ""
-                        }
-                        onChange={(e) =>
-                          setInvForm((prev) => ({
-                            ...prev,
-                            mesa_regalos_tienda: e.target.value,
-                          }))
-                        }
-                        placeholder="Ej. Zara Home, Sephora, Costco..."
-                        className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                      />
-                    </div>
-                  )}
-
-                  {giftError && (
-                    <p className="sm:col-span-3 text-[11px] font-bold text-rose-600">
-                      ⚠️ {giftError}
-                    </p>
-                  )}
-
-                  <div className="sm:col-span-3 flex flex-col-reverse items-stretch justify-end gap-2 pt-1 sm:flex-row sm:items-center">
-                    {String(invForm.mesa_regalos_url || "").trim() && (
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          setGiftError("");
-                          setInvForm((prev) => ({
-                            ...prev,
-                            mesa_regalos_url: "",
-                          }));
-                          if (evento.idevento) {
-                            await handleSaveEvento(null, {
-                              mesa_regalos_url: "",
-                            });
-                          }
-                        }}
-                        className="w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-center text-[11px] font-bold text-rose-600 transition hover:bg-rose-100 sm:w-auto"
-                      >
-                        🗑️ Quitar Link
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        let urlClean = String(
-                          invForm.mesa_regalos_url || ""
-                        ).trim();
-                        if (!urlClean) {
-                          setGiftError(
-                            "Por favor pega el enlace (URL) del carrito de compras o lista de regalos."
-                          );
-                          return;
-                        }
-                        if (!/^https?:\/\//i.test(urlClean)) {
-                          urlClean = `https://${urlClean}`;
-                        }
-                        const tiendaFinal =
-                          detectStoreFromUrl(urlClean) ||
-                          invForm.mesa_regalos_tienda ||
-                          "Amazon";
-                        setGiftError("");
-                        setInvForm((prev) => ({
-                          ...prev,
-                          mesa_regalos_url: urlClean,
-                          mesa_regalos_tienda: tiendaFinal,
-                        }));
-                        await handleSaveEvento(null, {
-                          mesa_regalos_habilitada: true,
-                          mesa_regalos_tienda: tiendaFinal,
-                          mesa_regalos_url: urlClean,
-                        });
-                      }}
-                      className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-center text-[11px] font-extrabold text-white shadow-2xs transition hover:bg-[#5A6CD0] sm:w-auto sm:py-2"
-                    >
-                      💾 Guardar Link del Carrito
-                    </button>
-                  </div>
-                </div>
-
-                {/* Vista previa del link configurado */}
-                {String(invForm.mesa_regalos_url || "").trim() ? (
-                  (() => {
-                    const tiendaActual =
-                      invForm.mesa_regalos_tienda ||
-                      detectStoreFromUrl(invForm.mesa_regalos_url) ||
-                      "Amazon";
-                    const meta = getTiendaMeta(tiendaActual);
-                    const hrefUrl = /^https?:\/\//i.test(
-                      invForm.mesa_regalos_url.trim()
-                    )
-                      ? invForm.mesa_regalos_url.trim()
-                      : `https://${invForm.mesa_regalos_url.trim()}`;
-                    return (
-                      <div className="flex min-w-0 flex-col justify-between gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 shadow-2xs sm:flex-row sm:items-center">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span
-                              className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-extrabold ${meta.lightBadgeClass}`}
-                            >
-                              {meta.icon} {tiendaActual}
-                            </span>
-                            <strong className="min-w-0 max-w-full truncate text-xs font-extrabold text-[#2D3047]">
-                              Carrito / Mesa de Regalos del Anfitrión
-                            </strong>
-                          </div>
-                          <a
-                            href={hrefUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1 block max-w-full truncate font-mono text-[10px] font-semibold text-[#6C7EE1] hover:underline"
-                          >
-                            {hrefUrl} ↗
-                          </a>
-                        </div>
-                        <a
-                          href={hrefUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full shrink-0 rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-1.5 text-center text-[10px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1] sm:w-auto"
-                        >
-                          Probar Link ↗
-                        </a>
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <p className="rounded-xl border border-dashed border-[#DCE0F0] bg-white/70 p-3 text-center text-[11px] text-[#8E94A9]">
-                    Pega aquí el enlace único de tu carrito de compras o lista
-                    de regalos (por ejemplo de Amazon o Mercado Libre) para que
-                    tus invitados accedan directamente desde la invitación.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Configuración de Ubicación del Evento con Google Maps */}
-            <div className="space-y-3 rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
-                    📍 UBICACIÓN EN LA TARJETA DE INVITACIÓN
-                  </span>
-                  <h4 className="text-xs font-extrabold text-[#2D3047]">
-                    Configurar Salón / Dirección con Google Maps
-                  </h4>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!navigator.geolocation) {
-                        showNotice("Tu navegador no soporta geolocalización.");
-                        return;
-                      }
-                      navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                          const coords = `${pos.coords.latitude.toFixed(
-                            6
-                          )}, ${pos.coords.longitude.toFixed(6)}`;
-                          setInvForm((prev) => ({
-                            ...prev,
-                            direccion: coords,
-                          }));
-                          showNotice(
-                            "✓ Coordenadas GPS aplicadas al mapa de la invitación."
-                          );
-                        },
-                        () => {
-                          showNotice(
-                            "No se pudo obtener el GPS. Escribe la dirección o pega el enlace de Google Maps."
-                          );
-                        }
-                      );
-                    }}
-                    className="rounded-lg border border-[#DCE0F0] bg-white px-2.5 py-1 text-[10px] font-bold text-[#2D3047] shadow-2xs transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
-                  >
-                    🎯 Usar mi GPS
-                  </button>
-                  <a
-                    href={mapLocation.externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-[#6C7EE1]/15 px-2.5 py-1 text-[10px] font-bold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
-                  >
-                    🗺️ Abrir Google Maps ↗
-                  </a>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                <div className="min-w-0">
-                  <label className="mb-1 block text-[8.5px] font-bold uppercase tracking-wider text-[#5B617A]">
-                    Estado
-                  </label>
-                  <select
-                    value={invForm.estado_evento || "Ningúno"}
-                    onChange={(e) => {
-                      const nuevoEstado = e.target.value;
-                      if (nuevoEstado === "Ningúno") {
-                        setInvForm((prev) => ({
-                          ...prev,
-                          estado_evento: "Ningúno",
-                          municipio: "Ningúno",
-                        }));
-                      } else {
-                        const listaMun =
-                          catalogosMexico.municipiosPorEstado?.[nuevoEstado] ||
-                          [];
-                        setInvForm((prev) => ({
-                          ...prev,
-                          estado_evento: nuevoEstado,
-                          municipio: listaMun[0] || "Ningúno",
-                        }));
-                      }
-                    }}
-                    className="h-[26px] w-full max-w-full truncate rounded-lg border border-[#DCE0F0] bg-[#f7f8fc] px-2.5 py-0.5 text-[9px] font-semibold leading-tight text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                  >
-                    <option value="Ningúno" className="text-[9px]">
-                      Ningúno
-                    </option>
-                    {(catalogosMexico.estados || []).map((est) => (
-                      <option
-                        key={est.key}
-                        value={est.nombre}
-                        className="text-[9px]"
-                      >
-                        {est.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="min-w-0">
-                  <label className="mb-1 block text-[8.5px] font-bold uppercase tracking-wider text-[#5B617A]">
-                    Municipio
-                  </label>
-                  <select
-                    value={
-                      !invForm.estado_evento ||
-                      invForm.estado_evento === "Ningúno"
-                        ? "Ningúno"
-                        : invForm.municipio || "Ningúno"
-                    }
-                    disabled={
-                      !invForm.estado_evento ||
-                      invForm.estado_evento === "Ningúno"
-                    }
-                    onChange={(e) =>
-                      setInvForm((prev) => ({
-                        ...prev,
-                        municipio: e.target.value,
-                      }))
-                    }
-                    className="h-[26px] w-full max-w-full truncate rounded-lg border border-[#DCE0F0] bg-[#f7f8fc] px-2.5 py-0.5 text-[9px] font-semibold leading-tight text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#f7f8fc]/75 disabled:text-[#2D3047]/50"
-                  >
-                    {!invForm.estado_evento ||
-                    invForm.estado_evento === "Ningúno" ? (
-                      <option value="Ningúno" className="text-[9px]">
-                        Ningúno
-                      </option>
-                    ) : (
-                      (
-                        catalogosMexico.municipiosPorEstado?.[
-                          invForm.estado_evento
-                        ] || []
-                      ).map((mun) => (
-                        <option key={mun} value={mun} className="text-[9px]">
-                          {mun}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
-                    Nombre del Salón, Jardín o Recinto
-                  </label>
-                  <input
-                    type="text"
-                    value={invForm.lugar || ""}
-                    onChange={(e) =>
-                      setInvForm((prev) => ({ ...prev, lugar: e.target.value }))
-                    }
-                    placeholder="Ej. Salón Jardín Imperial / Hacienda Los Morales"
-                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="mb-1 block text-[11px] font-extrabold text-[#D9483B]">
-                    Dirección Exacta, Coordenadas o Enlace de Google Maps
-                  </label>
-                  <input
-                    type="text"
-                    value={invForm.direccion || ""}
-                    onChange={(e) =>
-                      setInvForm((prev) => ({
-                        ...prev,
-                        direccion: e.target.value,
-                      }))
-                    }
-                    placeholder="Ej. Av. Paseo de la Reforma 500, CDMX o pega el link de Google Maps"
-                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-semibold text-[#0F172A] placeholder:font-normal placeholder:text-[#64748B] outline-none focus:border-[#6C7EE1]"
-                  />
-                </div>
-              </div>
-
-              {/* Mapa Interactivo de Google Maps en Vivo */}
-              <div className="overflow-hidden rounded-xl border border-[#DCE0F0] bg-white shadow-2xs">
-                <iframe
-                  title="Vista previa de ubicación en Google Maps"
-                  src={mapLocation.embedUrl}
-                  className="h-40 w-full border-0"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
+                <input
+                  type="text"
+                  value={invForm.codigo_vestimenta || ""}
+                  onChange={(e) =>
+                    setInvForm((prev) => ({
+                      ...prev,
+                      codigo_vestimenta: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
                 />
               </div>
             </div>
@@ -4472,7 +3862,7 @@ function GestorEvento({
                       >
                         {isPreviewFechaLimiteVencida
                           ? "⏳ FECHA DE CONFIRMACIÓN CADUCADA"
-                          : invForm.texto_boton_rsvp || "Confirmar Asistencia"}
+                          : "Confirmar Asistencia"}
                       </button>
                     </div>
                   </div>
@@ -4704,7 +4094,7 @@ function GestorEvento({
                         >
                           {isPreviewFechaLimiteVencida
                             ? "⏳ FECHA DE CONFIRMACIÓN CADUCADA"
-                            : invForm.texto_boton_rsvp || "Confirmar Asistencia"}
+                            : "Confirmar Asistencia"}
                         </button>
                         <a
                           href={mapLocation.externalUrl}
@@ -5294,6 +4684,681 @@ function GestorEvento({
       )}
 
       {/* =====================================================================
+          PESTAÑA: 🛠️ CONFIGURACIÓN (/events/[id]/config)
+         ===================================================================== */}
+      {currentTab === "config" && (
+        <div className="w-full space-y-6">
+          <form
+            onSubmit={handleSaveEvento}
+            className="w-full space-y-5 rounded-2xl border border-[#E6E9F4] bg-white p-4 shadow-xs sm:p-6"
+          >
+            <div className="flex items-center justify-between border-b border-[#E6E9F4] pb-3">
+              <div>
+                <h3 className="font-display text-xl font-bold uppercase tracking-wide text-[#2D3047] sm:text-2xl">
+                  🛠️ Configuración del Evento
+                </h3>
+                <p className="mt-0.5 text-xs text-[#5B617A]">
+                  Configura la fecha límite de confirmación, límite de invitados permitidos, acceso QR, mesa de regalos y ubicación del evento.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* 1. Fecha Límite de Confirmación al Evento */}
+              <div className="flex flex-col justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4 sm:col-span-2">
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="text-sm font-bold text-[#2D3047]">
+                      ⏳ Fecha Límite de Confirmación al Evento
+                    </h4>
+                    <span
+                      className={`rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider ${
+                        invForm.fecha_limite_rsvp_activa
+                          ? "bg-amber-500/15 text-amber-700"
+                          : "bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {invForm.fecha_limite_rsvp_activa
+                        ? `🟢 Activa (${invForm.fecha_limite_rsvp || "Sin fecha"})`
+                        : "⚪ Sin Fecha Límite"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-[#8E94A9]">
+                    Asigna una fecha límite para que tus invitados confirmen
+                    su asistencia. Cuando pase la fecha límite, el sistema ya
+                    no permitirá confirmar y mostrará que la fecha de
+                    confirmación ya caducó.
+                  </p>
+                </div>
+
+                <div className="mt-3.5 grid grid-cols-1 items-end gap-3 sm:grid-cols-2 md:grid-cols-12">
+                  <div className="sm:col-span-2 md:col-span-6">
+                    <label
+                      className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-xs font-extrabold transition select-none ${
+                        invForm.fecha_limite_rsvp_activa
+                          ? "border-[#6C7EE1] bg-[#6C7EE1] text-white shadow-2xs"
+                          : "border-[#DCE0F0] bg-white text-[#2D3047] hover:border-[#6C7EE1]"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={Boolean(invForm.fecha_limite_rsvp_activa)}
+                        onChange={async (e) => {
+                          const checked = e.target.checked;
+                          const nextFecha = checked
+                            ? invForm.fecha_limite_rsvp ||
+                              invForm.fecha_evento ||
+                              ""
+                            : "";
+                          setInvForm((prev) => ({
+                            ...prev,
+                            fecha_limite_rsvp_activa: checked,
+                            fecha_limite_rsvp: nextFecha,
+                          }));
+                          if (evento.idevento) {
+                            await handleSaveEvento(null, {
+                              fecha_limite_rsvp_activa: checked,
+                              fecha_limite_rsvp: nextFecha,
+                            });
+                          }
+                        }}
+                        className="h-4 w-4 shrink-0 cursor-pointer accent-[#2D3047]"
+                      />
+                      <span>
+                        Asignar Fecha Límite de confirmación al Evento
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="sm:col-span-1 md:col-span-3">
+                    <label className="mb-1 block text-[10px] font-bold uppercase text-[#5B617A]">
+                      Fecha Límite
+                    </label>
+                    <input
+                      type="date"
+                      max={invForm.fecha_evento || undefined}
+                      disabled={!invForm.fecha_limite_rsvp_activa}
+                      value={
+                        invForm.fecha_limite_rsvp_activa
+                          ? invForm.fecha_limite_rsvp || ""
+                          : ""
+                      }
+                      onChange={async (e) => {
+                        const nextDate = e.target.value;
+                        setInvForm((prev) => ({
+                          ...prev,
+                          fecha_limite_rsvp: nextDate,
+                        }));
+                        if (
+                          evento.idevento &&
+                          /^\d{4}-\d{2}-\d{2}$/.test(nextDate)
+                        ) {
+                          await handleSaveEvento(null, {
+                            fecha_limite_rsvp_activa: true,
+                            fecha_limite_rsvp: nextDate,
+                          });
+                        }
+                      }}
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#EAECEF] disabled:text-[#8E94A9] disabled:opacity-60"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-1 md:col-span-3">
+                    <button
+                      type="button"
+                      disabled={!invForm.fecha_limite_rsvp_activa}
+                      onClick={async () => {
+                        if (!invForm.fecha_limite_rsvp) {
+                          showNotice(
+                            "Selecciona la fecha límite de confirmación."
+                          );
+                          return;
+                        }
+                        await handleSaveEvento(null, {
+                          fecha_limite_rsvp_activa: true,
+                          fecha_limite_rsvp: invForm.fecha_limite_rsvp,
+                        });
+                      }}
+                      className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-white transition hover:bg-[#5A6CD0] disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      💾 Guardar Fecha
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Número de Invitados Permitidos (Límite del Evento) */}
+              <div className="sm:col-span-2">
+                <label className="mb-1 flex flex-wrap items-center justify-between gap-1 text-xs font-semibold text-[#0d23ad]">
+                  <span style={{ color: "#0d23ad" }}>
+                    👥 Número de Invitados Permitidos (Límite del Evento)
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                      isGuestLimitExceeded
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-emerald-100 text-emerald-700"
+                    }`}
+                  >
+                    {isGuestLimitExceeded
+                      ? `⚠️ Superado: ${totalInvitadosCount} invitados registrados / ${totalPasesLista} lugares`
+                      : `✓ En lista ahora: ${totalInvitadosCount} invitados registrados / ${totalPasesLista} lugares`}
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={invForm.capacidad ?? evento.capacidad ?? 100}
+                  onChange={(e) =>
+                    setInvForm((prev) => ({
+                      ...prev,
+                      capacidad: e.target.value,
+                    }))
+                  }
+                  placeholder="Ej. 100"
+                  className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-2 text-xs font-bold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                />
+                <span className="mt-1 block text-[11px] text-[#8E94A9]">
+                  Si al compartir las invitaciones virtuales por WhatsApp o Correo se sobrepasa este número, el sistema mostrará una advertencia.
+                </span>
+              </div>
+
+              {/* 5. ¿Confirmar Acceso el día del evento? */}
+              <div className="sm:col-span-2">
+                <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-3 text-xs transition hover:border-[#6C7EE1]">
+                  <div>
+                    <span className="block font-bold text-[#2D3047]">
+                      🔳 ¿Confirmar Acceso el día del evento?
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-[#8E94A9]">
+                      Si está activado, al invitado se le mostrará un Código QR
+                      después de confirmar su asistencia en la invitación virtual.
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(
+                      invForm.confirmar_acceso_qr ??
+                        invForm.permitir_acompanantes ??
+                        true
+                    )}
+                    onChange={async (e) => {
+                      const checked = e.target.checked;
+                      setInvForm((prev) => ({
+                        ...prev,
+                        confirmar_acceso_qr: checked,
+                        permitir_acompanantes: checked,
+                      }));
+                      if (evento.idevento) {
+                        await handleSaveEvento(null, {
+                          confirmar_acceso_qr: checked,
+                          permitir_acompanantes: checked,
+                        });
+                      }
+                    }}
+                    className="h-4 w-4 shrink-0 cursor-pointer accent-[#6C7EE1]"
+                  />
+                </label>
+              </div>
+
+              {/* 6. ¿Tu evento tendrá Mesa de Regalos? */}
+              <div className="sm:col-span-2">
+                <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3.5 py-3 text-xs transition hover:border-[#6C7EE1]">
+                  <div>
+                    <span className="block font-bold text-[#2D3047]">
+                      🎁 ¿Tu evento tendrá Mesa de Regalos?
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-[#8E94A9]">
+                      Activa esta opción para agregar un único link al carrito
+                      de compras o lista de regalos del anfitrión (Amazon,
+                      Mercado Libre, IKEA, Liverpool, etc.) y mostrarlo en tu
+                      invitación digital.
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(invForm.mesa_regalos_habilitada)}
+                    onChange={async (e) => {
+                      const checked = e.target.checked;
+                      setInvForm((prev) => ({
+                        ...prev,
+                        mesa_regalos_habilitada: checked,
+                      }));
+                      if (evento.idevento) {
+                        await handleSaveEvento(null, {
+                          mesa_regalos_habilitada: checked,
+                        });
+                      }
+                    }}
+                    className="h-4 w-4 shrink-0 cursor-pointer accent-[#6C7EE1]"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Panel de Mesa de Regalos: Link único del Carrito / Lista del Anfitrión */}
+            {Boolean(invForm.mesa_regalos_habilitada) && (
+              <div className="space-y-3.5 rounded-2xl border border-[#6C7EE1]/35 bg-[#F7F8FC] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
+                      🎁 LINK DE MESA DE REGALOS / CARRITO DEL ANFITRIÓN
+                    </span>
+                    <h4 className="text-xs font-extrabold text-[#2D3047]">
+                      Agrega el enlace del carrito de compras o lista de regalos
+                      (Amazon, Mercado Libre, IKEA, Liverpool, etc.)
+                    </h4>
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
+                      String(invForm.mesa_regalos_url || "").trim()
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-[#6C7EE1]/15 text-[#6C7EE1]"
+                    }`}
+                  >
+                    {String(invForm.mesa_regalos_url || "").trim()
+                      ? "✓ Link configurado"
+                      : "Pendiente de link"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 sm:grid-cols-3">
+                  <div className="min-w-0">
+                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                      Tienda del Carrito / Lista
+                    </label>
+                    <select
+                      value={
+                        TIENDAS_MESA_REGALOS.includes(
+                          invForm.mesa_regalos_tienda || "Amazon"
+                        )
+                          ? invForm.mesa_regalos_tienda || "Amazon"
+                          : "Otra tienda"
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInvForm((prev) => ({
+                          ...prev,
+                          mesa_regalos_tienda:
+                            val === "Otra tienda" ? "Tienda Externa" : val,
+                        }));
+                      }}
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    >
+                      {TIENDAS_MESA_REGALOS.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="min-w-0 sm:col-span-2">
+                    <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                      Link del Carrito de Compras o Mesa de Regalos del Anfitrión *
+                    </label>
+                    <input
+                      type="url"
+                      value={invForm.mesa_regalos_url || ""}
+                      onChange={(e) => {
+                        if (giftError) setGiftError("");
+                        const nextUrl = e.target.value;
+                        const detected = detectStoreFromUrl(nextUrl);
+                        setInvForm((prev) => ({
+                          ...prev,
+                          mesa_regalos_url: nextUrl,
+                          mesa_regalos_tienda:
+                            detected || prev.mesa_regalos_tienda || "Amazon",
+                        }));
+                      }}
+                      placeholder="https://www.amazon.com.mx/... o link del carrito de Mercado Libre..."
+                      className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                    />
+                  </div>
+
+                  {!TIENDAS_MESA_REGALOS.slice(0, -1).includes(
+                    invForm.mesa_regalos_tienda || "Amazon"
+                  ) && (
+                    <div className="sm:col-span-3">
+                      <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                        Nombre personalizado de la Tienda
+                      </label>
+                      <input
+                        type="text"
+                        value={
+                          invForm.mesa_regalos_tienda === "Otra tienda"
+                            ? ""
+                            : invForm.mesa_regalos_tienda || ""
+                        }
+                        onChange={(e) =>
+                          setInvForm((prev) => ({
+                            ...prev,
+                            mesa_regalos_tienda: e.target.value,
+                          }))
+                        }
+                        placeholder="Ej. Zara Home, Sephora, Costco..."
+                        className="w-full rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                      />
+                    </div>
+                  )}
+
+                  {giftError && (
+                    <p className="sm:col-span-3 text-[11px] font-bold text-rose-600">
+                      ⚠️ {giftError}
+                    </p>
+                  )}
+
+                  <div className="sm:col-span-3 flex flex-col-reverse items-stretch justify-end gap-2 pt-1 sm:flex-row sm:items-center">
+                    {String(invForm.mesa_regalos_url || "").trim() && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setGiftError("");
+                          setInvForm((prev) => ({
+                            ...prev,
+                            mesa_regalos_url: "",
+                          }));
+                          if (evento.idevento) {
+                            await handleSaveEvento(null, {
+                              mesa_regalos_url: "",
+                            });
+                          }
+                        }}
+                        className="w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-center text-[11px] font-bold text-rose-600 transition hover:bg-rose-100 sm:w-auto"
+                      >
+                        🗑️ Quitar Link
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        let urlClean = String(
+                          invForm.mesa_regalos_url || ""
+                        ).trim();
+                        if (!urlClean) {
+                          setGiftError(
+                            "Por favor pega el enlace (URL) del carrito de compras o lista de regalos."
+                          );
+                          return;
+                        }
+                        if (!/^https?:\/\//i.test(urlClean)) {
+                          urlClean = `https://${urlClean}`;
+                        }
+                        const tiendaFinal =
+                          detectStoreFromUrl(urlClean) ||
+                          invForm.mesa_regalos_tienda ||
+                          "Amazon";
+                        setGiftError("");
+                        setInvForm((prev) => ({
+                          ...prev,
+                          mesa_regalos_url: urlClean,
+                          mesa_regalos_tienda: tiendaFinal,
+                        }));
+                        await handleSaveEvento(null, {
+                          mesa_regalos_habilitada: true,
+                          mesa_regalos_tienda: tiendaFinal,
+                          mesa_regalos_url: urlClean,
+                        });
+                      }}
+                      className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-center text-[11px] font-extrabold text-white shadow-2xs transition hover:bg-[#5A6CD0] sm:w-auto sm:py-2"
+                    >
+                      💾 Guardar Link del Carrito
+                    </button>
+                  </div>
+                </div>
+
+                {/* Vista previa del link configurado */}
+                {String(invForm.mesa_regalos_url || "").trim() ? (
+                  (() => {
+                    const tiendaActual =
+                      invForm.mesa_regalos_tienda ||
+                      detectStoreFromUrl(invForm.mesa_regalos_url) ||
+                      "Amazon";
+                    const meta = getTiendaMeta(tiendaActual);
+                    const hrefUrl = /^https?:\/\//i.test(
+                      invForm.mesa_regalos_url.trim()
+                    )
+                      ? invForm.mesa_regalos_url.trim()
+                      : `https://${invForm.mesa_regalos_url.trim()}`;
+                    return (
+                      <div className="flex min-w-0 flex-col justify-between gap-2.5 rounded-xl border border-[#DCE0F0] bg-white p-3 shadow-2xs sm:flex-row sm:items-center">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-extrabold ${meta.lightBadgeClass}`}
+                            >
+                              {meta.icon} {tiendaActual}
+                            </span>
+                            <strong className="min-w-0 max-w-full truncate text-xs font-extrabold text-[#2D3047]">
+                              Carrito / Mesa de Regalos del Anfitrión
+                            </strong>
+                          </div>
+                          <a
+                            href={hrefUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 block max-w-full truncate font-mono text-[10px] font-semibold text-[#6C7EE1] hover:underline"
+                          >
+                            {hrefUrl} ↗
+                          </a>
+                        </div>
+                        <a
+                          href={hrefUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full shrink-0 rounded-lg border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-1.5 text-center text-[10px] font-bold text-[#2D3047] transition hover:border-[#6C7EE1] hover:text-[#6C7EE1] sm:w-auto"
+                        >
+                          Probar Link ↗
+                        </a>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <p className="rounded-xl border border-dashed border-[#DCE0F0] bg-white/70 p-3 text-center text-[11px] text-[#8E94A9]">
+                    Pega aquí el enlace único de tu carrito de compras o lista
+                    de regalos (por ejemplo de Amazon o Mercado Libre) para que
+                    tus invitados accedan directamente desde la invitación.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 7. Configuración de Ubicación del Evento con Google Maps */}
+            <div className="space-y-3 rounded-2xl border border-[#DCE0F0] bg-[#F7F8FC] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
+                    📍 UBICACIÓN EN LA TARJETA DE INVITACIÓN
+                  </span>
+                  <h4 className="text-xs font-extrabold text-[#2D3047]">
+                    Configurar Salón / Dirección con Google Maps
+                  </h4>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!navigator.geolocation) {
+                        showNotice("Tu navegador no soporta geolocalización.");
+                        return;
+                      }
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          const coords = `${pos.coords.latitude.toFixed(
+                            6
+                          )}, ${pos.coords.longitude.toFixed(6)}`;
+                          setInvForm((prev) => ({
+                            ...prev,
+                            direccion: coords,
+                          }));
+                          showNotice(
+                            "✓ Coordenadas GPS aplicadas al mapa de la invitación."
+                          );
+                        },
+                        () => {
+                          showNotice(
+                            "No se pudo obtener el GPS. Escribe la dirección o pega el enlace de Google Maps."
+                          );
+                        }
+                      );
+                    }}
+                    className="rounded-lg border border-[#DCE0F0] bg-white px-2.5 py-1 text-[10px] font-bold text-[#2D3047] shadow-2xs transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                  >
+                    🎯 Usar mi GPS
+                  </button>
+                  <a
+                    href={mapLocation.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-[#6C7EE1]/15 px-2.5 py-1 text-[10px] font-bold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
+                  >
+                    🗺️ Abrir Google Maps ↗
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-[#5B617A]">
+                    Estado
+                  </label>
+                  <select
+                    value={invForm.estado_evento || "Ningúno"}
+                    onChange={(e) => {
+                      const nuevoEstado = e.target.value;
+                      if (nuevoEstado === "Ningúno") {
+                        setInvForm((prev) => ({
+                          ...prev,
+                          estado_evento: "Ningúno",
+                          municipio: "Ningúno",
+                        }));
+                      } else {
+                        const listaMun =
+                          catalogosMexico.municipiosPorEstado?.[nuevoEstado] ||
+                          [];
+                        setInvForm((prev) => ({
+                          ...prev,
+                          estado_evento: nuevoEstado,
+                          municipio: listaMun[0] || "Ningúno",
+                        }));
+                      }
+                    }}
+                    className="w-full max-w-full truncate rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                  >
+                    <option value="Ningúno">
+                      Ningúno
+                    </option>
+                    {(catalogosMexico.estados || []).map((est) => (
+                      <option
+                        key={est.key}
+                        value={est.nombre}
+                      >
+                        {est.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="min-w-0">
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-[#5B617A]">
+                    Municipio
+                  </label>
+                  <select
+                    value={
+                      !invForm.estado_evento ||
+                      invForm.estado_evento === "Ningúno"
+                        ? "Ningúno"
+                        : invForm.municipio || "Ningúno"
+                    }
+                    disabled={
+                      !invForm.estado_evento ||
+                      invForm.estado_evento === "Ningúno"
+                    }
+                    onChange={(e) =>
+                      setInvForm((prev) => ({
+                        ...prev,
+                        municipio: e.target.value,
+                      }))
+                    }
+                    className="w-full max-w-full truncate rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-semibold text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#EAECEF] disabled:text-[#8E94A9]"
+                  >
+                    {!invForm.estado_evento ||
+                    invForm.estado_evento === "Ningúno" ? (
+                      <option value="Ningúno">
+                        Ningúno
+                      </option>
+                    ) : (
+                      (
+                        catalogosMexico.municipiosPorEstado?.[
+                          invForm.estado_evento
+                        ] || []
+                      ).map((mun) => (
+                        <option key={mun} value={mun}>
+                          {mun}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-[11px] font-semibold text-[#5B617A]">
+                    Nombre del Salón, Jardín o Recinto
+                  </label>
+                  <input
+                    type="text"
+                    value={invForm.lugar || ""}
+                    onChange={(e) =>
+                      setInvForm((prev) => ({ ...prev, lugar: e.target.value }))
+                    }
+                    placeholder="Ej. Salón Jardín Imperial / Hacienda Los Morales"
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-[11px] font-extrabold text-[#D9483B]">
+                    Dirección Exacta, Coordenadas o Enlace de Google Maps
+                  </label>
+                  <input
+                    type="text"
+                    value={invForm.direccion || ""}
+                    onChange={(e) =>
+                      setInvForm((prev) => ({
+                        ...prev,
+                        direccion: e.target.value,
+                      }))
+                    }
+                    placeholder="Ej. Av. Paseo de la Reforma 500, CDMX o pega el link de Google Maps"
+                    className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-semibold text-[#0F172A] placeholder:font-normal placeholder:text-[#64748B] outline-none focus:border-[#6C7EE1]"
+                  />
+                </div>
+              </div>
+
+              {/* Mapa Interactivo de Google Maps en Vivo */}
+              <div className="overflow-hidden rounded-xl border border-[#DCE0F0] bg-white shadow-2xs">
+                <iframe
+                  title="Vista previa de ubicación en Google Maps"
+                  src={mapLocation.embedUrl}
+                  className="h-40 w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full cursor-pointer rounded-xl bg-gradient-to-r from-[#6C7EE1] to-[#535398] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-[0_8px_20px_rgba(108,126,225,0.3)] transition hover:opacity-95"
+            >
+              💾 Guardar Configuración del Evento
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* =====================================================================
           TAB B: 👥 LISTA DE INVITADOS Y RSVP (/events/[id]/guests)
          ===================================================================== */}
       {currentTab === "guests" && (
@@ -5323,10 +5388,10 @@ function GestorEvento({
               </div>
               <button
                 type="button"
-                onClick={() => onChangeSubTab("settings")}
+                onClick={() => onChangeSubTab("config")}
                 className="shrink-0 cursor-pointer rounded-xl bg-[#2D3047] px-3.5 py-2 text-[11px] font-extrabold text-white transition hover:bg-[#1E2030]"
               >
-                ⚙️ Ajustar Límite ({limiteInvitadosPermitidos})
+                🛠️ Ajustar Límite ({limiteInvitadosPermitidos})
               </button>
             </div>
           )}
@@ -6767,7 +6832,7 @@ function GestorEvento({
                   <span
                     className={`mt-3 inline-block rounded-lg px-4 py-1.5 text-[10px] font-bold uppercase ${activeEmailTemplate.buttonClass}`}
                   >
-                    {invForm.texto_boton_rsvp || "Confirmar Asistencia"}
+                    Confirmar Asistencia
                   </span>
                 </div>
               </div>
@@ -7214,8 +7279,7 @@ function GestorEvento({
                                 rel="noopener noreferrer"
                                 className={`inline-block rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-wider shadow-lg transition hover:opacity-90 ${activeEmailTemplate.buttonClass}`}
                               >
-                                {invForm.texto_boton_rsvp ||
-                                  "Confirmar Asistencia"}
+                                Confirmar Asistencia
                               </a>
                             </div>
 
@@ -8529,129 +8593,6 @@ function GestorEvento({
               </h3>
 
               <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {/* 0. Fecha Límite de Confirmación al Evento */}
-                <div className="flex flex-col justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4 sm:col-span-2">
-                  <div>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h4 className="text-sm font-bold text-[#2D3047]">
-                        ⏳ Fecha Límite de Confirmación al Evento
-                      </h4>
-                      <span
-                        className={`rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider ${
-                          invForm.fecha_limite_rsvp_activa
-                            ? "bg-amber-500/15 text-amber-700"
-                            : "bg-slate-200 text-slate-600"
-                        }`}
-                      >
-                        {invForm.fecha_limite_rsvp_activa
-                          ? `🟢 Activa (${invForm.fecha_limite_rsvp || "Sin fecha"})`
-                          : "⚪ Sin Fecha Límite"}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-[#8E94A9]">
-                      Asigna una fecha límite para que tus invitados confirmen
-                      su asistencia. Cuando pase la fecha límite, el sistema ya
-                      no permitirá confirmar y mostrará que la fecha de
-                      confirmación ya caducó.
-                    </p>
-                  </div>
-
-                  <div className="mt-3.5 grid grid-cols-1 items-end gap-3 sm:grid-cols-12">
-                    <div className="sm:col-span-6">
-                      <label
-                        className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-xs font-extrabold transition select-none ${
-                          invForm.fecha_limite_rsvp_activa
-                            ? "border-[#6C7EE1] bg-[#6C7EE1] text-white shadow-2xs"
-                            : "border-[#DCE0F0] bg-white text-[#2D3047] hover:border-[#6C7EE1]"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={Boolean(invForm.fecha_limite_rsvp_activa)}
-                          onChange={async (e) => {
-                            const checked = e.target.checked;
-                            const nextFecha = checked
-                              ? invForm.fecha_limite_rsvp ||
-                                invForm.fecha_evento ||
-                                ""
-                              : "";
-                            setInvForm((prev) => ({
-                              ...prev,
-                              fecha_limite_rsvp_activa: checked,
-                              fecha_limite_rsvp: nextFecha,
-                            }));
-                            if (evento.idevento) {
-                              await handleSaveEvento(null, {
-                                fecha_limite_rsvp_activa: checked,
-                                fecha_limite_rsvp: nextFecha,
-                              });
-                            }
-                          }}
-                          className="h-4 w-4 shrink-0 cursor-pointer accent-[#2D3047]"
-                        />
-                        <span>
-                          Asignar Fecha Límite de confirmación al Evento
-                        </span>
-                      </label>
-                    </div>
-
-                    <div className="sm:col-span-3">
-                      <label className="mb-1 block text-[10px] font-bold uppercase text-[#5B617A]">
-                        Fecha Límite
-                      </label>
-                      <input
-                        type="date"
-                        max={invForm.fecha_evento || undefined}
-                        disabled={!invForm.fecha_limite_rsvp_activa}
-                        value={
-                          invForm.fecha_limite_rsvp_activa
-                            ? invForm.fecha_limite_rsvp || ""
-                            : ""
-                        }
-                        onChange={async (e) => {
-                          const nextDate = e.target.value;
-                          setInvForm((prev) => ({
-                            ...prev,
-                            fecha_limite_rsvp: nextDate,
-                          }));
-                          if (
-                            evento.idevento &&
-                            /^\d{4}-\d{2}-\d{2}$/.test(nextDate)
-                          ) {
-                            await handleSaveEvento(null, {
-                              fecha_limite_rsvp_activa: true,
-                              fecha_limite_rsvp: nextDate,
-                            });
-                          }
-                        }}
-                        className="w-full rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1] disabled:cursor-not-allowed disabled:bg-[#EAECEF] disabled:text-[#8E94A9] disabled:opacity-60"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-3">
-                      <button
-                        type="button"
-                        disabled={!invForm.fecha_limite_rsvp_activa}
-                        onClick={async () => {
-                          if (!invForm.fecha_limite_rsvp) {
-                            showNotice(
-                              "Selecciona la fecha límite de confirmación."
-                            );
-                            return;
-                          }
-                          await handleSaveEvento(null, {
-                            fecha_limite_rsvp_activa: true,
-                            fecha_limite_rsvp: invForm.fecha_limite_rsvp,
-                          });
-                        }}
-                        className="w-full rounded-xl bg-[#6C7EE1] px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-white transition hover:bg-[#5A6CD0] disabled:cursor-not-allowed disabled:opacity-45"
-                      >
-                        💾 Guardar Fecha
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
                 {/* 1. Pausar / Reanudar respuestas RSVP */}
                 <div className="flex flex-col justify-between rounded-xl border border-[#E6E9F4] bg-[#F7F8FC] p-4">
                   <div>

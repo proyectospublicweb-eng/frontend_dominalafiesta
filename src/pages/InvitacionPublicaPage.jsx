@@ -1030,7 +1030,7 @@ function InvitacionPublicaPage() {
                     ? "CONFIRMACIONES CERRADAS"
                     : isFechaLimiteVencida
                     ? "⏳ FECHA DE CONFIRMACIÓN CADUCADA"
-                    : evento.texto_boton_rsvp || "CONFIRMAR ASISTENCIA"}
+                    : "Confirmar Asistencia"}
                 </button>
               )}
 
