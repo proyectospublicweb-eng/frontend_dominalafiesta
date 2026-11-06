@@ -1,5 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  Calendar,
+  Home,
+  LogOut,
+  MailOpen,
+  Menu,
+  MoreVertical,
+  Plus,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
   getEventosRequest,
@@ -344,12 +357,12 @@ function HomePage() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen(false)}
-                className="text-sm font-bold lg:hidden"
+                className="flex items-center justify-center text-sm font-bold lg:hidden"
                 aria-label="Cerrar menú"
               >
-                ✕
+                <X className="h-4 w-4 stroke-[2.2]" />
               </button>
-              <span className="hidden text-sm font-bold lg:inline">⋮</span>
+              <MoreVertical className="hidden h-4 w-4 stroke-[2.2] lg:inline" />
             </div>
           </div>
 
@@ -367,8 +380,9 @@ function HomePage() {
                     {user?.username || "Organizador"}
                   </p>
                   {user?.isAdmin && (
-                    <span className="shrink-0 rounded-md bg-[#4CE0B3]/20 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#4CE0B3]">
-                      🛡️ Admin
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-[#4CE0B3]/20 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#4CE0B3]">
+                      <ShieldCheck className="h-3 w-3 stroke-[2.2]" />
+                      <span>Admin</span>
                     </span>
                   )}
                 </div>
@@ -384,6 +398,7 @@ function HomePage() {
               onClick={logout}
               className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#6C7EE1] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#5A6CD0]"
             >
+              <LogOut className="h-3.5 w-3.5 stroke-[2]" />
               <span>Cerrar Sesión</span>
             </button>
           </div>
@@ -406,10 +421,10 @@ function HomePage() {
               }`}
             >
               <span className="flex items-center gap-3">
-                <span className="text-sm">✨</span>
+                <Sparkles className="h-4 w-4 shrink-0 stroke-[2]" />
                 <span>Crear Evento</span>
               </span>
-              <span className="text-[10px] text-[#4CE0B3]">＋</span>
+              <Plus className="h-3.5 w-3.5 shrink-0 stroke-[2.5] text-[#4CE0B3]" />
             </button>
 
             {/* 2. Resumen / Mis Eventos */}
@@ -427,7 +442,7 @@ function HomePage() {
               }`}
             >
               <span className="flex items-center gap-3">
-                <span className="text-sm">🏠</span>
+                <Home className="h-4 w-4 shrink-0 stroke-[2]" />
                 <span>Mis Eventos</span>
               </span>
               <span className="rounded-full bg-[#6C7EE1]/25 px-2 py-0.5 text-[10px] font-bold text-[#9BA9FF]">
@@ -452,7 +467,7 @@ function HomePage() {
               }`}
             >
               <span className="flex items-center gap-3">
-                <span className="text-sm">💌</span>
+                <MailOpen className="h-4 w-4 shrink-0 stroke-[2]" />
                 <span>Mis Invitaciones</span>
               </span>
               <span className="rounded-full bg-[#4CE0B3]/25 px-2 py-0.5 text-[10px] font-bold text-[#4CE0B3]">
@@ -475,7 +490,7 @@ function HomePage() {
               }`}
             >
               <span className="flex items-center gap-3">
-                <span className="text-sm">📅</span>
+                <Calendar className="h-4 w-4 shrink-0 stroke-[2]" />
                 <span>Calendario</span>
               </span>
               <span className="rounded-full bg-[#FF8086]/25 px-2 py-0.5 text-[10px] font-bold text-[#FF8086]">
@@ -499,7 +514,7 @@ function HomePage() {
                 }`}
               >
                 <span className="flex items-center gap-3">
-                  <span className="text-sm">🛡️</span>
+                  <ShieldCheck className="h-4 w-4 shrink-0 stroke-[2]" />
                   <span>Config. Global</span>
                 </span>
                 <span className="rounded-full bg-[#4CE0B3]/20 px-2 py-0.5 text-[10px] font-extrabold text-[#4CE0B3]">
@@ -524,14 +539,14 @@ function HomePage() {
               className="shrink-0 rounded-xl border border-[#ECEEF2] bg-white p-2 text-black shadow-2xs lg:hidden"
               aria-label="Abrir menú"
             >
-              ☰
+              <Menu className="h-4 w-4 stroke-[2.2]" />
             </button>
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-lg font-extrabold tracking-tight text-black sm:text-3xl">
                 ¡Hola! {user?.username || "Organizador"}
               </h1>
               <p className="truncate text-[10px] font-medium text-black sm:text-xs">
-                Administra tus invitaciones, confirmaciones y accesos en tiempo real ✨
+                Administra tus invitaciones, confirmaciones y accesos en tiempo real
               </p>
             </div>
           </div>
@@ -577,9 +592,9 @@ function HomePage() {
               type="button"
               onClick={() => openEventManager(selectedEventoId, "settings")}
               title="Ajustes del evento"
-              className="flex aspect-square h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[#4A4A8A] text-xs text-black shadow-[0_6px_16px_rgba(74,74,138,0.28)] transition hover:bg-[#3F3F7A] active:scale-95 sm:h-9 sm:w-9"
+              className="flex aspect-square h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[#4A4A8A] text-xs text-white shadow-[0_6px_16px_rgba(74,74,138,0.28)] transition hover:bg-[#3F3F7A] active:scale-95 sm:h-9 sm:w-9"
             >
-              ⚙️
+              <Settings className="h-4 w-4 stroke-[2]" />
             </button>
 
             <div className="flex items-center gap-2 rounded-full border border-[#ECEEF2] bg-white p-0.5 shadow-2xs sm:gap-2.5 sm:p-1 sm:pl-1.5 sm:pr-3.5">
