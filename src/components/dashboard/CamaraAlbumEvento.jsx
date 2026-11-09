@@ -2628,8 +2628,8 @@ export default function CamaraAlbumEvento({
               </div>
 
               <div className="grid grid-cols-1 items-start gap-3.5 sm:gap-4 lg:grid-cols-12 lg:gap-5">
-                {/* Columna Izquierda (7 cols): 1. Diseño y Duración + 2. Selección de Fotos + 3. Audio + 4. Reels Creados */}
-                <div className="space-y-3.5 sm:space-y-4 lg:col-span-7">
+                {/* Columna Izquierda Superior (7 cols en desktop): 1. Diseño y Duración + 2. Selección de Fotos + 3. Audio */}
+                <div className="order-1 space-y-3.5 sm:space-y-4 lg:col-span-7">
                   {/* PASO 1: Escoger el Diseño y Duración del Reel (10s, 15s, 20s) */}
                   <div className="rounded-[20px] border border-white/[0.08] bg-gradient-to-b from-[#232936]/90 to-[#1B202B]/90 p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md sm:rounded-[22px] sm:p-4">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -3247,9 +3247,10 @@ export default function CamaraAlbumEvento({
                       </div>
                     )}
                   </div>
+                </div>
 
-                  {/* Miniaturas de los Reels Creados estilo "Devices" (Smart Lock / Smart Plug / Blinds) */}
-                  <div className="rounded-[20px] border border-white/[0.08] bg-gradient-to-b from-[#232936]/90 to-[#1B202B]/90 p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md sm:rounded-[22px] sm:p-4">
+                {/* Miniaturas de los Reels Creados: Al final (order-3) en móviles y tablets (< lg), y debajo del Paso 3 en columna izquierda en escritorio (lg:col-span-7) */}
+                <div className="order-3 rounded-[20px] border border-white/[0.08] bg-gradient-to-b from-[#232936]/90 to-[#1B202B]/90 p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md sm:rounded-[22px] sm:p-4 lg:col-span-7">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                       <label className="flex items-center gap-2 text-xs font-semibold tracking-tight text-white/95 sm:text-sm">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#56B4FC]/40 bg-[#56B4FC]/15 text-xs text-[#7DD3FC]">
@@ -3420,13 +3421,12 @@ export default function CamaraAlbumEvento({
                         })}
                       </div>
                     )}
-                  </div>
                 </div>
 
-                {/* Columna Derecha (5 cols): Vista Previa 9:16 estilo "Lighting Master / Climate Control" */}
+                {/* Columna Derecha (5 cols en desktop, order-2 antes de Reels Creados en móvil/tablet): Vista Previa 9:16 estilo "Lighting Master / Climate Control" */}
                 <div
                   ref={reelPreviewSectionRef}
-                  className="lg:sticky lg:top-0 lg:col-span-5"
+                  className="order-2 lg:sticky lg:top-0 lg:col-span-5 lg:row-span-2"
                 >
                   <div className="flex flex-col items-center rounded-[22px] border border-white/[0.09] bg-gradient-to-b from-[#232936]/95 to-[#181C26]/95 p-3.5 shadow-[0_18px_42px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-md sm:rounded-[24px] sm:p-5">
                     <div className="mb-3 flex w-full items-center justify-between gap-2">
