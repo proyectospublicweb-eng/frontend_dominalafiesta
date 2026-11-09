@@ -1,6 +1,7 @@
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
+import { AlertCircle, Sparkles, UserPlus } from "lucide-react";
 import AuthLayout from "../components/AuthLayout";
 import PasswordField from "../components/PasswordField";
 
@@ -42,8 +43,9 @@ function RegisterPage() {
     <AuthLayout>
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
         <div className="text-center">
-          <span className="inline-block rounded-md bg-[#15B2F5] px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white">
-            Registro Gratis
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-[#15B2F5] px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white">
+            <Sparkles className="h-3.5 w-3.5 shrink-0" />
+            <span>Registro Gratis</span>
           </span>
           <h1 className="mt-3 text-3xl font-extrabold text-[#171F39]">
             Crear cuenta
@@ -54,8 +56,9 @@ function RegisterPage() {
         </div>
 
         {error && (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-600">
-            {error}
+          <p className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-600">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{error}</span>
           </p>
         )}
 
@@ -95,9 +98,10 @@ function RegisterPage() {
 
         <button
           type="submit"
-          className="w-full rounded-xl bg-[#15B2F5] py-3.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#0E9DE0]"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#15B2F5] py-3.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#0E9DE0]"
         >
-          Crear cuenta
+          <UserPlus className="h-4 w-4 shrink-0" />
+          <span>Crear cuenta</span>
         </button>
 
         <p className="text-center text-sm text-gray-500">

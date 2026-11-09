@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlarmClock,
   AlertTriangle,
+  Bell,
   Calendar,
   CalendarDays,
   Camera,
@@ -17,17 +18,19 @@ import {
   FolderOpen,
   Gift,
   Hourglass,
-  Image,
+  Image as ImageIcon,
   LayoutTemplate,
   Lightbulb,
   Link2,
   Lock,
   Mail,
-  Map,
+  Map as MapIcon,
   MapPin,
   MessageCircle,
   Monitor,
   Navigation,
+  Package,
+  PartyPopper,
   Pause,
   Pencil,
   Play,
@@ -40,9 +43,12 @@ import {
   Send,
   Settings,
   Share2,
+  Shirt,
   ShoppingBag,
+  ShoppingCart,
   SlidersHorizontal,
   Smartphone,
+  Sofa,
   Sparkles,
   Star,
   Ticket,
@@ -216,41 +222,41 @@ function getTiendaMeta(tienda) {
   const t = String(tienda || "").toLowerCase();
   if (t.includes("amazon")) {
     return {
-      icon: "📦",
+      Icon: Package,
       badgeClass: "bg-amber-500/20 text-amber-300 border-amber-400/40",
       lightBadgeClass: "bg-amber-100 text-amber-900 border-amber-300",
     };
   }
   if (t.includes("mercado")) {
     return {
-      icon: "🤝",
+      Icon: ShoppingBag,
       badgeClass: "bg-yellow-400/20 text-yellow-200 border-yellow-400/40",
       lightBadgeClass: "bg-yellow-100 text-yellow-900 border-yellow-300",
     };
   }
   if (t.includes("ikea")) {
     return {
-      icon: "🛋️",
+      Icon: Sofa,
       badgeClass: "bg-sky-500/20 text-sky-200 border-sky-400/40",
       lightBadgeClass: "bg-sky-100 text-sky-900 border-sky-300",
     };
   }
   if (t.includes("liverpool")) {
     return {
-      icon: "🛍️",
+      Icon: ShoppingBag,
       badgeClass: "bg-pink-500/20 text-pink-200 border-pink-400/40",
       lightBadgeClass: "bg-pink-100 text-pink-900 border-pink-300",
     };
   }
   if (t.includes("palacio")) {
     return {
-      icon: "✨",
+      Icon: Sparkles,
       badgeClass: "bg-amber-400/20 text-amber-200 border-amber-300/40",
       lightBadgeClass: "bg-amber-50 text-amber-900 border-amber-300",
     };
   }
   return {
-    icon: "🎁",
+    Icon: Gift,
     badgeClass: "bg-[#15b2f5]/20 text-[#15b2f5] border-[#15b2f5]/40",
     lightBadgeClass: "bg-indigo-50 text-indigo-900 border-indigo-200",
   };
@@ -1592,11 +1598,12 @@ function GestorEvento({
   const handlePosterFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result !== "string") return;
-      const img = new Image();
-      img.onload = () => {
+      const img = new window.Image();
+      img.onload = async () => {
         const maxW = 1000;
         const scale = img.width > maxW ? maxW / img.width : 1;
         const canvas = document.createElement("canvas");
@@ -1606,11 +1613,22 @@ function GestorEvento({
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
         setInvForm((prev) => ({ ...prev, imagen_portada: compressedDataUrl }));
-        showNotice("✓ Imagen/póster optimizado y cargado en la vista previa.");
+        if (evento?.idevento) {
+          await handleSaveEvento(null, { imagen_portada: compressedDataUrl });
+          showNotice("✓ Imagen/póster optimizado y guardado en la invitación.");
+        } else {
+          showNotice("✓ Imagen/póster optimizado y cargado en la vista previa.");
+        }
       };
-      img.onerror = () => {
-        setInvForm((prev) => ({ ...prev, imagen_portada: reader.result }));
-        showNotice("✓ Imagen/póster cargado en la vista previa.");
+      img.onerror = async () => {
+        const rawDataUrl = reader.result;
+        setInvForm((prev) => ({ ...prev, imagen_portada: rawDataUrl }));
+        if (evento?.idevento) {
+          await handleSaveEvento(null, { imagen_portada: rawDataUrl });
+          showNotice("✓ Imagen/póster cargado y guardado en la invitación.");
+        } else {
+          showNotice("✓ Imagen/póster cargado en la vista previa.");
+        }
       };
       img.src = reader.result;
     };
@@ -3322,8 +3340,8 @@ function GestorEvento({
           <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl border-2 border-amber-400 bg-white p-5 shadow-2xl sm:p-6">
             <div className="flex items-start justify-between gap-3 border-b border-amber-200 pb-3.5">
               <div className="flex items-start gap-2.5">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-xl">
-                  ⚠️
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-xl text-amber-700">
+                  <AlertTriangle className="h-5 w-5 shrink-0" />
                 </span>
                 <div>
                   <span className="inline-block rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-800">
@@ -3339,7 +3357,7 @@ function GestorEvento({
                 onClick={() => setGuestLimitWarningModal(null)}
                 className="cursor-pointer rounded-lg border border-[#E6E9F4] px-2.5 py-1 text-xs font-bold text-[#8E94A9] hover:border-rose-400 hover:text-rose-500"
               >
-                ✕
+                <X className="h-4 w-4 shrink-0" />
               </button>
             </div>
 
@@ -3417,9 +3435,10 @@ function GestorEvento({
                   setGuestLimitWarningModal(null);
                   onChangeSubTab("config");
                 }}
-                className="cursor-pointer rounded-xl border border-[#6C7EE1]/40 bg-[#6C7EE1]/10 px-3.5 py-2.5 text-xs font-extrabold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
+                className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#6C7EE1]/40 bg-[#6C7EE1]/10 px-3.5 py-2.5 text-xs font-extrabold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white"
               >
-                🛠️ Ajustar Límite en Configuración
+                <Settings className="h-3.5 w-3.5 shrink-0" />
+                <span>Ajustar Límite en Configuración</span>
               </button>
 
               <div className="flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center">
@@ -3439,9 +3458,10 @@ function GestorEvento({
                       proceedFn();
                     }
                   }}
-                  className="cursor-pointer rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-black shadow-sm transition hover:bg-amber-400"
+                  className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-black shadow-sm transition hover:bg-amber-400"
                 >
-                  ⚠️ Compartir de Todos Modos
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  <span>Compartir de Todos Modos</span>
                 </button>
               </div>
             </div>
@@ -4119,37 +4139,52 @@ function GestorEvento({
                       </div>
 
                       <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-black/40 p-3 text-left text-[11px] text-gray-200">
-                        <p>
-                          📅 <strong>Fecha:</strong> {invForm.fecha_evento}
+                        <p className="flex items-start gap-1.5">
+                          <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#15b2f5]" />
+                          <span>
+                            <strong>Fecha:</strong> {invForm.fecha_evento}
+                          </span>
                         </p>
                         {Boolean(
                           invForm.fecha_limite_rsvp_activa &&
                             invForm.fecha_limite_rsvp
                         ) && (
                           <p
-                            className={
+                            className={`flex items-start gap-1.5 ${
                               isPreviewFechaLimiteVencida
                                 ? "text-rose-300"
                                 : "text-amber-300"
-                            }
+                            }`}
                           >
-                            ⏳ <strong>Fecha límite para confirmar:</strong>{" "}
-                            {invForm.fecha_limite_rsvp}{" "}
-                            {isPreviewFechaLimiteVencida ? "(Caducada)" : ""}
+                            <Hourglass className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                            <span>
+                              <strong>Fecha límite para confirmar:</strong>{" "}
+                              {invForm.fecha_limite_rsvp}{" "}
+                              {isPreviewFechaLimiteVencida ? "(Caducada)" : ""}
+                            </span>
                           </p>
                         )}
-                        <p>
-                          📍 <strong>Lugar:</strong>{" "}
-                          {invForm.lugar || "Por confirmar"}
+                        <p className="flex items-start gap-1.5">
+                          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#15b2f5]" />
+                          <span>
+                            <strong>Lugar:</strong>{" "}
+                            {invForm.lugar || "Por confirmar"}
+                          </span>
                         </p>
                         {invForm.direccion && (
-                          <p className="truncate">
-                            🗺️ <strong>Dirección:</strong> {invForm.direccion}
+                          <p className="flex items-start gap-1.5 truncate">
+                            <MapIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#15b2f5]" />
+                            <span className="truncate">
+                              <strong>Dirección:</strong> {invForm.direccion}
+                            </span>
                           </p>
                         )}
-                        <p>
-                          👔 <strong>Código de Vestimenta:</strong>{" "}
-                          {invForm.codigo_vestimenta}
+                        <p className="flex items-start gap-1.5">
+                          <Shirt className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#15b2f5]" />
+                          <span>
+                            <strong>Código de Vestimenta:</strong>{" "}
+                            {invForm.codigo_vestimenta}
+                          </span>
                         </p>
                       </div>
 
@@ -4162,28 +4197,35 @@ function GestorEvento({
                           loading="lazy"
                           referrerPolicy="no-referrer-when-downgrade"
                         />
-                        <div className="flex items-center justify-between px-3 py-2 text-[10px]">
-                          <span className="truncate font-semibold text-gray-300">
-                            📍 {invForm.lugar || "Ubicación del Evento"}
+                        <div className="flex items-center justify-between gap-2 px-3 py-2 text-[10px]">
+                          <span className="inline-flex min-w-0 items-center gap-1 truncate font-semibold text-gray-300">
+                            <MapPin className="h-3 w-3 shrink-0 text-[#15b2f5]" />
+                            <span className="truncate">
+                              {invForm.lugar || "Ubicación del Evento"}
+                            </span>
                           </span>
                           <a
                             href={mapLocation.externalUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="shrink-0 font-extrabold text-[#15b2f5] hover:underline"
+                            className="inline-flex shrink-0 items-center gap-1 font-extrabold text-[#15b2f5] hover:underline"
                           >
-                            🗺️ Ver en Maps ↗
+                            <MapIcon className="h-3 w-3 shrink-0" />
+                            <span>Ver en Maps</span>
+                            <ExternalLink className="h-2.5 w-2.5 shrink-0" />
                           </a>
                         </div>
                       </div>
 
                       {/* Notificación de Modalidad de Invitados en la Tarjeta Móvil */}
                       <div className="mt-3 rounded-xl border border-[#15b2f5]/40 bg-[#15b2f5]/10 px-3 py-2 text-center shadow-[0_0_15px_rgba(21,178,245,0.15)]">
-                        <span className="block text-[9px] font-bold uppercase tracking-widest text-[#15b2f5]">
-                          🔔 MODALIDAD DE ASISTENCIA
+                        <span className="inline-flex items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-widest text-[#15b2f5]">
+                          <Bell className="h-3 w-3 shrink-0" />
+                          <span>MODALIDAD DE ASISTENCIA</span>
                         </span>
-                        <strong className="mt-0.5 block text-xs font-bold uppercase tracking-wider text-white">
-                          🎟️ {normalizeModalidad(invForm.modalidad_invitados)}
+                        <strong className="mt-0.5 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-wider text-white">
+                          <Ticket className="h-3.5 w-3.5 shrink-0 text-[#15b2f5]" />
+                          <span>{normalizeModalidad(invForm.modalidad_invitados)}</span>
                         </strong>
                       </div>
 
@@ -4205,16 +4247,19 @@ function GestorEvento({
                             mesaRegalosItems[0]?.tienda ||
                             "Amazon";
                           const meta = getTiendaMeta(tiendaActual);
+                          const TiendaIcon = meta.Icon;
                           return (
                             <div className="mt-3 rounded-xl border border-amber-400/35 bg-black/40 p-3 text-left">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
-                                  🎁 MESA DE REGALOS
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                                  <Gift className="h-3.5 w-3.5 shrink-0" />
+                                  <span>MESA DE REGALOS</span>
                                 </span>
                                 <span
-                                  className={`inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold ${meta.badgeClass}`}
+                                  className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-bold ${meta.badgeClass}`}
                                 >
-                                  {meta.icon} {tiendaActual}
+                                  <TiendaIcon className="h-3 w-3 shrink-0" />
+                                  <span>{tiendaActual}</span>
                                 </span>
                               </div>
                               {hrefUrl ? (
@@ -4224,10 +4269,16 @@ function GestorEvento({
                                   rel="noopener noreferrer"
                                   className="mt-2 flex items-center justify-between gap-2 rounded-none border border-amber-400/40 bg-amber-400/15 px-3 py-2 text-[11px] font-extrabold text-amber-200 transition hover:bg-amber-400/25"
                                 >
-                                  <span className="truncate">
-                                    🛒 Ver Carrito / Lista en {tiendaActual}
+                                  <span className="inline-flex min-w-0 items-center gap-1.5 truncate">
+                                    <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
+                                    <span className="truncate">
+                                      Ver Carrito / Lista en {tiendaActual}
+                                    </span>
                                   </span>
-                                  <span className="shrink-0">Abrir ↗</span>
+                                  <span className="inline-flex shrink-0 items-center gap-1">
+                                    <span>Abrir</span>
+                                    <ExternalLink className="h-3 w-3 shrink-0" />
+                                  </span>
                                 </a>
                               ) : (
                                 <p className="mt-1.5 text-[10px] text-gray-400">
@@ -4248,7 +4299,7 @@ function GestorEvento({
                             window.open(realUrl, "_blank", "noopener,noreferrer");
                           }
                         }}
-                        className="mt-4 w-full cursor-pointer rounded-none py-2.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
+                        className="mt-4 inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-none py-2.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                         style={{
                           backgroundColor: isPreviewFechaLimiteVencida
                             ? "#e11d48"
@@ -4259,9 +4310,14 @@ function GestorEvento({
                         }}
                         title="Haz clic para abrir y probar el formulario real de Confirmación de Asistencia"
                       >
-                        {isPreviewFechaLimiteVencida
-                          ? "⏳ FECHA DE CONFIRMACIÓN CADUCADA"
-                          : "Confirmar Asistencia"}
+                        {isPreviewFechaLimiteVencida ? (
+                          <>
+                            <Hourglass className="h-3.5 w-3.5 shrink-0" />
+                            <span>FECHA DE CONFIRMACIÓN CADUCADA</span>
+                          </>
+                        ) : (
+                          <span>Confirmar Asistencia</span>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -4298,7 +4354,7 @@ function GestorEvento({
                       ) : (
                         <div className="flex h-full flex-col items-center justify-center p-8 text-center">
                           <div
-                            className="flex h-20 w-20 items-center justify-center rounded-2xl border text-3xl shadow-lg"
+                            className="flex h-20 w-20 items-center justify-center rounded-2xl border text-3xl text-white shadow-lg"
                             style={{
                               borderColor: invForm.color_acento || tpl.accent,
                               backgroundColor: `${
@@ -4306,7 +4362,7 @@ function GestorEvento({
                               }22`,
                             }}
                           >
-                            🥂
+                            <PartyPopper className="h-9 w-9 shrink-0" />
                           </div>
                           <p className="mt-3 text-xs uppercase tracking-widest text-gray-400">
                             {invForm.tipo_evento}
@@ -4355,15 +4411,18 @@ function GestorEvento({
                                 invForm.fecha_limite_rsvp
                             ) && (
                               <span
-                                className={`mt-1 block text-[11px] font-bold ${
+                                className={`mt-1 inline-flex items-center gap-1 text-[11px] font-bold ${
                                   isPreviewFechaLimiteVencida
                                     ? "text-rose-300"
                                     : "text-amber-300"
                                 }`}
                               >
-                                ⏳ Límite confirmación:{" "}
-                                {invForm.fecha_limite_rsvp}{" "}
-                                {isPreviewFechaLimiteVencida ? "(Caducada)" : ""}
+                                <Hourglass className="h-3 w-3 shrink-0" />
+                                <span>
+                                  Límite confirmación:{" "}
+                                  {invForm.fecha_limite_rsvp}{" "}
+                                  {isPreviewFechaLimiteVencida ? "(Caducada)" : ""}
+                                </span>
                               </span>
                             )}
                           </div>
@@ -4395,11 +4454,13 @@ function GestorEvento({
 
                         {/* Notificación de Modalidad de Invitados en la Tarjeta de Escritorio */}
                         <div className="mt-4 flex flex-col items-center justify-between gap-1 rounded-xl border border-[#15b2f5]/40 bg-[#15b2f5]/10 px-4 py-2.5 text-center shadow-[0_0_15px_rgba(21,178,245,0.15)] sm:flex-row sm:text-left">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#15b2f5]">
-                            🔔 Modalidad de Asistencia Notificada:
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#15b2f5]">
+                            <Bell className="h-3.5 w-3.5 shrink-0" />
+                            <span>Modalidad de Asistencia Notificada:</span>
                           </span>
-                          <strong className="text-xs font-bold uppercase tracking-wider text-white">
-                            🎟️ {normalizeModalidad(invForm.modalidad_invitados)}
+                          <strong className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
+                            <Ticket className="h-3.5 w-3.5 shrink-0 text-[#15b2f5]" />
+                            <span>{normalizeModalidad(invForm.modalidad_invitados)}</span>
                           </strong>
                         </div>
 
@@ -4432,16 +4493,19 @@ function GestorEvento({
                               mesaRegalosItems[0]?.tienda ||
                               "Amazon";
                             const meta = getTiendaMeta(tiendaActual);
+                            const TiendaIcon = meta.Icon;
                             return (
                               <div className="mt-4 rounded-xl border border-amber-400/35 bg-black/40 p-3.5 text-left">
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
-                                    🎁 MESA DE REGALOS SUGERIDOS
+                                  <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                                    <Gift className="h-3.5 w-3.5 shrink-0" />
+                                    <span>MESA DE REGALOS SUGERIDOS</span>
                                   </span>
                                   <span
-                                    className={`inline-block rounded border px-2 py-0.5 text-[10px] font-bold ${meta.badgeClass}`}
+                                    className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-bold ${meta.badgeClass}`}
                                   >
-                                    {meta.icon} {tiendaActual}
+                                    <TiendaIcon className="h-3 w-3 shrink-0" />
+                                    <span>{tiendaActual}</span>
                                   </span>
                                 </div>
                                 {hrefUrl ? (
@@ -4451,12 +4515,16 @@ function GestorEvento({
                                     rel="noopener noreferrer"
                                     className="mt-2.5 flex items-center justify-between gap-3 rounded-none border border-amber-400/40 bg-amber-400/15 px-3.5 py-2.5 text-xs font-extrabold text-amber-200 transition hover:bg-amber-400/25"
                                   >
-                                    <span className="truncate">
-                                      🛒 Ver Carrito de Compras / Mesa de Regalos en{" "}
-                                      {tiendaActual}
+                                    <span className="inline-flex min-w-0 items-center gap-1.5 truncate">
+                                      <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
+                                      <span className="truncate">
+                                        Ver Carrito de Compras / Mesa de Regalos en{" "}
+                                        {tiendaActual}
+                                      </span>
                                     </span>
-                                    <span className="shrink-0 rounded-none bg-amber-400 px-2.5 py-1 text-[10px] font-extrabold text-[#171F39]">
-                                      Abrir Carrito ↗
+                                    <span className="inline-flex shrink-0 items-center gap-1 rounded-none bg-amber-400 px-2.5 py-1 text-[10px] font-extrabold text-[#171F39]">
+                                      <span>Abrir Carrito</span>
+                                      <ExternalLink className="h-3 w-3 shrink-0" />
                                     </span>
                                   </a>
                                 ) : (
@@ -4480,7 +4548,7 @@ function GestorEvento({
                               window.open(realUrl, "_blank", "noopener,noreferrer");
                             }
                           }}
-                          className="flex-1 cursor-pointer rounded-none py-3 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
+                          className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-none py-3 text-xs font-bold uppercase tracking-widest text-black shadow-lg transition hover:brightness-110"
                           style={{
                             backgroundColor: isPreviewFechaLimiteVencida
                               ? "#e11d48"
@@ -4491,17 +4559,24 @@ function GestorEvento({
                           }}
                           title="Haz clic para abrir y probar el formulario real de Confirmación de Asistencia"
                         >
-                          {isPreviewFechaLimiteVencida
-                            ? "⏳ FECHA DE CONFIRMACIÓN CADUCADA"
-                            : "Confirmar Asistencia"}
+                          {isPreviewFechaLimiteVencida ? (
+                            <>
+                              <Hourglass className="h-3.5 w-3.5 shrink-0" />
+                              <span>FECHA DE CONFIRMACIÓN CADUCADA</span>
+                            </>
+                          ) : (
+                            <span>Confirmar Asistencia</span>
+                          )}
                         </button>
                         <a
                           href={mapLocation.externalUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-none border border-white/15 bg-white/5 px-4 py-3 text-center text-xs font-bold text-gray-200 transition hover:border-[#15b2f5] hover:text-[#15b2f5]"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-none border border-white/15 bg-white/5 px-4 py-3 text-center text-xs font-bold text-gray-200 transition hover:border-[#15b2f5] hover:text-[#15b2f5]"
                         >
-                          🗺️ Ver Mapa ↗
+                          <MapIcon className="h-3.5 w-3.5 shrink-0" />
+                          <span>Ver Mapa</span>
+                          <ExternalLink className="h-3 w-3 shrink-0" />
                         </a>
                       </div>
                     </div>
@@ -7310,7 +7385,7 @@ function GestorEvento({
                         onClick={() => setSelectedWhatsappLinkId(lnk.iditem)}
                         className={`flex cursor-pointer flex-col justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-xs transition sm:flex-row sm:items-center ${
                           isSelected
-                            ? "border-[#6D28D9] bg-white shadow-xs ring-2 ring-[#6D28D9]/12"
+                            ? "border-[aliceblue] bg-[#c3ebcb] shadow-xs ring-2 ring-[#6D28D9]/12"
                             : "border-[#E5E7EB] bg-white hover:border-[#6D28D9]/50"
                         }`}
                       >
@@ -7369,7 +7444,7 @@ function GestorEvento({
                         <span
                           className={`self-start shrink-0 rounded-none px-2.5 py-1 text-[10px] font-semibold sm:self-center ${
                             isSelected
-                              ? "bg-[#6D28D9] text-white"
+                              ? "bg-[#437d4e] text-white"
                               : "border border-[#E5E7EB] bg-white text-[#6B7280]"
                           }`}
                         >
@@ -7392,7 +7467,7 @@ function GestorEvento({
               <div className="mt-3.5 rounded-xl border border-[#E5E7EB] bg-[#FAFAFC] p-3.5">
                 <div className="mb-2.5 flex flex-wrap items-center justify-between gap-1.5">
                   <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#6D28D9]">
-                    <Image className="h-3.5 w-3.5 stroke-[2]" />
+                    <ImageIcon className="h-3.5 w-3.5 stroke-[2]" />
                     <span>Vista Previa de Miniatura en WhatsApp</span>
                   </span>
                   <span className="rounded-md bg-[#ECFDF5] px-2 py-0.5 text-[10px] font-semibold text-[#059669]">
@@ -7546,7 +7621,7 @@ function GestorEvento({
                         onClick={() => setSelectedEmailLinkId(lnk.iditem)}
                         className={`flex cursor-pointer flex-col justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-xs transition sm:flex-row sm:items-center ${
                           isSelected
-                            ? "border-[#6D28D9] bg-white shadow-xs ring-2 ring-[#6D28D9]/12"
+                            ? "border-[#6D28D9] bg-[#efd1e7] shadow-xs ring-2 ring-[#6D28D9]/12"
                             : "border-[#E5E7EB] bg-white hover:border-[#6D28D9]/50"
                         }`}
                       >
@@ -8409,7 +8484,7 @@ function GestorEvento({
                           <span>Vista Previa según el Evento (Invitados Confirmados)</span>
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-md bg-[#F3E8FF] px-2.5 py-0.5 text-[10px] font-semibold text-[#6D28D9]">
-                          <Image className="h-3 w-3 stroke-[2]" />
+                          <ImageIcon className="h-3 w-3 stroke-[2]" />
                           <span>
                             {hasCustomThumb
                               ? "Miniatura del evento"

@@ -1,4 +1,13 @@
 import { useMemo, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Clock,
+  MapPin,
+  Plus,
+  Users,
+  X,
+} from "lucide-react";
 
 const DEFAULT_INVITACION_THUMB = "/default-invitacion.svg";
 
@@ -289,7 +298,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
               className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E4E6EE] bg-[#F6F7F9] text-xs font-bold text-[#14141F] transition hover:border-[#4A4A8A] hover:bg-[#4A4A8A] hover:text-white sm:h-9 sm:w-9 sm:text-sm"
               aria-label="Mes anterior"
             >
-              ←
+              <ArrowLeft className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -297,7 +306,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
               className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E4E6EE] bg-[#F6F7F9] text-xs font-bold text-[#14141F] transition hover:border-[#4A4A8A] hover:bg-[#4A4A8A] hover:text-white sm:h-9 sm:w-9 sm:text-sm"
               aria-label="Mes siguiente"
             >
-              →
+              <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -404,7 +413,7 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                       }}
                       className="flex w-full items-center justify-center gap-1 rounded-md bg-[#4A4A8A] px-1 py-1 text-center text-[8px] leading-tight font-extrabold text-white shadow-xs transition hover:bg-[#FF5B4D] sm:rounded-lg sm:px-2 sm:py-1.5 sm:text-[10px]"
                     >
-                      <span className="hidden sm:inline">＋</span>
+                      <Plus className="hidden h-3 w-3 shrink-0 sm:inline" />
                       <span>Crear Evento</span>
                     </button>
                   </div>
@@ -424,9 +433,10 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
               <button
                 type="button"
                 onClick={() => setSelectedDateStr(null)}
-                className="text-xs font-bold text-[#8A8D9F] hover:text-[#14141F]"
+                className="inline-flex items-center justify-center rounded-lg p-1 text-[#8A8D9F] hover:bg-black/5 hover:text-[#14141F]"
+                aria-label="Cerrar detalle del día"
               >
-                ✕
+                <X className="h-3.5 w-3.5" />
               </button>
             </div>
             <div className="space-y-2">
@@ -461,18 +471,24 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                         <p className="truncate text-xs font-extrabold text-[#14141F]">
                           {ev.nombre}
                         </p>
-                        <p className="truncate text-[10px] text-[#8A8D9F]">
-                          ⏰ {ev.hora_evento || "20:00"} hrs • 📍{" "}
-                          {ev.lugar || "Salón por definir"}
+                        <p className="flex items-center gap-1 truncate text-[10px] text-[#8A8D9F]">
+                          <Clock className="h-3 w-3 shrink-0 text-[#4A4A8A]" />
+                          <span>{ev.hora_evento || "20:00"} hrs</span>
+                          <span>•</span>
+                          <MapPin className="h-3 w-3 shrink-0 text-[#FF5B4D]" />
+                          <span className="truncate">
+                            {ev.lugar || "Salón por definir"}
+                          </span>
                         </p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => onOpenEvento(ev.idevento, "invitation")}
-                      className="shrink-0 rounded-lg bg-[#4A4A8A] px-2.5 py-1.5 text-[10px] font-extrabold text-white shadow-2xs transition hover:bg-[#3F3F7A]"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#4A4A8A] px-2.5 py-1.5 text-[10px] font-extrabold text-white shadow-2xs transition hover:bg-[#3F3F7A]"
                     >
-                      Abrir →
+                      <span>Abrir</span>
+                      <ArrowRight className="h-3 w-3 shrink-0" />
                     </button>
                   </div>
                 );
@@ -501,9 +517,10 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
             <button
               type="button"
               onClick={() => onCreateNew(selectedDateStr || "")}
-              className="shrink-0 rounded-full bg-[#FF5B4D] px-3.5 py-1.5 text-xs font-extrabold text-white shadow-[0_8px_18px_rgba(255,91,77,0.3)] transition hover:bg-[#F24C3E]"
+              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FF5B4D] px-3.5 py-1.5 text-xs font-extrabold text-white shadow-[0_8px_18px_rgba(255,91,77,0.3)] transition hover:bg-[#F24C3E]"
             >
-              ＋ Nuevo
+              <Plus className="h-3.5 w-3.5 shrink-0" />
+              <span>Nuevo</span>
             </button>
           </div>
 
@@ -518,9 +535,10 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
               <button
                 type="button"
                 onClick={() => onCreateNew(selectedDateStr || "")}
-                className="mt-4 rounded-full bg-[#FF5B4D] px-5 py-2 text-xs font-bold text-white shadow-[0_8px_18px_rgba(255,91,77,0.3)] transition hover:bg-[#F24C3E]"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#FF5B4D] px-5 py-2 text-xs font-bold text-white shadow-[0_8px_18px_rgba(255,91,77,0.3)] transition hover:bg-[#F24C3E]"
               >
-                ＋ Crear Evento
+                <Plus className="h-3.5 w-3.5 shrink-0" />
+                <span>Crear Evento</span>
               </button>
             </div>
           ) : (
@@ -570,9 +588,14 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                           <h4 className="truncate text-xs font-extrabold leading-tight tracking-tight text-[#14141F] sm:text-sm">
                             {ev.nombre}
                           </h4>
-                          <p className="mt-0.5 truncate text-[11px] font-medium leading-tight text-[#8A8D9F]">
-                            ⏰ {ev.hora_evento || "20:00"} hrs &nbsp;•&nbsp; 📍{" "}
-                            {ev.lugar || "Salón por definir"}
+                          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-medium leading-tight text-[#8A8D9F]">
+                            <Clock className="h-3 w-3 shrink-0 text-[#4A4A8A]" />
+                            <span>{ev.hora_evento || "20:00"} hrs</span>
+                            <span>•</span>
+                            <MapPin className="h-3 w-3 shrink-0 text-[#FF5B4D]" />
+                            <span className="truncate">
+                              {ev.lugar || "Salón por definir"}
+                            </span>
                           </p>
                         </div>
                       </div>
@@ -594,8 +617,11 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
 
                     {/* Pie de tarjeta compacto: Confirmados y botón para abrir el Gestor */}
                     <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-[#14141F]/10 pt-1.5 text-[10px]">
-                      <span className="font-bold text-[#14141F]">
-                        👥 {ev.pases_confirmados || 0}/{ev.capacidad} confirmados
+                      <span className="inline-flex items-center gap-1 font-bold text-[#14141F]">
+                        <Users className="h-3 w-3 shrink-0 text-[#4A4A8A]" />
+                        <span>
+                          {ev.pases_confirmados || 0}/{ev.capacidad} confirmados
+                        </span>
                       </span>
                       <button
                         type="button"
@@ -603,9 +629,10 @@ function CalendarioEventos({ eventos = [], onOpenEvento, onCreateNew }) {
                           e.stopPropagation();
                           onOpenEvento(ev.idevento, "invitation");
                         }}
-                        className={`shrink-0 font-extrabold ${ev.palette.accentText} hover:underline`}
+                        className={`inline-flex shrink-0 items-center gap-1 font-extrabold ${ev.palette.accentText} hover:underline`}
                       >
-                        Abrir Evento →
+                        <span>Abrir Evento</span>
+                        <ArrowRight className="h-3 w-3 shrink-0" />
                       </button>
                     </div>
                   </div>

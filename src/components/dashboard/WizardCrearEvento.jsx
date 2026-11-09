@@ -1,4 +1,17 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ExternalLink,
+  Gift,
+  Hourglass,
+  Map as MapIcon,
+  MapPin,
+  Navigation,
+  Plus,
+  Users,
+} from "lucide-react";
 import { useGoogleMapsLocation } from "../../utils/googleMaps.js";
 import catalogosMexico from "../../utils/catalogosMexico.json";
 import {
@@ -251,17 +264,19 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
           <span className="inline-block rounded-lg bg-[#4A4A8A] px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-2xs">
             Asistente Paso a Paso
           </span>
-          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-[#14141F] sm:text-4xl">
-            ➕ Crear Nuevo Evento
+          <h1 className="mt-2 flex items-center gap-2 text-2xl font-extrabold tracking-tight text-[#14141F] sm:text-4xl">
+            <Plus className="h-6 w-6 shrink-0 text-[#4A4A8A] sm:h-8 sm:w-8" />
+            <span>Crear Nuevo Evento</span>
           </h1>
         </div>
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="self-start rounded-xl border border-[#ECEEF2] bg-white px-4 py-2.5 text-xs font-bold text-[#14141F] shadow-2xs transition hover:border-[#4A4A8A] hover:text-[#4A4A8A]"
+            className="inline-flex items-center gap-1.5 self-start rounded-xl border border-[#ECEEF2] bg-white px-4 py-2.5 text-xs font-bold text-[#14141F] shadow-2xs transition hover:border-[#4A4A8A] hover:text-[#4A4A8A]"
           >
-            ← Volver a Mis Eventos
+            <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+            <span>Volver a Mis Eventos</span>
           </button>
         )}
       </div>
@@ -291,7 +306,11 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                     : "bg-white text-[#3C66E6] group-hover:bg-[#3C66E6] group-hover:text-white"
                 }`}
               >
-                {isDone ? "✓" : s.num}
+                {isDone ? (
+                  <Check className="h-4 w-4 stroke-[3] sm:h-5 sm:w-5" />
+                ) : (
+                  s.num
+                )}
               </span>
               <div className="min-w-0 flex-1">
                 <p
@@ -437,7 +456,8 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                       }}
                       className="h-4 w-4 shrink-0 cursor-pointer accent-[#FF5B4D]"
                     />
-                    <span>⏳ Asignar Fecha Límite de confirmación al Evento</span>
+                    <Hourglass className="h-4 w-4 shrink-0" />
+                    <span>Asignar Fecha Límite de confirmación al Evento</span>
                   </label>
 
                   <div>
@@ -460,12 +480,22 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                     />
                   </div>
                 </div>
-                <p className="mt-2 text-[11px] text-[#8A8D9F]">
-                  {form.fecha_limite_rsvp_activa
-                    ? `✓ Activo: Los invitados podrán confirmar su asistencia hasta el ${
-                        form.fecha_limite_rsvp || "día seleccionado"
-                      }. Pasada esta fecha ya no se permitirá confirmar y se mostrará que la fecha de confirmación ya caducó.`
-                    : "Marca el botón «Asignar Fecha Límite de confirmación al Evento» para desbloquear el selector de fecha límite."}
+                <p className="mt-2 flex items-start gap-1.5 text-[11px] text-[#8A8D9F]">
+                  {form.fecha_limite_rsvp_activa ? (
+                    <>
+                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#588B73]" />
+                      <span>
+                        Activo: Los invitados podrán confirmar su asistencia hasta el{" "}
+                        {form.fecha_limite_rsvp || "día seleccionado"}. Pasada esta
+                        fecha ya no se permitirá confirmar y se mostrará que la
+                        fecha de confirmación ya caducó.
+                      </span>
+                    </>
+                  ) : (
+                    <span>
+                      Marca el botón «Asignar Fecha Límite de confirmación al Evento» para desbloquear el selector de fecha límite.
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -562,8 +592,9 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
               <div className="space-y-3 rounded-2xl border border-[#ECEEF2] bg-[#F6F7F9] p-4 sm:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A4A8A]">
-                      📍 UBICACIÓN EN LA TARJETA DE INVITACIÓN
+                    <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-[#4A4A8A]">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      <span>UBICACIÓN EN LA TARJETA DE INVITACIÓN</span>
                     </span>
                     <h4 className="text-xs font-extrabold text-[#14141F]">
                       Configurar Salón / Dirección con Google Maps
@@ -586,7 +617,7 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                             )}, ${pos.coords.longitude.toFixed(6)}`;
                             updateField("direccion", coords);
                             setGpsNotice(
-                              "✓ Coordenadas GPS aplicadas al mapa de la invitación."
+                              "Coordenadas GPS aplicadas al mapa de la invitación."
                             );
                           },
                           () => {
@@ -596,24 +627,28 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                           }
                         );
                       }}
-                      className="cursor-pointer rounded-lg border border-[#E4E6EE] bg-white px-2.5 py-1 text-[10px] font-bold text-[#14141F] shadow-2xs transition hover:border-[#4A4A8A] hover:text-[#4A4A8A]"
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#E4E6EE] bg-white px-2.5 py-1 text-[10px] font-bold text-[#14141F] shadow-2xs transition hover:border-[#4A4A8A] hover:text-[#4A4A8A]"
                     >
-                      🎯 Usar mi GPS
+                      <Navigation className="h-3 w-3 shrink-0 text-[#4A4A8A]" />
+                      <span>Usar mi GPS</span>
                     </button>
                     <a
                       href={mapLocation.externalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-lg bg-[#4A4A8A]/12 px-2.5 py-1 text-[10px] font-bold text-[#4A4A8A] transition hover:bg-[#4A4A8A] hover:text-white"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#4A4A8A]/12 px-2.5 py-1 text-[10px] font-bold text-[#4A4A8A] transition hover:bg-[#4A4A8A] hover:text-white"
                     >
-                      🗺️ Abrir Google Maps ↗
+                      <MapIcon className="h-3 w-3 shrink-0" />
+                      <span>Abrir Google Maps</span>
+                      <ExternalLink className="h-2.5 w-2.5 shrink-0" />
                     </a>
                   </div>
                 </div>
 
                 {gpsNotice && (
-                  <p className="text-[11px] font-bold text-[#588B73]">
-                    {gpsNotice}
+                  <p className="flex items-center gap-1 text-[11px] font-bold text-[#588B73]">
+                    <Check className="h-3.5 w-3.5 shrink-0" />
+                    <span>{gpsNotice}</span>
                   </p>
                 )}
 
@@ -658,8 +693,9 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#4A4A8A]">
-                  👥 Número de Invitados Permitidos (Capacidad del Evento)
+                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#4A4A8A]">
+                  <Users className="h-4 w-4 shrink-0" />
+                  <span>Número de Invitados Permitidos (Capacidad del Evento)</span>
                 </label>
                 <input
                   type="number"
@@ -753,8 +789,9 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
             <div className="space-y-3">
               <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E4E6EE] bg-[#F6F7F9] px-4 py-3.5 text-xs transition hover:border-[#4A4A8A]">
                 <div>
-                  <span className="block font-extrabold text-[#14141F]">
-                    🎁 ¿Tu evento tendrá Mesa de Regalos?
+                  <span className="flex items-center gap-1.5 font-extrabold text-[#14141F]">
+                    <Gift className="h-4 w-4 shrink-0 text-[#FF5B4D]" />
+                    <span>¿Tu evento tendrá Mesa de Regalos?</span>
                   </span>
                   <span className="mt-0.5 block text-[11px] text-[#8A8D9F]">
                     Marca esta casilla si deseas agregar el enlace de tu carrito de compras o lista de regalos (Amazon, Mercado Libre, IKEA, Liverpool, etc.).
@@ -882,8 +919,9 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
                     {form.fecha_evento} • {form.hora_evento} hrs
                   </strong>
                   {form.fecha_limite_rsvp_activa && form.fecha_limite_rsvp && (
-                    <span className="mt-1 block text-[11px] font-bold text-amber-300">
-                      ⏳ Fecha límite confirmación: {form.fecha_limite_rsvp}
+                    <span className="mt-1 flex items-center gap-1 text-[11px] font-bold text-amber-300">
+                      <Hourglass className="h-3 w-3 shrink-0" />
+                      <span>Fecha límite confirmación: {form.fecha_limite_rsvp}</span>
                     </span>
                   )}
                 </div>
@@ -925,9 +963,10 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
             <button
               type="button"
               onClick={handleBack}
-              className="rounded-xl border border-[#E4E6EE] bg-[#F6F7F9] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[#14141F] transition hover:border-[#4A4A8A] hover:bg-[#ECEEF5] sm:px-5"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E4E6EE] bg-[#F6F7F9] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[#14141F] transition hover:border-[#4A4A8A] hover:bg-[#ECEEF5] sm:px-5"
             >
-              ← Anterior
+              <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+              <span>Anterior</span>
             </button>
           ) : (
             <div />
@@ -937,19 +976,25 @@ function WizardCrearEvento({ onCreateEvento, onCancel, initialDate = "" }) {
             <button
               type="button"
               onClick={handleNext}
-              className="rounded-2xl bg-[#FF5B4D] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-[0_10px_22px_rgba(255,91,77,0.34)] transition hover:bg-[#F24C3E] sm:px-6"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#FF5B4D] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-[0_10px_22px_rgba(255,91,77,0.34)] transition hover:bg-[#F24C3E] sm:px-6"
             >
-              Siguiente Paso →
+              <span>Siguiente Paso</span>
+              <ArrowRight className="h-3.5 w-3.5 shrink-0" />
             </button>
           ) : (
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-2xl bg-[#FF5B4D] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-[0_10px_22px_rgba(255,91,77,0.34)] transition hover:bg-[#F24C3E] disabled:opacity-60 sm:px-7"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#FF5B4D] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-[0_10px_22px_rgba(255,91,77,0.34)] transition hover:bg-[#F24C3E] disabled:opacity-60 sm:px-7"
             >
-              {submitting
-                ? "Creando Evento..."
-                : "✓ Crear Evento e Ir al Gestor"}
+              {submitting ? (
+                "Creando Evento..."
+              ) : (
+                <>
+                  <Check className="h-4 w-4 shrink-0 stroke-[2.5]" />
+                  <span>Crear Evento e Ir al Gestor</span>
+                </>
+              )}
             </button>
           )}
         </div>

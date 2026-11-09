@@ -1,5 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import {
+  Bell,
+  Calendar,
+  Camera,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ClipboardCheck,
+  ExternalLink,
+  Gift,
+  Hourglass,
+  Lock,
+  Mail,
+  Map as MapIcon,
+  MapPin,
+  Package,
+  PartyPopper,
+  Pencil,
+  Rocket,
+  Shirt,
+  ShoppingBag,
+  ShoppingCart,
+  Sofa,
+  Sparkles,
+  Ticket,
+  Unlock,
+  X,
+  XCircle,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import AuthModal from "../components/AuthModal.jsx";
 import {
@@ -130,36 +159,36 @@ function getTiendaMetaPublic(tienda) {
   const t = String(tienda || "").toLowerCase();
   if (t.includes("amazon")) {
     return {
-      icon: "📦",
+      Icon: Package,
       badgeClass: "bg-amber-500/20 text-amber-300 border-amber-400/40",
     };
   }
   if (t.includes("mercado")) {
     return {
-      icon: "🤝",
+      Icon: ShoppingBag,
       badgeClass: "bg-yellow-400/20 text-yellow-200 border-yellow-400/40",
     };
   }
   if (t.includes("ikea")) {
     return {
-      icon: "🛋️",
+      Icon: Sofa,
       badgeClass: "bg-sky-500/20 text-sky-200 border-sky-400/40",
     };
   }
   if (t.includes("liverpool")) {
     return {
-      icon: "🛍️",
+      Icon: ShoppingBag,
       badgeClass: "bg-pink-500/20 text-pink-200 border-pink-400/40",
     };
   }
   if (t.includes("palacio")) {
     return {
-      icon: "✨",
+      Icon: Sparkles,
       badgeClass: "bg-amber-400/20 text-amber-200 border-amber-300/40",
     };
   }
   return {
-    icon: "🎁",
+    Icon: Gift,
     badgeClass: "bg-[#15B2F5]/20 text-[#15B2F5] border-[#15B2F5]/40",
   };
 }
@@ -398,7 +427,7 @@ function InvitacionPublicaPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F3F6FA] p-6 text-[#171F39]">
         <div className="max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-lg">
-          <span className="text-4xl">🎟️</span>
+          <Ticket className="mx-auto h-10 w-10 text-[#15B2F5]" />
           <h1 className="mt-3 text-xl font-extrabold text-[#171F39]">
             Invitación no disponible
           </h1>
@@ -610,8 +639,9 @@ function InvitacionPublicaPage() {
             </span>
 
             {invitado && (
-              <div className="mt-3 break-words rounded-xl border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-gray-200 transition-transform duration-300 hover:scale-[1.02] sm:text-sm">
-                🎟️ Pase Personal para:{" "}
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 break-words rounded-xl border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-gray-200 transition-transform duration-300 hover:scale-[1.02] sm:text-sm">
+                <Ticket className="h-4 w-4 shrink-0 text-[#15B2F5]" />
+                <span>Pase Personal para:</span>
                 <strong className="text-[#15B2F5]">{invitado.nombre}</strong>
               </div>
             )}
@@ -655,33 +685,48 @@ function InvitacionPublicaPage() {
 
             {/* Datos de Fecha, Lugar y Código de Vestimenta */}
             <div className="mt-4 space-y-2 break-words rounded-2xl border border-white/10 bg-black/30 p-3.5 text-left text-xs text-gray-200 sm:p-5 sm:text-sm">
-              <p>
-                📅 <strong>Fecha:</strong> {fechaStr}
+              <p className="flex items-start gap-2">
+                <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-[#15B2F5]" />
+                <span>
+                  <strong>Fecha:</strong> {fechaStr}
+                </span>
               </p>
               {Boolean(
                 evento.fecha_limite_rsvp_activa && fechaLimiteRsvpStr
               ) && (
                 <p
-                  className={
+                  className={`flex items-start gap-2 ${
                     isFechaLimiteVencida ? "text-rose-300" : "text-amber-300"
-                  }
+                  }`}
                 >
-                  ⏳ <strong>Fecha límite de confirmación:</strong>{" "}
-                  {fechaLimiteRsvpStr}{" "}
-                  {isFechaLimiteVencida ? "(Caducada)" : ""}
+                  <Hourglass className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    <strong>Fecha límite de confirmación:</strong>{" "}
+                    {fechaLimiteRsvpStr}{" "}
+                    {isFechaLimiteVencida ? "(Caducada)" : ""}
+                  </span>
                 </p>
               )}
-              <p>
-                📍 <strong>Lugar:</strong> {evento.lugar || "Por confirmar"}
+              <p className="flex items-start gap-2">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#15B2F5]" />
+                <span>
+                  <strong>Lugar:</strong> {evento.lugar || "Por confirmar"}
+                </span>
               </p>
               {evento.direccion && (
-                <p>
-                  🗺️ <strong>Dirección:</strong> {evento.direccion}
+                <p className="flex items-start gap-2">
+                  <MapIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#15B2F5]" />
+                  <span>
+                    <strong>Dirección:</strong> {evento.direccion}
+                  </span>
                 </p>
               )}
-              <p>
-                👔 <strong>Código de Vestimenta:</strong>{" "}
-                {evento.codigo_vestimenta || "Formal / Libre"}
+              <p className="flex items-start gap-2">
+                <Shirt className="mt-0.5 h-4 w-4 shrink-0 text-[#15B2F5]" />
+                <span>
+                  <strong>Código de Vestimenta:</strong>{" "}
+                  {evento.codigo_vestimenta || "Formal / Libre"}
+                </span>
               </p>
             </div>
 
@@ -695,27 +740,34 @@ function InvitacionPublicaPage() {
                 referrerPolicy="no-referrer-when-downgrade"
               />
               <div className="flex flex-col gap-1.5 px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-3 sm:text-sm">
-                <span className="truncate font-semibold text-gray-200">
-                  📍 {evento.lugar || "Ubicación del Evento"}
+                <span className="flex min-w-0 items-center gap-1.5 truncate font-semibold text-gray-200">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-[#15B2F5]" />
+                  <span className="truncate">
+                    {evento.lugar || "Ubicación del Evento"}
+                  </span>
                 </span>
                 <a
                   href={mapLocation.externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 font-extrabold text-[#15B2F5] hover:underline"
+                  className="inline-flex shrink-0 items-center gap-1 font-extrabold text-[#15B2F5] hover:underline"
                 >
-                  🗺️ Cómo llegar en Google Maps ↗
+                  <MapIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span>Cómo llegar en Google Maps</span>
+                  <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               </div>
             </div>
 
             {/* Notificación de Modalidad de Asistencia */}
             <div className="mt-4 rounded-2xl border border-[#15B2F5]/40 bg-[#15B2F5]/15 px-4 py-3 text-center">
-              <span className="block text-[10px] font-extrabold uppercase tracking-widest text-[#15B2F5]">
-                🔔 MODALIDAD DE ASISTENCIA
+              <span className="inline-flex items-center justify-center gap-1 text-[10px] font-extrabold uppercase tracking-widest text-[#15B2F5]">
+                <Bell className="h-3.5 w-3.5 shrink-0" />
+                <span>MODALIDAD DE ASISTENCIA</span>
               </span>
-              <strong className="mt-0.5 block text-sm font-extrabold uppercase tracking-wider text-white">
-                🎟️ {modalidadEvento}
+              <strong className="mt-0.5 flex items-center justify-center gap-1.5 text-sm font-extrabold uppercase tracking-wider text-white">
+                <Ticket className="h-4 w-4 shrink-0 text-[#15B2F5]" />
+                <span>{modalidadEvento}</span>
               </strong>
               {(adultosLockedByLink || ninosLockedByLink) && (
                 <p className="mt-1 text-[11px] font-semibold text-gray-200">
@@ -754,16 +806,19 @@ function InvitacionPublicaPage() {
                   mesaRegalos[0]?.tienda ||
                   "Amazon";
                 const meta = getTiendaMetaPublic(tiendaActual);
+                const TiendaIcon = meta.Icon;
                 return (
                   <div className="mt-4 rounded-2xl border border-amber-400/35 bg-black/35 p-4 text-left">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-300">
-                        🎁 MESA DE REGALOS SUGERIDOS
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-amber-300">
+                        <Gift className="h-3.5 w-3.5 shrink-0" />
+                        <span>MESA DE REGALOS SUGERIDOS</span>
                       </span>
                       <span
-                        className={`inline-block rounded border px-2 py-0.5 text-[10px] font-extrabold ${meta.badgeClass}`}
+                        className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-extrabold ${meta.badgeClass}`}
                       >
-                        {meta.icon} {tiendaActual}
+                        <TiendaIcon className="h-3 w-3 shrink-0" />
+                        <span>{tiendaActual}</span>
                       </span>
                     </div>
                     <p className="mt-1.5 text-[11px] text-gray-300">
@@ -778,15 +833,19 @@ function InvitacionPublicaPage() {
                       className="mt-3 flex flex-col items-center justify-between gap-2.5 rounded-xl border border-amber-400/40 bg-amber-400/15 px-4 py-3 text-xs transition hover:border-amber-400 hover:bg-amber-400/25 sm:flex-row"
                     >
                       <div className="min-w-0 w-full flex-1 text-center sm:text-left">
-                        <p className="truncate font-extrabold text-white">
-                          🛒 Carrito / Lista de Regalos en {tiendaActual}
+                        <p className="flex items-center justify-center gap-1.5 truncate font-extrabold text-white sm:justify-start">
+                          <ShoppingCart className="h-3.5 w-3.5 shrink-0 text-amber-300" />
+                          <span className="truncate">
+                            Carrito / Lista de Regalos en {tiendaActual}
+                          </span>
                         </p>
                         <p className="mt-0.5 truncate font-mono text-[10px] text-amber-200/90">
                           {hrefUrl}
                         </p>
                       </div>
-                      <span className="w-full shrink-0 rounded-lg bg-amber-400 px-3.5 py-2 text-center text-[11px] font-extrabold text-[#171F39] shadow sm:w-auto">
-                        Ver Carrito / Lista ↗
+                      <span className="inline-flex w-full shrink-0 items-center justify-center gap-1 rounded-lg bg-amber-400 px-3.5 py-2 text-center text-[11px] font-extrabold text-[#171F39] shadow sm:w-auto">
+                        <span>Ver Carrito / Lista</span>
+                        <ExternalLink className="h-3 w-3 shrink-0" />
                       </span>
                     </a>
                   </div>
@@ -795,16 +854,18 @@ function InvitacionPublicaPage() {
 
             {/* Mensaje de confirmación tras enviar formulario */}
             {feedbackMsg && (
-              <div className="recuerdalo-pop-in recuerdalo-pulse-glow mt-5 break-words rounded-2xl border-2 border-[#6EE7B7] bg-gradient-to-r from-[#10B981] via-[#34D399] to-[#10B981] px-4 py-3.5 text-center text-base font-extrabold leading-snug tracking-tight text-[#041E17] shadow-[0_12px_32px_rgba(16,185,129,0.45)] sm:px-6 sm:py-4 sm:text-lg md:text-xl">
-                ✓ {feedbackMsg}
+              <div className="recuerdalo-pop-in recuerdalo-pulse-glow mt-5 flex items-center justify-center gap-2 break-words rounded-2xl border-2 border-[#6EE7B7] bg-gradient-to-r from-[#10B981] via-[#34D399] to-[#10B981] px-4 py-3.5 text-center text-base font-extrabold leading-snug tracking-tight text-[#041E17] shadow-[0_12px_32px_rgba(16,185,129,0.45)] sm:px-6 sm:py-4 sm:text-lg md:text-xl">
+                <Check className="h-5 w-5 shrink-0 stroke-[3]" />
+                <span>{feedbackMsg}</span>
               </div>
             )}
 
             {/* Aviso cuando la fecha límite de confirmación ya caducó */}
             {(isFechaLimiteVencida || expiredRsvpMsg) && (
               <div className="mt-4 rounded-2xl border border-rose-400/50 bg-rose-500/20 p-4 text-center shadow-lg">
-                <span className="inline-block rounded-full bg-rose-500 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white">
-                  ⏳ FECHA DE CONFIRMACIÓN CADUCADA
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                  <Hourglass className="h-3.5 w-3.5 shrink-0" />
+                  <span>FECHA DE CONFIRMACIÓN CADUCADA</span>
                 </span>
                 <p className="mt-2 text-xs font-extrabold text-rose-100 sm:text-sm">
                   {expiredRsvpMsg ||
@@ -821,8 +882,9 @@ function InvitacionPublicaPage() {
             {invitado && invitado.estado_rsvp === "Confirmado" && !showRsvpForm ? (
               <>
                 <div className="recuerdalo-pop-in mt-5 rounded-2xl border border-[#15B2F5]/40 bg-[#0F1A45] p-4 text-center transition-transform duration-300 hover:scale-[1.01] sm:p-6">
-                  <span className="recuerdalo-float inline-block rounded-lg bg-[#15B2F5] px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow sm:text-xs">
-                    🟢 ASISTENCIA CONFIRMADA
+                  <span className="recuerdalo-float inline-flex items-center gap-1.5 rounded-lg bg-[#15B2F5] px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow sm:text-xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    <span>ASISTENCIA CONFIRMADA</span>
                   </span>
                   <p className="mt-2 break-words text-sm font-extrabold text-white sm:text-base">
                     {invitado.nombre}
@@ -882,9 +944,10 @@ function InvitacionPublicaPage() {
                     <button
                       type="button"
                       onClick={handleOpenRsvpAttempt}
-                      className="mt-4 w-full rounded-xl border border-white/15 bg-white/10 py-2.5 text-[11px] font-bold text-gray-200 transition hover:bg-white/20 sm:text-xs"
+                      className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/10 py-2.5 text-[11px] font-bold text-gray-200 transition hover:bg-white/20 sm:text-xs"
                     >
-                      ✏️ Modificar mi respuesta o datos
+                      <Pencil className="h-3.5 w-3.5 shrink-0" />
+                      <span>Modificar mi respuesta o datos</span>
                     </button>
                   )}
                 </div>
@@ -907,7 +970,8 @@ function InvitacionPublicaPage() {
                     />
                     <div className="min-w-0 flex-1">
                       <span className="inline-flex items-center gap-1 rounded-full border border-[#4CE0B3]/50 bg-[#4CE0B3]/20 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#6EE7B7] sm:text-[11px]">
-                        ✨ Recuerdalo.com.mx • Cuenta Gratis
+                        <Sparkles className="h-3 w-3 shrink-0" />
+                        <span>Recuerdalo.com.mx • Cuenta Gratis</span>
                       </span>
                       <h3 className="mt-1 break-words text-base font-extrabold leading-tight text-[#edfb78] sm:text-lg md:text-xl">
                         ¡Si lo prefieres puedes registrarte con tu correo y vive el evento al máximo!
@@ -918,8 +982,8 @@ function InvitacionPublicaPage() {
                   {/* Tarjetas de beneficios con efectos de movimiento */}
                   <div className="relative mt-3.5 space-y-2.5 sm:space-y-3">
                     <div className="group flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#15B2F5]/60 hover:bg-white/15 sm:p-3.5">
-                      <span className="recuerdalo-float flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#15B2F5]/25 text-lg shadow-inner transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10 sm:text-xl">
-                        🔔
+                      <span className="recuerdalo-float flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#15B2F5]/25 text-[#15B2F5] shadow-inner transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10">
+                        <Bell className="h-5 w-5" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-extrabold text-white sm:text-sm">
@@ -927,14 +991,17 @@ function InvitacionPublicaPage() {
                         </p>
                         <p className="mt-0.5 text-[11px] leading-snug text-gray-300 sm:text-xs">
                           Consulta tu pase QR siempre a la mano, mapa, horarios y avisos desde tu sección{" "}
-                          <strong className="text-[#15B2F5]">&ldquo;💌 Mis Invitaciones&rdquo;</strong>.
+                          <strong className="inline-flex items-center gap-1 text-[#15B2F5]">
+                            <Mail className="h-3 w-3 shrink-0" />
+                            <span>&ldquo;Mis Invitaciones&rdquo;</span>
+                          </strong>.
                         </p>
                       </div>
                     </div>
 
                     <div className="group flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#4CE0B3]/60 hover:bg-white/15 sm:p-3.5">
-                      <span className="recuerdalo-float-delayed flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#4CE0B3]/25 text-lg shadow-inner transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10 sm:text-xl">
-                        📸
+                      <span className="recuerdalo-float-delayed flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#4CE0B3]/25 text-[#4CE0B3] shadow-inner transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10">
+                        <Camera className="h-5 w-5" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-extrabold text-white sm:text-sm">
@@ -947,8 +1014,8 @@ function InvitacionPublicaPage() {
                     </div>
 
                     <div className="group flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-400/60 hover:bg-white/15 sm:p-3.5">
-                      <span className="recuerdalo-float flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-400/25 text-lg shadow-inner transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10 sm:text-xl">
-                        🎉
+                      <span className="recuerdalo-float flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-400/25 text-amber-300 shadow-inner transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10">
+                        <PartyPopper className="h-5 w-5" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-extrabold text-white sm:text-sm">
@@ -970,7 +1037,8 @@ function InvitacionPublicaPage() {
                     }}
                     className="recuerdalo-shimmer-btn relative mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#4CE0B3] via-[#15B2F5] to-[#4CE0B3] px-3.5 py-3 text-center text-[11px] font-extrabold uppercase leading-snug tracking-wider text-[#0B1536] shadow-[0_12px_28px_rgba(21,178,245,0.4)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(76,224,179,0.55)] active:scale-[0.99] sm:px-5 sm:py-4 sm:text-xs md:text-sm"
                   >
-                    <span>🚀 Crear mi Cuenta Gratis con mi Correo</span>
+                    <Rocket className="h-4 w-4 shrink-0" />
+                    <span>Crear mi Cuenta Gratis con mi Correo</span>
                   </button>
 
                   <div className="relative mt-3.5 flex flex-col items-center justify-center gap-2 text-center text-[11px] text-gray-300 sm:flex-row sm:justify-between sm:text-left sm:text-xs">
@@ -986,17 +1054,19 @@ function InvitacionPublicaPage() {
                     </button>
                     <Link
                       to="/"
-                      className="font-semibold text-gray-300 transition hover:text-[#15B2F5]"
+                      className="inline-flex items-center gap-1 font-semibold text-gray-300 transition hover:text-[#15B2F5]"
                     >
-                      Conocer Recuerdalo.com.mx ↗
+                      <span>Conocer Recuerdalo.com.mx</span>
+                      <ExternalLink className="h-3 w-3 shrink-0" />
                     </Link>
                   </div>
                 </div>
               </>
             ) : invitado && invitado.estado_rsvp === "Rechazado" && !showRsvpForm ? (
               <div className="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-center">
-                <span className="inline-block rounded-full bg-rose-500/20 px-3 py-1 text-[10px] font-bold uppercase text-rose-300">
-                  🔴 NO PODRÁ ASISTIR
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 px-3 py-1 text-[10px] font-bold uppercase text-rose-300">
+                  <XCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span>NO PODRÁ ASISTIR</span>
                 </span>
                 <p className="mt-2 text-xs text-gray-300">
                   Has notificado que no podrás asistir a este evento.
@@ -1020,17 +1090,22 @@ function InvitacionPublicaPage() {
                   type="button"
                   disabled={!evento.rsvp_habilitado}
                   onClick={handleOpenRsvpAttempt}
-                  className={`mt-5 w-full cursor-pointer rounded-xl py-3.5 text-xs font-extrabold uppercase tracking-widest text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  className={`mt-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-xs font-extrabold uppercase tracking-widest text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${
                     isFechaLimiteVencida
                       ? "bg-rose-600/80 hover:bg-rose-600"
                       : "bg-[#15B2F5] hover:bg-[#0E9DE0]"
                   }`}
                 >
-                  {!evento.rsvp_habilitado
-                    ? "CONFIRMACIONES CERRADAS"
-                    : isFechaLimiteVencida
-                    ? "⏳ FECHA DE CONFIRMACIÓN CADUCADA"
-                    : "Confirmar Asistencia"}
+                  {!evento.rsvp_habilitado ? (
+                    "CONFIRMACIONES CERRADAS"
+                  ) : isFechaLimiteVencida ? (
+                    <>
+                      <Hourglass className="h-4 w-4 shrink-0" />
+                      <span>FECHA DE CONFIRMACIÓN CADUCADA</span>
+                    </>
+                  ) : (
+                    "Confirmar Asistencia"
+                  )}
                 </button>
               )}
 
@@ -1041,15 +1116,17 @@ function InvitacionPublicaPage() {
                 className="mt-5 space-y-3.5 rounded-2xl border border-[#15B2F5]/40 bg-[#0F1A45] p-5 text-left shadow-2xl"
               >
                 <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                  <h3 className="text-base font-extrabold uppercase tracking-wide text-[#15B2F5]">
-                    📋 Confirmar Asistencia
+                  <h3 className="flex items-center gap-1.5 text-base font-extrabold uppercase tracking-wide text-[#15B2F5]">
+                    <ClipboardCheck className="h-4 w-4 shrink-0" />
+                    <span>Confirmar Asistencia</span>
                   </h3>
                   <button
                     type="button"
                     onClick={() => setShowRsvpForm(false)}
-                    className="text-xs text-gray-400 hover:text-white"
+                    className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-white"
                   >
-                    ✕ Cerrar
+                    <X className="h-3.5 w-3.5 shrink-0" />
+                    <span>Cerrar</span>
                   </button>
                 </div>
 
@@ -1063,26 +1140,28 @@ function InvitacionPublicaPage() {
                       onClick={() =>
                         setForm((p) => ({ ...p, estado_rsvp: "Confirmado" }))
                       }
-                      className={`rounded-xl border py-2.5 text-xs font-extrabold transition ${
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-extrabold transition ${
                         form.estado_rsvp === "Confirmado"
                           ? "border-[#15B2F5] bg-[#15B2F5] text-white"
                           : "border-white/10 bg-black/40 text-gray-400 hover:text-white"
                       }`}
                     >
-                      🟢 Sí, asistiré
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      <span>Sí, asistiré</span>
                     </button>
                     <button
                       type="button"
                       onClick={() =>
                         setForm((p) => ({ ...p, estado_rsvp: "Rechazado" }))
                       }
-                      className={`rounded-xl border py-2.5 text-xs font-extrabold transition ${
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-extrabold transition ${
                         form.estado_rsvp === "Rechazado"
                           ? "border-rose-400 bg-rose-500/20 text-rose-300"
                           : "border-white/10 bg-black/40 text-gray-400 hover:text-white"
                       }`}
                     >
-                      🔴 No podré asistir
+                      <XCircle className="h-3.5 w-3.5 shrink-0" />
+                      <span>No podré asistir</span>
                     </button>
                   </div>
                 </div>
@@ -1149,12 +1228,14 @@ function InvitacionPublicaPage() {
                               (No aplica)
                             </span>
                           ) : adultosLockedByLink ? (
-                            <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
-                              🔒 Bloqueado ({urlAdultos})
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
+                              <Lock className="h-3 w-3 shrink-0" />
+                              <span>Bloqueado ({urlAdultos})</span>
                             </span>
                           ) : (
-                            <span className="text-[10px] font-medium text-[#15B2F5]">
-                              🔓 Libre
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#15B2F5]">
+                              <Unlock className="h-3 w-3 shrink-0" />
+                              <span>Libre</span>
                             </span>
                           )}
                         </label>
@@ -1187,12 +1268,14 @@ function InvitacionPublicaPage() {
                               (Solo adultos)
                             </span>
                           ) : ninosLockedByLink ? (
-                            <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
-                              🔒 Bloqueado ({urlNinos})
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
+                              <Lock className="h-3 w-3 shrink-0" />
+                              <span>Bloqueado ({urlNinos})</span>
                             </span>
                           ) : (
-                            <span className="text-[10px] font-medium text-[#15B2F5]">
-                              🔓 Libre
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#15B2F5]">
+                              <Unlock className="h-3 w-3 shrink-0" />
+                              <span>Libre</span>
                             </span>
                           )}
                         </label>
@@ -1219,8 +1302,11 @@ function InvitacionPublicaPage() {
                       </div>
                     </div>
                     {(adultosLockedByLink || ninosLockedByLink) && (
-                      <p className="text-[11px] text-amber-200/90">
-                        🔒 Los campos con candado tienen el número de pases preasignado por el organizador.
+                      <p className="flex items-center gap-1.5 text-[11px] text-amber-200/90">
+                        <Lock className="h-3.5 w-3.5 shrink-0" />
+                        <span>
+                          Los campos con candado tienen el número de pases preasignado por el organizador.
+                        </span>
                       </p>
                     )}
 
@@ -1247,11 +1333,16 @@ function InvitacionPublicaPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full cursor-pointer rounded-xl bg-[#15B2F5] py-3 text-xs font-extrabold uppercase tracking-widest text-white shadow-lg transition hover:bg-[#0E9DE0] disabled:opacity-50"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#15B2F5] py-3 text-xs font-extrabold uppercase tracking-widest text-white shadow-lg transition hover:bg-[#0E9DE0] disabled:opacity-50"
                 >
-                  {submitting
-                    ? "Guardando respuesta..."
-                    : "✓ Enviar mi Confirmación"}
+                  {submitting ? (
+                    "Guardando respuesta..."
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 shrink-0 stroke-[2.5]" />
+                      <span>Enviar mi Confirmación</span>
+                    </>
+                  )}
                 </button>
               </form>
             )}
@@ -1278,23 +1369,12 @@ function InvitacionPublicaPage() {
             aria-label="Ver más información abajo"
           >
             <span className="inline-block h-2 w-2 shrink-0 animate-ping rounded-full bg-[#4CE0B3]" />
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-[#4CE0B3]" />
             <span className="truncate tracking-wide text-[#A7F3D0] group-hover:text-white">
-              ✨ Ver más información
+              Ver más información
             </span>
             <span className="recuerdalo-bounce-down flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#4CE0B3] to-[#10B981] text-[#041E17] shadow-md sm:h-7 sm:w-7">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              <ChevronDown className="h-3.5 w-3.5 stroke-[3] sm:h-4 sm:w-4" />
             </span>
           </button>
         </div>

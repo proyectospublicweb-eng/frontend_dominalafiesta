@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertCircle, Hourglass, LogIn, Sparkles, UserPlus, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import PasswordField from "./PasswordField";
 
@@ -86,25 +87,14 @@ function AuthModal({ isOpen, initialMode = "login", defaultEmail = "", onClose }
           className="absolute right-4 top-4 rounded-xl p-1.5 text-[#8E94A9] transition hover:bg-[#F0F2F8] hover:text-[#2D3047]"
           aria-label="Cerrar modal"
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="h-5 w-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 18 18 6M6 6l12 12"
-            />
-          </svg>
+          <X className="h-5 w-5 shrink-0" />
         </button>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="text-center">
-            <span className="inline-block rounded-full bg-[#ECEFFA] px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-widest text-[#6C7EE1]">
-              Recuerdalo.com.mx
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ECEFFA] px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-widest text-[#6C7EE1]">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+              <span>Recuerdalo.com.mx</span>
             </span>
             <h2 className="mt-3 text-2xl font-extrabold text-[#2D3047] sm:text-3xl">
               {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
@@ -117,8 +107,9 @@ function AuthModal({ isOpen, initialMode = "login", defaultEmail = "", onClose }
           </div>
 
           {error && (
-            <p className="rounded-xl border border-[#F98880]/40 bg-[#FFF2F1] px-3.5 py-2.5 text-sm font-medium text-[#E05349]">
-              {error}
+            <p className="flex items-start gap-2 rounded-xl border border-[#F98880]/40 bg-[#FFF2F1] px-3.5 py-2.5 text-sm font-medium text-[#E05349]">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{error}</span>
             </p>
           )}
 
@@ -169,13 +160,24 @@ function AuthModal({ isOpen, initialMode = "login", defaultEmail = "", onClose }
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-xl bg-gradient-to-r from-[#7587EB] to-[#6475DC] py-3.5 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(108,126,225,0.3)] transition hover:from-[#6475DC] hover:to-[#5A6CD0] disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7587EB] to-[#6475DC] py-3.5 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(108,126,225,0.3)] transition hover:from-[#6475DC] hover:to-[#5A6CD0] disabled:opacity-60"
           >
-            {submitting
-              ? "Procesando..."
-              : mode === "login"
-              ? "Entrar a mi cuenta"
-              : "Crear cuenta"}
+            {submitting ? (
+              <>
+                <Hourglass className="h-4 w-4 shrink-0" />
+                <span>Procesando...</span>
+              </>
+            ) : mode === "login" ? (
+              <>
+                <LogIn className="h-4 w-4 shrink-0" />
+                <span>Entrar a mi cuenta</span>
+              </>
+            ) : (
+              <>
+                <UserPlus className="h-4 w-4 shrink-0" />
+                <span>Crear cuenta</span>
+              </>
+            )}
           </button>
 
           <p className="text-center text-sm text-[#6E748A]">

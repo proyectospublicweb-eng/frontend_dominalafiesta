@@ -2,15 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Calendar,
+  Camera,
+  Film,
   Home,
   LogOut,
   MailOpen,
   Menu,
-  MoreVertical,
   Plus,
+  RefreshCw,
   Settings,
   ShieldCheck,
   Sparkles,
+  Trash2,
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -25,7 +28,7 @@ import WizardCrearEvento from "../components/dashboard/WizardCrearEvento.jsx";
 import GestorEvento from "../components/dashboard/GestorEvento.jsx";
 import CalendarioEventos from "../components/dashboard/CalendarioEventos.jsx";
 import PanelAdminGlobal from "../components/dashboard/PanelAdminGlobal.jsx";
-import CamaraAlbumEvento from "../components/dashboard/CamaraAlbumEvento.jsx";
+import DetalleInvitacionRecibida from "../components/dashboard/DetalleInvitacionRecibida.jsx";
 import {
   GESTOR_TABS,
   normalizeGestorTab,
@@ -335,49 +338,35 @@ function HomePage() {
           SIDEBAR IZQUIERDO ESTILO "Tbk" (#2D3047 + BLOQUE SUPERIOR #6C7EE1)
          ===================================================================== */}
       <aside
-        className={`font-wallet fixed inset-y-0 left-0 z-50 flex w-64 flex-col justify-between bg-[#2D3047] text-white shadow-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+        className={`font-wallet fixed inset-y-0 left-0 z-50 flex w-64 max-w-[85vw] flex-col justify-between overflow-hidden bg-[#2D3047] text-white shadow-xl transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:max-w-none lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div>
-          {/* Bloque Superior Redondeado en Índigo Periwinkle (#6C7EE1) estilo "Tbk" */}
-          <div className="m-4 flex items-center justify-between overflow-hidden rounded-2xl bg-[#6C7EE1] shadow-md shadow-[#1E2135]/40">
-            <div className="flex items-center gap-2.5 px-4 py-3.5">
+        <div className="flex-1 overflow-y-auto pb-4">
+          {/* Botón para cerrar el panel en vista móvil/tablet */}
+          <div className="flex justify-end px-4 pt-3 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center justify-center rounded-lg p-1.5 text-white/80 hover:bg-white/10 hover:text-white"
+              aria-label="Cerrar menú"
+            >
+              <X className="h-4 w-4 stroke-[2.2]" />
+            </button>
+          </div>
+
+          {/* Tarjeta superior con logo Recuérdalo y correo del usuario */}
+          <div className="mx-3.5 mt-2 mb-4 rounded-2xl bg-[#23263A] p-3 sm:mx-4 sm:p-3.5 lg:mt-4">
+            <div className="flex items-center gap-2.5">
               <img
                 src="/logo-recuerdalo.png?v=3"
                 alt="Recuérdalo"
-                className="h-10 w-10 shrink-0 rounded-xl border border-white/60 object-cover shadow-sm"
+                className="h-9 w-9 shrink-0 rounded-xl object-cover"
               />
-              <span className="text-base font-extrabold tracking-tight text-white">
-                Recuerdalo
-              </span>
-            </div>
-
-            <div className="flex h-full items-center bg-[#5A6CD0] px-3.5 py-5 text-white/90">
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(false)}
-                className="flex items-center justify-center text-sm font-bold lg:hidden"
-                aria-label="Cerrar menú"
-              >
-                <X className="h-4 w-4 stroke-[2.2]" />
-              </button>
-              <MoreVertical className="hidden h-4 w-4 stroke-[2.2] lg:inline" />
-            </div>
-          </div>
-
-          {/* Tarjeta con el correo del usuario y cierre de sesión debajo del logo */}
-          <div className="mx-4 mb-4 rounded-2xl bg-[#23263A] p-3.5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#6C7EE1] text-xs font-bold text-white shadow-xs">
-                {String(user?.username || "U")
-                  .slice(0, 1)
-                  .toUpperCase()}
-              </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <p className="truncate text-xs font-bold text-white">
-                    {user?.username || "Organizador"}
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                  <p className="truncate text-[11px] font-bold text-white sm:text-xs">
+                    Recuerdalo.com.mx
                   </p>
                   {user?.isAdmin && (
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-[#4CE0B3]/20 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#4CE0B3]">
@@ -392,15 +381,6 @@ function HomePage() {
               </div>
               <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#4CE0B3]" />
             </div>
-
-            <button
-              type="button"
-              onClick={logout}
-              className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#6C7EE1] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#5A6CD0]"
-            >
-              <LogOut className="h-3.5 w-3.5 stroke-[2]" />
-              <span>Cerrar Sesión</span>
-            </button>
           </div>
 
           {/* Navegación Principal */}
@@ -523,6 +503,18 @@ function HomePage() {
               </button>
             )}
           </nav>
+        </div>
+
+        {/* Bloque Inferior del Sidebar: Botón de Cerrar Sesión */}
+        <div className="shrink-0 border-t border-white/10 bg-[#2D3047] p-4">
+          <button
+            type="button"
+            onClick={logout}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#5A6CD0]"
+          >
+            <LogOut className="h-3.5 w-3.5 shrink-0 stroke-[2]" />
+            <span>Cerrar Sesión</span>
+          </button>
         </div>
       </aside>
 
@@ -915,10 +907,10 @@ function HomePage() {
           {activeSection === "mis-invitaciones" && (
             <div className="space-y-6 text-[#1E2235]">
               {selectedInvitacionAlbum ? (
-                <CamaraAlbumEvento
-                  evento={selectedInvitacionAlbum}
-                  modoInvitado={true}
-                  onCloseModoInvitado={() => setSelectedInvitacionAlbum(null)}
+                <DetalleInvitacionRecibida
+                  invitacionInicial={selectedInvitacionAlbum}
+                  onBack={() => setSelectedInvitacionAlbum(null)}
+                  onInvitacionUpdated={fetchMisInvitaciones}
                 />
               ) : (
                 <div>
@@ -1049,7 +1041,8 @@ function HomePage() {
                         onClick={fetchMisInvitaciones}
                         className="inline-flex w-fit cursor-pointer items-center justify-center gap-1.5 self-start rounded-lg bg-[#2B7FFF] px-5 py-2.5 text-center text-xs font-semibold text-white shadow-[0_4px_12px_rgba(43,127,255,0.28)] transition hover:bg-[#1A6FEF] lg:self-auto"
                       >
-                        <span>🔄 Actualizar Invitaciones</span>
+                        <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+                        <span>Actualizar Invitaciones</span>
                       </button>
                     </div>
 
@@ -1081,14 +1074,9 @@ function HomePage() {
                           const coverThumb =
                             String(inv.imagen_portada || "").trim() ||
                             DEFAULT_INVITACION_THUMB;
-                          const guestTokenParam =
-                            inv.token_invitacion || inv.idinvitado;
-                          const publicUrl = `/invitacion/e${
-                            inv.idevento
-                          }?guest=${encodeURIComponent(guestTokenParam)}`;
-                          const puedeVerAlbum =
-                            inv.estado_rsvp === "Confirmado" &&
-                            Boolean(inv.compartir_album_invitados);
+                          const puedeVerAlbum = Boolean(
+                            inv.compartir_album_invitados
+                          );
                           const numFotos = Number(inv.total_fotos_evento || 0);
                           const numReels = Number(inv.total_reels_evento || 0);
                           const statusDotColor =
@@ -1101,13 +1089,7 @@ function HomePage() {
                           return (
                             <div
                               key={`${inv.idevento}-${inv.idinvitado}`}
-                              onClick={() =>
-                                window.open(
-                                  publicUrl,
-                                  "_blank",
-                                  "noopener,noreferrer"
-                                )
-                              }
+                              onClick={() => setSelectedInvitacionAlbum(inv)}
                               className="group relative flex w-full min-w-0 cursor-pointer flex-col overflow-hidden rounded-[16px] bg-white shadow-[0_10px_28px_rgba(20,24,45,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(20,24,45,0.14)] sm:rounded-[22px]"
                             >
                               {/* Imagen superior del evento */}
@@ -1194,12 +1176,17 @@ function HomePage() {
                                       className="flex w-full cursor-pointer flex-wrap items-center justify-center gap-1 rounded-lg bg-[#1E2029] px-2 py-1.5 text-center text-[9px] font-extrabold text-white shadow-sm transition hover:bg-[#2D3047] sm:gap-1.5 sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]"
                                       title="El anfitrión compartió las fotos y reels de este evento contigo"
                                     >
+                                      <Camera className="h-3 w-3 shrink-0 text-[#4ADE80] sm:h-3.5 sm:w-3.5" />
                                       <span className="truncate">
-                                        📸 Ver Fotos y Reels
+                                        Ver Fotos y Reels
                                       </span>
                                       {(numFotos > 0 || numReels > 0) && (
-                                        <span className="shrink-0 rounded-md bg-white/15 px-1 py-0.5 text-[8px] text-[#4ADE80] sm:px-1.5 sm:text-[9px]">
-                                          {numFotos}📷 · {numReels}🎬
+                                        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/15 px-1 py-0.5 text-[8px] text-[#4ADE80] sm:px-1.5 sm:text-[9px]">
+                                          <span>{numFotos}</span>
+                                          <Camera className="h-2.5 w-2.5 shrink-0" />
+                                          <span>·</span>
+                                          <span>{numReels}</span>
+                                          <Film className="h-2.5 w-2.5 shrink-0" />
                                         </span>
                                       )}
                                     </button>
@@ -1356,7 +1343,7 @@ function HomePage() {
 
             <div className="text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFF2F1] text-2xl text-[#E05349] shadow-xs">
-                🗑️
+                <Trash2 className="h-6 w-6 shrink-0" />
               </div>
               <h3 className="mt-4 text-2xl font-extrabold text-[#2D3047]">
                 ¿Eliminar este evento?

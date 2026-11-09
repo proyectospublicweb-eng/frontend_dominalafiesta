@@ -1,5 +1,38 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  BarChart3,
+  Calendar,
+  Camera,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Crown,
+  FileText,
+  Hourglass,
+  Inbox,
+  Info,
+  Lightbulb,
+  Lock,
+  MoveHorizontal,
+  PartyPopper,
+  Plus,
+  RefreshCw,
+  Save,
+  Search,
+  Settings,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  Ticket,
+  Trash2,
+  User,
+  UserCheck,
+  Users,
+  X,
+  Zap,
+} from "lucide-react";
+import {
   getPlatformConfigAdminRequest,
   updatePlatformConfigAdminRequest,
   listarPlantillasPlatformAdminRequest,
@@ -302,8 +335,9 @@ export default function PanelAdminGlobal() {
   if (loading) {
     return (
       <div className="rounded-3xl border border-[#E6E9F4] bg-white p-8 text-center shadow-xs">
-        <p className="text-sm font-bold text-[#6C7EE1]">
-          ⏳ Cargando configuración global de administradores...
+        <p className="inline-flex items-center justify-center gap-2 text-sm font-bold text-[#6C7EE1]">
+          <Hourglass className="h-4 w-4 shrink-0 animate-pulse" />
+          <span>Cargando configuración global de administradores...</span>
         </p>
       </div>
     );
@@ -489,7 +523,8 @@ export default function PanelAdminGlobal() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="min-w-0">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6C7EE1]/25 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-[#9BA9FF]">
-              🛡️ Zona Exclusiva • SuperAdmin
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+              <span>Zona Exclusiva • SuperAdmin</span>
             </span>
             <h2 className="mt-2 font-display text-lg font-extrabold uppercase tracking-wide text-white sm:text-2xl lg:text-3xl">
               Configuración Global de Recuerdalo.com.mx
@@ -499,19 +534,28 @@ export default function PanelAdminGlobal() {
             </p>
           </div>
           <div className="grid shrink-0 grid-cols-1 gap-2 min-[480px]:grid-cols-2 sm:flex sm:flex-wrap sm:items-center">
-            <span className="w-full rounded-xl border border-[#6C7EE1]/40 bg-[#6C7EE1]/20 px-3.5 py-2 text-center text-xs font-extrabold text-[#B8C2FF] sm:w-auto">
-              👥 {usuariosList.length} Usuario(s) Registrado(s)
+            <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#6C7EE1]/40 bg-[#6C7EE1]/20 px-3.5 py-2 text-center text-xs font-extrabold text-[#B8C2FF] sm:w-auto">
+              <Users className="h-3.5 w-3.5 shrink-0" />
+              <span>{usuariosList.length} Usuario(s) Registrado(s)</span>
             </span>
             <span
-              className={`w-full rounded-xl px-3.5 py-2 text-center text-xs font-extrabold sm:w-auto ${
+              className={`inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-center text-xs font-extrabold sm:w-auto ${
                 form.configured
                   ? "bg-emerald-500/20 text-[#4CE0B3]"
                   : "bg-amber-500/20 text-amber-300"
               }`}
             >
-              {form.configured
-                ? "✓ API Meta Global Activa"
-                : "⚙️ API Meta Pendiente"}
+              {form.configured ? (
+                <>
+                  <Check className="h-3.5 w-3.5 shrink-0" />
+                  <span>API Meta Global Activa</span>
+                </>
+              ) : (
+                <>
+                  <Settings className="h-3.5 w-3.5 shrink-0" />
+                  <span>API Meta Pendiente</span>
+                </>
+              )}
             </span>
           </div>
         </div>
@@ -524,8 +568,9 @@ export default function PanelAdminGlobal() {
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#18A97E]">
               MÓDULO 1 • CONEXIÓN CENTRAL META CLOUD API
             </span>
-            <h3 className="font-display text-lg font-bold uppercase tracking-wide text-[#2D3047] sm:text-xl lg:text-2xl">
-              📲 Credenciales Globales de WhatsApp Business API
+            <h3 className="flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide text-[#2D3047] sm:text-xl lg:text-2xl">
+              <Smartphone className="h-5 w-5 shrink-0 text-[#18A97E]" />
+              <span>Credenciales Globales de WhatsApp Business API</span>
             </h3>
             <p className="text-xs text-[#8E94A9]">
               Configura la cuenta oficial de Meta de Recuerdalo.com.mx para el disparo silencioso y automático de recordatorios en todos los eventos.
@@ -585,7 +630,11 @@ export default function PanelAdminGlobal() {
               </span>
             </label>
             <div className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1.5 w-72 max-w-[calc(100vw-3rem)] rounded-xl border border-[#18A97E]/40 bg-[#F7F8FC] p-2.5 text-[11px] leading-snug text-[#2D3047] opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100">
-              ℹ️ <strong>Sugerencia:</strong> No es necesario para enviar los mensajes si los campos de{" "}
+              <span className="inline-flex items-center gap-1 font-bold text-[#18A97E]">
+                <Info className="h-3.5 w-3.5 shrink-0" />
+                <span>Sugerencia:</span>
+              </span>{" "}
+              No es necesario para enviar los mensajes si los campos de{" "}
               <strong>
                 Phone Number ID, Token de Acceso Permanente, Nombre de la Plantilla e Idioma
               </strong>{" "}
@@ -611,11 +660,19 @@ export default function PanelAdminGlobal() {
                     ? "Consultar plantillas autorizadas de esta cuenta WABA"
                     : "Completa el campo WABA ID para habilitar la consulta de plantillas"
                 }
-                className="w-full shrink-0 cursor-pointer rounded-xl border border-[#18A97E] bg-white px-4 py-2.5 text-center text-xs font-extrabold text-[#18A97E] transition hover:bg-[#18A97E] hover:text-white disabled:cursor-not-allowed disabled:border-[#DCE0F0] disabled:bg-gray-100 disabled:text-gray-400 sm:w-auto"
+                className="inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#18A97E] bg-white px-4 py-2.5 text-center text-xs font-extrabold text-[#18A97E] transition hover:bg-[#18A97E] hover:text-white disabled:cursor-not-allowed disabled:border-[#DCE0F0] disabled:bg-gray-100 disabled:text-gray-400 sm:w-auto"
               >
-                {loadingTemplates
-                  ? "⏳ Consultando..."
-                  : "📋 Listar Plantillas"}
+                {loadingTemplates ? (
+                  <>
+                    <Hourglass className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+                    <span>Consultando...</span>
+                  </>
+                ) : (
+                  <>
+                    <ClipboardList className="h-3.5 w-3.5 shrink-0" />
+                    <span>Listar Plantillas</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -689,15 +746,19 @@ export default function PanelAdminGlobal() {
         {templatesList.length > 0 && (
           <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-50/40 p-3.5">
             <div className="mb-2.5 flex items-center justify-between">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-[#18A97E]">
-                📑 Plantillas Encontradas en tu WABA ({templatesList.length}) — Haz clic para usar:
+              <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[#18A97E]">
+                <FileText className="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  Plantillas Encontradas en tu WABA ({templatesList.length}) — Haz clic para usar:
+                </span>
               </span>
               <button
                 type="button"
                 onClick={() => setTemplatesList([])}
-                className="cursor-pointer text-xs font-bold text-[#8E94A9] hover:text-[#2D3047]"
+                className="inline-flex cursor-pointer items-center gap-1 text-xs font-bold text-[#8E94A9] hover:text-[#2D3047]"
               >
-                ✕ Cerrar lista
+                <X className="h-3.5 w-3.5 shrink-0" />
+                <span>Cerrar lista</span>
               </button>
             </div>
             <div className="grid max-h-52 grid-cols-1 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -751,35 +812,56 @@ export default function PanelAdminGlobal() {
         )}
 
         <div className="mt-5 flex flex-col items-stretch justify-between gap-3 border-t border-[#E6E9F4] pt-4 sm:flex-row sm:flex-wrap sm:items-center">
-          <p className="text-[11px] text-[#5B617A]">
-            💡 Tip: Para pruebas rápidas puedes usar la plantilla preaprobada{" "}
-            <code className="rounded bg-[#F7F8FC] px-1.5 py-0.5 font-mono font-bold text-[#18A97E]">
-              hello_world
-            </code>{" "}
-            con idioma{" "}
-            <code className="rounded bg-[#F7F8FC] px-1.5 py-0.5 font-mono font-bold text-[#18A97E]">
-              en_US
-            </code>
-            .
+          <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-[#5B617A]">
+            <Lightbulb className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <span>
+              Tip: Para pruebas rápidas puedes usar la plantilla preaprobada{" "}
+              <code className="rounded bg-[#F7F8FC] px-1.5 py-0.5 font-mono font-bold text-[#18A97E]">
+                hello_world
+              </code>{" "}
+              con idioma{" "}
+              <code className="rounded bg-[#F7F8FC] px-1.5 py-0.5 font-mono font-bold text-[#18A97E]">
+                en_US
+              </code>
+              .
+            </span>
           </p>
           <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
             <button
               type="button"
               disabled={runningCron}
               onClick={handleRunReminderCheckNow}
-              className="w-full cursor-pointer rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-center text-xs font-bold text-[#D97706] transition hover:bg-amber-500/20 disabled:opacity-50 sm:w-auto"
+              className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-center text-xs font-bold text-[#D97706] transition hover:bg-amber-500/20 disabled:opacity-50 sm:w-auto"
             >
-              {runningCron
-                ? "⏳ Verificando..."
-                : "⚡ Ejecutar Ciclo Automático Ahora"}
+              {runningCron ? (
+                <>
+                  <Hourglass className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+                  <span>Verificando...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-3.5 w-3.5 shrink-0" />
+                  <span>Ejecutar Ciclo Automático Ahora</span>
+                </>
+              )}
             </button>
             <button
               type="button"
               disabled={saving}
               onClick={() => handleSaveConfig()}
-              className="w-full cursor-pointer rounded-xl bg-[#18A97E] px-5 py-2.5 text-center text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-50 sm:w-auto"
+              className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#18A97E] px-5 py-2.5 text-center text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-50 sm:w-auto"
             >
-              {saving ? "⏳ Guardando..." : "💾 Guardar Configuración Global"}
+              {saving ? (
+                <>
+                  <Hourglass className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="h-3.5 w-3.5 shrink-0" />
+                  <span>Guardar Configuración Global</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -792,8 +874,9 @@ export default function PanelAdminGlobal() {
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#6C7EE1]">
               MÓDULO 2 • CONTROL DE ACCESO ADMINISTRATIVO
             </span>
-            <h3 className="font-display text-lg font-bold uppercase tracking-wide text-[#2D3047] sm:text-xl lg:text-2xl">
-              👥 Cuentas Administradoras de Recuerdalo.com.mx
+            <h3 className="flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide text-[#2D3047] sm:text-xl lg:text-2xl">
+              <Users className="h-5 w-5 shrink-0 text-[#6C7EE1]" />
+              <span>Cuentas Administradoras de Recuerdalo.com.mx</span>
             </h3>
             <p className="text-xs text-[#8E94A9]">
               Elige qué usuarios tienen permiso para ver y administrar este apartado de Configuración Global.
@@ -813,9 +896,10 @@ export default function PanelAdminGlobal() {
             />
             <button
               type="submit"
-              className="w-full shrink-0 cursor-pointer rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-center text-xs font-bold text-white transition hover:bg-[#5A6CD0] sm:w-auto"
+              className="inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#6C7EE1] px-4 py-2.5 text-center text-xs font-bold text-white transition hover:bg-[#5A6CD0] sm:w-auto"
             >
-              ＋ Agregar Admin
+              <Plus className="h-3.5 w-3.5 shrink-0" />
+              <span>Agregar Admin</span>
             </button>
           </form>
         </div>
@@ -831,8 +915,9 @@ export default function PanelAdminGlobal() {
                   <span className="break-all font-bold text-[#2D3047] sm:truncate">
                     {email}
                   </span>
-                  <span className="rounded-full bg-[#6C7EE1]/15 px-2.5 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
-                    🛡️ Administrador Autorizado
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#6C7EE1]/15 px-2.5 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
+                    <ShieldCheck className="h-3 w-3 shrink-0" />
+                    <span>Administrador Autorizado</span>
                   </span>
                 </div>
                 <p className="mt-0.5 text-[10px] text-[#5B617A]">
@@ -861,12 +946,14 @@ export default function PanelAdminGlobal() {
                     {u.correoregistro}
                   </span>
                   {u.isPrimarySuperAdmin ? (
-                    <span className="rounded-full bg-[#2D3047] px-2.5 py-0.5 text-[10px] font-extrabold text-[#4CE0B3]">
-                      👑 SuperAdmin Principal
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#2D3047] px-2.5 py-0.5 text-[10px] font-extrabold text-[#4CE0B3]">
+                      <Crown className="h-3 w-3 shrink-0" />
+                      <span>SuperAdmin Principal</span>
                     </span>
                   ) : (
-                    <span className="rounded-full bg-[#6C7EE1]/15 px-2.5 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
-                      🛡️ Administrador
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#6C7EE1]/15 px-2.5 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
+                      <ShieldCheck className="h-3 w-3 shrink-0" />
+                      <span>Administrador</span>
                     </span>
                   )}
                 </div>
@@ -896,8 +983,9 @@ export default function PanelAdminGlobal() {
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#6C7EE1]">
               MÓDULO 3 • MONITOR DE REGISTROS DE PLATAFORMA
             </span>
-            <h3 className="font-display text-lg font-bold uppercase tracking-wide text-[#2D3047] sm:text-xl lg:text-2xl">
-              🪪 Usuarios Registrados en Recuerdalo.com.mx
+            <h3 className="flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide text-[#2D3047] sm:text-xl lg:text-2xl">
+              <UserCheck className="h-5 w-5 shrink-0 text-[#6C7EE1]" />
+              <span>Usuarios Registrados en Recuerdalo.com.mx</span>
             </h3>
             <p className="text-xs text-[#8E94A9]">
               Supervisa en tiempo real cada cuenta que se va registrando en la plataforma, su fecha exacta de alta, eventos creados y actividad.
@@ -908,11 +996,16 @@ export default function PanelAdminGlobal() {
             type="button"
             disabled={refreshingUsers}
             onClick={handleRefreshUsers}
-            className="w-full shrink-0 cursor-pointer rounded-xl border border-[#6C7EE1] bg-[#ECEFFA]/60 px-4 py-2.5 text-center text-xs font-extrabold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white disabled:opacity-50 sm:w-auto"
+            className="inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#6C7EE1] bg-[#ECEFFA]/60 px-4 py-2.5 text-center text-xs font-extrabold text-[#6C7EE1] transition hover:bg-[#6C7EE1] hover:text-white disabled:opacity-50 sm:w-auto"
           >
-            {refreshingUsers
-              ? "⏳ Actualizando..."
-              : "🔄 Actualizar Registros"}
+            <RefreshCw
+              className={`h-3.5 w-3.5 shrink-0 ${
+                refreshingUsers ? "animate-spin" : ""
+              }`}
+            />
+            <span>
+              {refreshingUsers ? "Actualizando..." : "Actualizar Registros"}
+            </span>
           </button>
         </div>
 
@@ -923,8 +1016,9 @@ export default function PanelAdminGlobal() {
               <span className="truncate text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
                 Total Registrados
               </span>
-              <span className="shrink-0 rounded-lg bg-[#6C7EE1]/12 px-2 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
-                👥 Directorio
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#6C7EE1]/12 px-2 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
+                <Users className="h-3 w-3 shrink-0" />
+                <span>Directorio</span>
               </span>
             </div>
             <p className="mt-1.5 font-display text-2xl font-extrabold text-[#2D3047]">
@@ -940,8 +1034,9 @@ export default function PanelAdminGlobal() {
               <span className="truncate text-[10px] font-extrabold uppercase tracking-wider text-[#18A97E]">
                 Nuevos (Últimos 7 Días)
               </span>
-              <span className="shrink-0 rounded-lg bg-emerald-500/15 px-2 py-0.5 text-[10px] font-extrabold text-[#18A97E]">
-                ⚡ Hoy: {registeredTodayCount}
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-emerald-500/15 px-2 py-0.5 text-[10px] font-extrabold text-[#18A97E]">
+                <Zap className="h-3 w-3 shrink-0" />
+                <span>Hoy: {registeredTodayCount}</span>
               </span>
             </div>
             <p className="mt-1.5 font-display text-2xl font-extrabold text-[#18A97E]">
@@ -957,8 +1052,9 @@ export default function PanelAdminGlobal() {
               <span className="truncate text-[10px] font-extrabold uppercase tracking-wider text-[#2D3047]">
                 Usuarios con Eventos
               </span>
-              <span className="shrink-0 rounded-lg bg-amber-500/15 px-2 py-0.5 text-[10px] font-extrabold text-amber-700">
-                🎉 {totalPlatformEvents} evento(s)
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-amber-500/15 px-2 py-0.5 text-[10px] font-extrabold text-amber-700">
+                <PartyPopper className="h-3 w-3 shrink-0" />
+                <span>{totalPlatformEvents} evento(s)</span>
               </span>
             </div>
             <p className="mt-1.5 font-display text-2xl font-extrabold text-[#2D3047]">
@@ -977,8 +1073,9 @@ export default function PanelAdminGlobal() {
               <span className="truncate text-[10px] font-extrabold uppercase tracking-wider text-[#6C7EE1]">
                 Invitados en Plataforma
               </span>
-              <span className="shrink-0 rounded-lg bg-[#2D3047]/10 px-2 py-0.5 text-[10px] font-extrabold text-[#2D3047]">
-                🛡️ {adminUsersCount} Admin(s)
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#2D3047]/10 px-2 py-0.5 text-[10px] font-extrabold text-[#2D3047]">
+                <ShieldCheck className="h-3 w-3 shrink-0" />
+                <span>{adminUsersCount} Admin(s)</span>
               </span>
             </div>
             <p className="mt-1.5 font-display text-2xl font-extrabold text-[#2D3047]">
@@ -994,12 +1091,13 @@ export default function PanelAdminGlobal() {
         <div className="mb-4 flex min-w-0 flex-col gap-3 rounded-2xl border border-[#E6E9F4] bg-[#F7F8FC] p-3">
           <div className="flex min-w-0 flex-col gap-2.5 md:flex-row md:items-center md:justify-between">
             <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-[#8E94A9]" />
               <input
                 type="text"
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
-                placeholder="🔍 Buscar por correo electrónico, #ID de usuario o nombre de evento..."
-                className="w-full rounded-xl border border-[#DCE0F0] bg-white py-2.5 pr-8 pl-3.5 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
+                placeholder="Buscar por correo electrónico, #ID de usuario o nombre de evento..."
+                className="w-full rounded-xl border border-[#DCE0F0] bg-white py-2.5 pr-8 pl-9 text-xs text-[#2D3047] outline-none focus:border-[#6C7EE1]"
               />
               {userSearchQuery && (
                 <button
@@ -1007,7 +1105,7 @@ export default function PanelAdminGlobal() {
                   onClick={() => setUserSearchQuery("")}
                   className="absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer rounded-lg px-2 py-0.5 text-xs font-bold text-[#8E94A9] hover:text-[#2D3047]"
                 >
-                  ✕
+                  <X className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
@@ -1022,13 +1120,13 @@ export default function PanelAdminGlobal() {
                 className="w-full min-w-0 rounded-xl border border-[#DCE0F0] bg-white px-3 py-2 text-xs font-bold text-[#2D3047] outline-none focus:border-[#6C7EE1] sm:w-auto"
               >
                 <option value="newest">
-                  📅 Más recientes primero (Últimos registros)
+                  Más recientes primero (Últimos registros)
                 </option>
                 <option value="oldest">
-                  🕰️ Más antiguos primero (Primeros registros)
+                  Más antiguos primero (Primeros registros)
                 </option>
                 <option value="most_events">
-                  🔥 Mayor cantidad de eventos creados
+                  Mayor cantidad de eventos creados
                 </option>
               </select>
             </div>
@@ -1039,37 +1137,44 @@ export default function PanelAdminGlobal() {
               {
                 id: "all",
                 label: `Todos (${usuariosList.length})`,
+                Icon: null,
               },
               {
                 id: "recent",
-                label: `🆕 Nuevos 7 días (${recent7DaysCount})`,
+                label: `Nuevos 7 días (${recent7DaysCount})`,
+                Icon: Sparkles,
               },
               {
                 id: "with_events",
-                label: `🎉 Con Eventos (${usersWithEventsCount})`,
+                label: `Con Eventos (${usersWithEventsCount})`,
+                Icon: PartyPopper,
               },
               {
                 id: "without_events",
-                label: `📭 Sin Eventos (${usersWithoutEventsCount})`,
+                label: `Sin Eventos (${usersWithoutEventsCount})`,
+                Icon: Inbox,
               },
               {
                 id: "admins",
-                label: `🛡️ Administradores (${adminUsersCount})`,
+                label: `Administradores (${adminUsersCount})`,
+                Icon: ShieldCheck,
               },
             ].map((tab) => {
               const active = userFilterType === tab.id;
+              const TabIcon = tab.Icon;
               return (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setUserFilterType(tab.id)}
-                  className={`cursor-pointer rounded-xl px-3 py-1.5 text-[11px] font-extrabold transition ${
+                  className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-extrabold transition ${
                     active
                       ? "bg-[#2D3047] text-white shadow-xs"
                       : "border border-[#DCE0F0] bg-white text-[#5B617A] hover:border-[#6C7EE1] hover:text-[#2D3047]"
                   }`}
                 >
-                  {tab.label}
+                  {TabIcon && <TabIcon className="h-3.5 w-3.5 shrink-0" />}
+                  <span>{tab.label}</span>
                 </button>
               );
             })}
@@ -1087,25 +1192,30 @@ export default function PanelAdminGlobal() {
           <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-[#E6E9F4] bg-white shadow-2xs">
             {/* Barra superior de ayuda y botones de desplazamiento horizontal */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E6E9F4] bg-[#F7F8FC] px-3 py-2">
-              <span className="text-[11px] font-semibold text-[#5B617A]">
-                ↔ Desliza horizontalmente la tabla para explorar todas las columnas ({filteredUsuarios.length} registro{filteredUsuarios.length === 1 ? "" : "s"})
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#5B617A]">
+                <MoveHorizontal className="h-3.5 w-3.5 shrink-0 text-[#6C7EE1]" />
+                <span>
+                  Desliza horizontalmente la tabla para explorar todas las columnas ({filteredUsuarios.length} registro{filteredUsuarios.length === 1 ? "" : "s"})
+                </span>
               </span>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => scrollUsersTable(-1)}
                   title="Desplazar tabla hacia la izquierda"
-                  className="cursor-pointer rounded-lg border border-[#DCE0F0] bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#2D3047] shadow-2xs transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                  className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#DCE0F0] bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#2D3047] shadow-2xs transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
                 >
-                  ◀ Izq.
+                  <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
+                  <span>Izq.</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => scrollUsersTable(1)}
                   title="Desplazar tabla hacia la derecha"
-                  className="cursor-pointer rounded-lg border border-[#DCE0F0] bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#2D3047] shadow-2xs transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
+                  className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#DCE0F0] bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#2D3047] shadow-2xs transition hover:border-[#6C7EE1] hover:text-[#6C7EE1]"
                 >
-                  Der. ▶
+                  <span>Der.</span>
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0" />
                 </button>
               </div>
             </div>
@@ -1192,12 +1302,14 @@ export default function PanelAdminGlobal() {
                                 {u.correoregistro}
                               </span>
                               {isToday ? (
-                                <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">
-                                  ⚡ Hoy
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">
+                                  <Zap className="h-2.5 w-2.5 shrink-0" />
+                                  <span>Hoy</span>
                                 </span>
                               ) : isRecent ? (
-                                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#18A97E]">
-                                  🆕 Nuevo (7d)
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#18A97E]">
+                                  <Sparkles className="h-2.5 w-2.5 shrink-0" />
+                                  <span>Nuevo (7d)</span>
                                 </span>
                               ) : null}
                             </div>
@@ -1207,16 +1319,19 @@ export default function PanelAdminGlobal() {
                         {/* Columna 3: Rol */}
                         <td className="px-3.5 py-3 whitespace-nowrap">
                           {u.isPrimarySuperAdmin ? (
-                            <span className="inline-flex items-center rounded-full bg-[#2D3047] px-2.5 py-1 text-[10px] font-extrabold text-[#4CE0B3]">
-                              👑 SuperAdmin Principal
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#2D3047] px-2.5 py-1 text-[10px] font-extrabold text-[#4CE0B3]">
+                              <Crown className="h-3 w-3 shrink-0" />
+                              <span>SuperAdmin Principal</span>
                             </span>
                           ) : u.isAdmin ? (
-                            <span className="inline-flex items-center rounded-full bg-[#6C7EE1]/15 px-2.5 py-1 text-[10px] font-extrabold text-[#6C7EE1]">
-                              🛡️ Administrador
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#6C7EE1]/15 px-2.5 py-1 text-[10px] font-extrabold text-[#6C7EE1]">
+                              <ShieldCheck className="h-3 w-3 shrink-0" />
+                              <span>Administrador</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center rounded-full bg-gray-200/80 px-2.5 py-1 text-[10px] font-semibold text-[#5B617A]">
-                              👤 Cliente / Organizador
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-200/80 px-2.5 py-1 text-[10px] font-semibold text-[#5B617A]">
+                              <User className="h-3 w-3 shrink-0" />
+                              <span>Cliente / Organizador</span>
                             </span>
                           )}
                         </td>
@@ -1224,8 +1339,9 @@ export default function PanelAdminGlobal() {
                         {/* Columna 4: Fecha de Alta */}
                         <td className="px-3.5 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-[#2D3047]">
-                              📅 {formatFechaRegistro(u.creado_en)}
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#2D3047]">
+                              <Calendar className="h-3.5 w-3.5 shrink-0 text-[#6C7EE1]" />
+                              <span>{formatFechaRegistro(u.creado_en)}</span>
                             </span>
                             {relativeTime && (
                               <span className="rounded bg-[#6C7EE1]/12 px-2 py-0.5 text-[10px] font-bold text-[#6C7EE1]">
@@ -1238,15 +1354,15 @@ export default function PanelAdminGlobal() {
                         {/* Columna 5: Actividad */}
                         <td className="px-3.5 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2.5 text-[11px] text-[#5B617A]">
-                            <span>
-                              🎉{" "}
+                            <span className="inline-flex items-center gap-1">
+                              <PartyPopper className="h-3 w-3 shrink-0 text-amber-600" />
                               <strong className="text-[#2D3047]">
                                 {u.total_eventos || 0}
                               </strong>{" "}
                               evento(s)
                             </span>
-                            <span>
-                              🎟️{" "}
+                            <span className="inline-flex items-center gap-1">
+                              <Ticket className="h-3 w-3 shrink-0 text-[#6C7EE1]" />
                               <strong className="text-[#2D3047]">
                                 {u.total_invitados || 0}
                               </strong>{" "}
@@ -1292,8 +1408,9 @@ export default function PanelAdminGlobal() {
                               )}
                             </div>
                           ) : (
-                            <span className="text-[11px] italic text-[#8E94A9]">
-                              📭 Sin eventos creados
+                            <span className="inline-flex items-center gap-1 text-[11px] italic text-[#8E94A9]">
+                              <Inbox className="h-3 w-3 shrink-0" />
+                              <span>Sin eventos creados</span>
                             </span>
                           )}
                         </td>
@@ -1301,22 +1418,28 @@ export default function PanelAdminGlobal() {
                         {/* Columna 7: Acción */}
                         <td className="px-3.5 py-3 text-right whitespace-nowrap">
                           {u.isPrimarySuperAdmin ? (
-                            <span className="inline-flex items-center rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-1.5 text-[10px] font-bold text-[#8E94A9]">
-                              🔒 Permanente
+                            <span className="inline-flex items-center gap-1 rounded-xl border border-[#DCE0F0] bg-[#F7F8FC] px-3 py-1.5 text-[10px] font-bold text-[#8E94A9]">
+                              <Lock className="h-3 w-3 shrink-0" />
+                              <span>Permanente</span>
                             </span>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleToggleUserAdmin(u)}
-                              className={`cursor-pointer rounded-xl px-3.5 py-2 text-center text-[11px] font-bold transition ${
+                              className={`inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-center text-[11px] font-bold transition ${
                                 u.isAdmin
                                   ? "border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
                                   : "border border-[#6C7EE1] bg-white text-[#6C7EE1] hover:bg-[#6C7EE1] hover:text-white"
                               }`}
                             >
-                              {u.isAdmin
-                                ? "Quitar Permiso Admin"
-                                : "🛡️ Hacer Administrador"}
+                              {u.isAdmin ? (
+                                "Quitar Permiso Admin"
+                              ) : (
+                                <>
+                                  <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                                  <span>Hacer Administrador</span>
+                                </>
+                              )}
                             </button>
                           )}
                         </td>
@@ -1337,8 +1460,11 @@ export default function PanelAdminGlobal() {
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#6C7EE1]">
               MÓDULO 4 • CÁMARA EN VIVO Y ÁLBUMES DE RECUERDOS HD
             </span>
-            <h3 className="font-display text-lg font-bold uppercase tracking-wide text-[#2D3047] sm:text-xl lg:text-2xl">
-              📸 Calidad Fotográfica Global y Autolimpieza de Álbumes (30 Días)
+            <h3 className="flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide text-[#2D3047] sm:text-xl lg:text-2xl">
+              <Camera className="h-5 w-5 shrink-0 text-[#6C7EE1]" />
+              <span>
+                Calidad Fotográfica Global y Autolimpieza de Álbumes (30 Días)
+              </span>
             </h3>
             <p className="text-xs text-[#8E94A9]">
               Cada evento cuenta con su propio álbum ilimitado en Alta Definición. Configura el nivel de calidad WebP y el periodo de vigencia antes de su eliminación automática.
@@ -1365,7 +1491,7 @@ export default function PanelAdminGlobal() {
                 Estándar Full HD (1920px · ~180 KB — Máximo ahorro)
               </option>
               <option value="hd">
-                ⭐ Alta Definición HD 2.5K (2560px · ~480 KB — Recomendado Gama Alta)
+                Alta Definición HD 2.5K (2560px · ~480 KB — Recomendado Gama Alta)
               </option>
               <option value="ultrahd">
                 Ultra HD 4K Fotográfico (3840px · ~950 KB — Impresión / Pantallas 4K)
@@ -1397,35 +1523,59 @@ export default function PanelAdminGlobal() {
         </div>
 
         <div className="mt-4 flex flex-col items-stretch justify-between gap-3 border-b border-[#E6E9F4] pb-4 sm:flex-row sm:flex-wrap sm:items-center">
-          <p className="text-[11px] text-[#5B617A]">
-            ℹ️ Al cumplirse los <strong>{form.albumRetentionDays} días</strong>, el servidor elimina automáticamente las fotos del evento vencido para mantener el disco libre.
+          <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-[#5B617A]">
+            <Info className="h-3.5 w-3.5 shrink-0 text-[#6C7EE1]" />
+            <span>
+              Al cumplirse los <strong>{form.albumRetentionDays} días</strong>, el servidor elimina automáticamente las fotos del evento vencido para mantener el disco libre.
+            </span>
           </p>
           <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
             <button
               type="button"
               disabled={runningAlbumCleanup}
               onClick={handleRunAlbumCleanupNow}
-              className="w-full cursor-pointer rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-center text-xs font-bold text-[#D97706] transition hover:bg-amber-500/20 disabled:opacity-50 sm:w-auto"
+              className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-center text-xs font-bold text-[#D97706] transition hover:bg-amber-500/20 disabled:opacity-50 sm:w-auto"
             >
-              {runningAlbumCleanup
-                ? "⏳ Revisando álbumes..."
-                : "🧹 Ejecutar Autolimpieza de Vencidos"}
+              {runningAlbumCleanup ? (
+                <>
+                  <Hourglass className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+                  <span>Revisando álbumes...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                  <span>Ejecutar Autolimpieza de Vencidos</span>
+                </>
+              )}
             </button>
             <button
               type="button"
               disabled={saving}
               onClick={() => handleSaveConfig()}
-              className="w-full cursor-pointer rounded-xl bg-[#6C7EE1] px-5 py-2.5 text-center text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0] disabled:opacity-50 sm:w-auto"
+              className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#6C7EE1] px-5 py-2.5 text-center text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#5A6CD0] disabled:opacity-50 sm:w-auto"
             >
-              {saving ? "⏳ Guardando..." : "💾 Guardar Calidad y Vigencia"}
+              {saving ? (
+                <>
+                  <Hourglass className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="h-3.5 w-3.5 shrink-0" />
+                  <span>Guardar Calidad y Vigencia</span>
+                </>
+              )}
             </button>
           </div>
         </div>
 
         {/* Monitor de Álbumes por Evento */}
         <div className="mt-4">
-          <h4 className="mb-2.5 text-xs font-extrabold uppercase tracking-wider text-[#2D3047]">
-            📊 Monitor de Álbumes Fotográficos por Evento ({albumesEventos.length})
+          <h4 className="mb-2.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[#2D3047]">
+            <BarChart3 className="h-4 w-4 shrink-0 text-[#6C7EE1]" />
+            <span>
+              Monitor de Álbumes Fotográficos por Evento ({albumesEventos.length})
+            </span>
           </h4>
           {albumesEventos.length === 0 ? (
             <p className="rounded-xl bg-[#F7F8FC] p-4 text-center text-xs text-[#5B617A]">
@@ -1443,18 +1593,24 @@ export default function PanelAdminGlobal() {
                       <span className="font-extrabold text-[#2D3047]">
                         #{ev.idevento} • {ev.nombre}
                       </span>
-                      <span className="rounded-full bg-[#6C7EE1]/12 px-2.5 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
-                        📷 {ev.totalPhotos} foto(s) ({ev.totalMb} MB)
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#6C7EE1]/12 px-2.5 py-0.5 text-[10px] font-extrabold text-[#6C7EE1]">
+                        <Camera className="h-3 w-3 shrink-0" />
+                        <span>
+                          {ev.totalPhotos} foto(s) ({ev.totalMb} MB)
+                        </span>
                       </span>
                       <span
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
                           ev.daysRemaining <= 5
                             ? "bg-amber-500/20 text-amber-800"
                             : "bg-emerald-500/15 text-emerald-700"
                         }`}
                       >
-                        ⏳ Restan {ev.daysRemaining} días (Expira:{" "}
-                        {String(ev.expiresAt || "").slice(0, 10)})
+                        <Hourglass className="h-3 w-3 shrink-0" />
+                        <span>
+                          Restan {ev.daysRemaining} días (Expira:{" "}
+                          {String(ev.expiresAt || "").slice(0, 10)})
+                        </span>
                       </span>
                     </div>
                     <p className="mt-0.5 text-[10px] text-[#8E94A9]">
@@ -1469,13 +1625,21 @@ export default function PanelAdminGlobal() {
                       ev.totalPhotos === 0 || cleaningEventId === ev.idevento
                     }
                     onClick={() => handleCleanEventAlbum(ev)}
-                    className="w-full shrink-0 cursor-pointer rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2 text-center text-[11px] font-bold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 sm:w-auto"
+                    className="inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2 text-center text-[11px] font-bold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 sm:w-auto"
                   >
-                    {cleaningEventId === ev.idevento
-                      ? "⏳ Limpiando..."
-                      : ev.totalPhotos > 0
-                      ? `🗑️ Limpiar Álbum (${ev.totalMb} MB)`
-                      : "Álbum Vacío"}
+                    {cleaningEventId === ev.idevento ? (
+                      <>
+                        <Hourglass className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+                        <span>Limpiando...</span>
+                      </>
+                    ) : ev.totalPhotos > 0 ? (
+                      <>
+                        <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                        <span>Limpiar Álbum ({ev.totalMb} MB)</span>
+                      </>
+                    ) : (
+                      "Álbum Vacío"
+                    )}
                   </button>
                 </div>
               ))}

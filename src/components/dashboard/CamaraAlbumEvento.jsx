@@ -1,5 +1,39 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  AlertTriangle,
+  ArrowLeft,
+  Ban,
+  Calendar,
+  Camera,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Download,
+  Eye,
+  Film,
+  Flag,
+  Hourglass,
+  Image as ImageIcon,
+  Infinity as InfinityIcon,
+  Lock,
+  MapPin,
+  Music,
+  Palette,
+  PartyPopper,
+  Play,
+  RefreshCw,
+  Scissors,
+  Smartphone,
+  Sparkles,
+  Square,
+  Trash2,
+  Upload,
+  Volume2,
+  X,
+} from "lucide-react";
+import {
   getAlbumFotosEventoRequest,
   toggleCompartirAlbumEventoRequest,
   addFotoAlbumEventoRequest,
@@ -366,14 +400,14 @@ export default function CamaraAlbumEvento({
     setVisorOverlayId(activeLightboxPhoto.overlayId || "none");
     setVisorLiveCanvasReady(false);
 
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
       lightboxBaseImgRef.current = img;
     };
     img.onerror = () => {
       // Respaldo a hdUrl si origUrl no estuviera disponible
-      const fallbackImg = new Image();
+      const fallbackImg = new window.Image();
       fallbackImg.crossOrigin = "anonymous";
       fallbackImg.onload = () => {
         lightboxBaseImgRef.current = fallbackImg;
@@ -411,7 +445,7 @@ export default function CamaraAlbumEvento({
     let baseImg = lightboxBaseImgRef.current;
     if (!baseImg) {
       baseImg = await new Promise((resolve) => {
-        const tempImg = new Image();
+        const tempImg = new window.Image();
         tempImg.crossOrigin = "anonymous";
         tempImg.onload = () => resolve(tempImg);
         tempImg.onerror = () => resolve(null);
@@ -1459,7 +1493,9 @@ export default function CamaraAlbumEvento({
   if (!evento?.idevento) {
     return (
       <div className="rounded-3xl border border-[#2A2C4A] bg-[#141526] p-6 text-center shadow-[0_24px_60px_rgba(10,8,28,0.65)] sm:p-10">
-        <span className="text-4xl">📸</span>
+        <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#8A4FFF]/20 text-[#B794FF] ring-1 ring-[#8A4FFF]/40">
+          <Camera className="h-8 w-8 shrink-0" />
+        </span>
         <h3 className="mt-3 text-lg font-extrabold text-[#F4F5FB]">
           Guarda primero tu evento para activar su Álbum de Fotografías HD
         </h3>
@@ -1509,31 +1545,49 @@ export default function CamaraAlbumEvento({
                   onClick={onCloseModoInvitado}
                   className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[#4BA6FF]/40 bg-[#4BA6FF]/15 px-3 py-1 text-[10px] font-extrabold text-[#7DD3FC] transition hover:bg-[#4BA6FF] hover:text-white sm:text-[11px]"
                 >
-                  ← Volver a Mis Invitaciones
+                  <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+                  <span>Volver a Mis Invitaciones</span>
                 </button>
               )}
               <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#3CE7B6]/20 to-[#2BC496]/20 px-2.5 py-1 text-[10px] font-extrabold text-[#3CE7B6] ring-1 ring-[#3CE7B6]/35 sm:px-3 sm:text-[11px]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#3CE7B6]" />
-                <span>
-                  {modoInvitado
-                    ? "🎉 Compartido por el Anfitrión"
-                    : "∞ Fotos Ilimitadas"}
-                </span>
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#3CE7B6]" />
+                {modoInvitado ? (
+                  <span className="inline-flex items-center gap-1">
+                    <PartyPopper className="h-3.5 w-3.5 shrink-0" />
+                    <span>Compartido por el Anfitrión</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1">
+                    <InfinityIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span>Fotos Ilimitadas</span>
+                  </span>
+                )}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#8A4FFF]/20 to-[#6E38E0]/20 px-2.5 py-1 text-[10px] font-extrabold text-[#B794FF] ring-1 ring-[#8A4FFF]/40 sm:px-3 sm:text-[11px]">
-                <span>✨ {activePreset.label.split("(")[0].trim()}</span>
+                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                <span>{activePreset.label.split("(")[0].trim()}</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#262942] bg-[#141526] px-2.5 py-1 text-[10px] font-bold text-[#9CA0C3] sm:px-3 sm:text-[11px]">
-                📷 {fotos.length} {fotos.length === 1 ? "foto" : "fotos"} · 🎬{" "}
-                {reels.length} {reels.length === 1 ? "reel" : "reels"} ({totalMb}{" "}
-                MB)
+              <span className="inline-flex flex-wrap items-center gap-1.5 rounded-full border border-[#262942] bg-[#141526] px-2.5 py-1 text-[10px] font-bold text-[#9CA0C3] sm:px-3 sm:text-[11px]">
+                <Camera className="h-3.5 w-3.5 shrink-0 text-[#4BA6FF]" />
+                <span>
+                  {fotos.length} {fotos.length === 1 ? "foto" : "fotos"}
+                </span>
+                <span>·</span>
+                <Film className="h-3.5 w-3.5 shrink-0 text-[#E1306C]" />
+                <span>
+                  {reels.length} {reels.length === 1 ? "reel" : "reels"} ({totalMb}{" "}
+                  MB)
+                </span>
               </span>
             </div>
 
-            <h2 className="mt-2.5 break-words font-display text-lg font-extrabold uppercase tracking-wide text-white sm:text-xl lg:text-2xl">
-              {modoInvitado
-                ? `📸 Fotos y Reels del Evento — ${evento.nombre}`
-                : `📸 Cámara y Álbum de Recuerdos — ${evento.nombre}`}
+            <h2 className="mt-2.5 flex items-center gap-2 break-words font-display text-lg font-extrabold uppercase tracking-wide text-white sm:text-xl lg:text-2xl">
+              <Camera className="h-5 w-5 shrink-0 text-[#4BA6FF] sm:h-6 sm:w-6" />
+              <span className="min-w-0 break-words">
+                {modoInvitado
+                  ? `Fotos y Reels del Evento — ${evento.nombre}`
+                  : `Cámara y Álbum de Recuerdos — ${evento.nombre}`}
+              </span>
             </h2>
             {modoInvitado && (
               <p className="mt-1 text-xs leading-relaxed text-[#8E92B2]">
@@ -1546,25 +1600,23 @@ export default function CamaraAlbumEvento({
           <div className="grid grid-cols-1 gap-2.5 border-t border-[#2E314B] pt-3.5 min-[420px]:grid-cols-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center">
             {!modoInvitado && (
               <>
-                <button
-                  type="button"
-                  disabled={togglingCompartir}
-                  onClick={handleToggleCompartirConInvitados}
-                  className={`inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2.5 text-center text-xs font-extrabold transition min-[420px]:col-span-2 sm:col-span-1 sm:w-auto ${
+                <label
+                  className={`inline-flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-full border px-4 py-2.5 text-xs font-extrabold transition select-none min-[420px]:col-span-2 sm:col-span-1 sm:w-auto ${
                     compartirConInvitados
-                      ? "border border-[#38CB89]/55 bg-gradient-to-r from-[#1E9E63] to-[#2ED47A] text-white shadow-[0_6px_20px_rgba(46,212,122,0.4)] hover:brightness-110"
-                      : "border border-[#FFB836]/45 bg-[#FFB836]/15 text-[#FFE2B8] hover:bg-[#FFB836]/25"
-                  }`}
+                      ? "border-[#38CB89]/55 bg-[#38CB89]/15 text-[#3CE7B6] shadow-[0_6px_20px_rgba(46,212,122,0.18)] hover:bg-[#38CB89]/25"
+                      : "border-[#323552] bg-[#141526] text-[#D5D8F0] hover:border-[#4BA6FF]/60 hover:bg-[#1B1D33] hover:text-white"
+                  } ${togglingCompartir ? "cursor-wait opacity-70" : ""}`}
                   title="Otorga o revoca el permiso para que los invitados con asistencia confirmada vean las fotos y reels en su sección Mis Invitaciones"
                 >
-                  <span>
-                    {togglingCompartir
-                      ? "⏳ Actualizando permiso..."
-                      : compartirConInvitados
-                      ? "🟢 Compartiendo Fotos y Reels a Invitados"
-                      : "🤝 Compartir Fotos y Reels a Invitados"}
-                  </span>
-                </button>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(compartirConInvitados)}
+                    disabled={togglingCompartir}
+                    onChange={handleToggleCompartirConInvitados}
+                    className="h-4 w-4 shrink-0 cursor-pointer rounded border-[#475569] bg-[#0D0E1B] accent-[#2ED47A] focus:ring-2 focus:ring-[#2ED47A]/40 disabled:cursor-wait"
+                  />
+                  <span>Compartir Fotos y Reels a invitados</span>
+                </label>
 
                 <button
                   type="button"
@@ -1575,9 +1627,17 @@ export default function CamaraAlbumEvento({
                       : "bg-gradient-to-r from-[#2ED47A] to-[#38CB89] shadow-[0_6px_18px_rgba(56,203,137,0.35)] hover:brightness-110"
                   }`}
                 >
-                  <span>
-                    {cameraOpen ? "✕ Cerrar Cámara" : "📷 Abrir Cámara en Vivo"}
-                  </span>
+                  {cameraOpen ? (
+                    <>
+                      <X className="h-4 w-4 shrink-0" />
+                      <span>Cerrar Cámara</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-4 w-4 shrink-0" />
+                      <span>Abrir Cámara en Vivo</span>
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -1586,7 +1646,8 @@ export default function CamaraAlbumEvento({
                   disabled={uploadingFiles}
                   className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#3CE7B6]/40 bg-[#3CE7B6]/15 px-4 py-2.5 text-xs font-extrabold text-[#3CE7B6] transition hover:bg-[#3CE7B6]/25 disabled:opacity-50 sm:hidden"
                 >
-                  <span>📱 Cámara del Celular</span>
+                  <Smartphone className="h-4 w-4 shrink-0" />
+                  <span>Cámara del Celular</span>
                 </button>
 
                 <button
@@ -1595,9 +1656,17 @@ export default function CamaraAlbumEvento({
                   disabled={uploadingFiles}
                   className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8A4FFF] to-[#6E38E0] px-4 py-2.5 text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(138,79,255,0.38)] transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
                 >
-                  <span>
-                    {uploadingFiles ? "⏳ Procesando HD..." : "⬆️ Subir Foto(s)"}
-                  </span>
+                  {uploadingFiles ? (
+                    <>
+                      <Hourglass className="h-4 w-4 shrink-0" />
+                      <span>Procesando HD...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 shrink-0" />
+                      <span>Subir Foto(s)</span>
+                    </>
+                  )}
                 </button>
               </>
             )}
@@ -1608,11 +1677,17 @@ export default function CamaraAlbumEvento({
               disabled={downloadingZip || fotos.length === 0}
               className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#323552] bg-[#141526] px-4 py-2.5 text-xs font-extrabold text-[#D5D8F0] shadow-xs transition hover:border-[#4BA6FF]/60 hover:bg-[#1B1D33] hover:text-white disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
             >
-              <span>
-                {downloadingZip
-                  ? "⏳ Empaquetando .ZIP..."
-                  : `⬇️ Descargar Álbum (.ZIP)`}
-              </span>
+              {downloadingZip ? (
+                <>
+                  <Hourglass className="h-4 w-4 shrink-0" />
+                  <span>Empaquetando .ZIP...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 shrink-0" />
+                  <span>Descargar Álbum (.ZIP)</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -1620,13 +1695,17 @@ export default function CamaraAlbumEvento({
         {/* Mensaje de error de cámara si el navegador bloqueó el permiso */}
         {cameraError && (
           <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-[#F25767]/40 bg-[#F25767]/15 p-3.5 text-xs text-[#FFB3BC] sm:flex-row sm:items-center sm:justify-between">
-            <span>⚠️ {cameraError}</span>
+            <span className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#F25767]" />
+              <span>{cameraError}</span>
+            </span>
             <button
               type="button"
               onClick={() => nativeCameraInputRef.current?.click()}
-              className="shrink-0 cursor-pointer rounded-full bg-[#F25767] px-3.5 py-1.5 text-[11px] font-extrabold text-white hover:bg-[#E03E52]"
+              className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[#F25767] px-3.5 py-1.5 text-[11px] font-extrabold text-white hover:bg-[#E03E52]"
             >
-              📱 Abrir Cámara Nativa / Elegir Foto
+              <Smartphone className="h-3.5 w-3.5 shrink-0" />
+              <span>Abrir Cámara Nativa / Elegir Foto</span>
             </button>
           </div>
         )}
@@ -1669,7 +1748,7 @@ export default function CamaraAlbumEvento({
                   className="flex cursor-pointer items-center gap-1.5 rounded-full border border-white/20 bg-black/55 px-3 py-2 text-xs font-extrabold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95 sm:px-4"
                   title="Cambiar entre cámara trasera y frontal"
                 >
-                  <span>🔄</span>
+                  <RefreshCw className="h-3.5 w-3.5 shrink-0" />
                   <span>
                     {facingMode === "environment" ? "Frontal" : "Trasera"}
                   </span>
@@ -1681,7 +1760,7 @@ export default function CamaraAlbumEvento({
                   title="Cerrar cámara"
                   aria-label="Cerrar cámara"
                 >
-                  ✕
+                  <X className="h-4 w-4 shrink-0" />
                 </button>
               </div>
             </div>
@@ -1712,7 +1791,7 @@ export default function CamaraAlbumEvento({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <span className="text-xl sm:text-2xl">🖼️</span>
+                        <ImageIcon className="h-5 w-5 text-white/90 sm:h-6 sm:w-6" />
                       )}
                     </div>
                     <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full border border-black/40 bg-[#2B7FFF] px-1 text-[10px] font-extrabold text-white shadow-md">
@@ -1734,7 +1813,11 @@ export default function CamaraAlbumEvento({
                 >
                   <span className="flex h-18 w-18 items-center justify-center rounded-full border-4 border-white bg-white/20 p-1.5 shadow-[0_0_28px_rgba(255,255,255,0.35)] backdrop-blur-xs transition duration-150 group-hover:scale-105 group-active:scale-90 sm:h-22 sm:w-22">
                     <span className="flex h-full w-full items-center justify-center rounded-full bg-white text-2xl text-[#141526] shadow-inner transition group-active:bg-[#3CE7B6] sm:text-3xl">
-                      {capturing ? "⏳" : "📸"}
+                      {capturing ? (
+                        <Hourglass className="h-6 w-6 sm:h-7 sm:w-7" />
+                      ) : (
+                        <Camera className="h-6 w-6 sm:h-7 sm:w-7" />
+                      )}
                     </span>
                   </span>
                   <span className="text-xs font-extrabold tracking-wide text-white drop-shadow sm:text-sm">
@@ -1750,7 +1833,7 @@ export default function CamaraAlbumEvento({
                   title="Cerrar Cámara en Vivo"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-white/35 bg-black/60 text-lg font-extrabold text-white shadow-lg backdrop-blur-md transition group-hover:border-[#F25767] group-hover:bg-[#F25767] sm:h-14 sm:w-14 sm:text-xl">
-                    ✕
+                    <X className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
                   <span className="text-[11px] font-extrabold tracking-tight text-white/95 drop-shadow sm:text-xs">
                     Cerrar
@@ -1772,8 +1855,8 @@ export default function CamaraAlbumEvento({
         <div className="mb-4 flex flex-col gap-3 border-b border-[#2E314B] pb-4">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#4BA6FF] to-[#2B82EB] text-xs shadow-[0_4px_12px_rgba(75,166,255,0.35)]">
-                🖼️
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#4BA6FF] to-[#2B82EB] text-xs text-white shadow-[0_4px_12px_rgba(75,166,255,0.35)]">
+                <ImageIcon className="h-3.5 w-3.5 shrink-0" />
               </span>
               <h3 className="text-sm font-extrabold uppercase tracking-wider text-white">
                 Galería Fotográfica del Evento ({fotos.length})
@@ -1787,8 +1870,9 @@ export default function CamaraAlbumEvento({
                   className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-white/15 bg-black px-4 py-2 text-center text-xs font-extrabold text-white shadow-[0_6px_18px_rgba(0,0,0,0.65)] transition hover:border-white/30 hover:bg-[#141414] sm:w-auto"
                   title="Abrir el creador flotante de Reels 9:16 para Instagram"
                 >
+                  <Film className="h-4 w-4 shrink-0 text-[#E1306C]" />
                   <span>
-                    🎬 Crear Reel para Instagram
+                    Crear Reel para Instagram
                     {reels.length > 0 ? ` (${reels.length})` : ""}
                   </span>
                 </button>
@@ -1798,11 +1882,19 @@ export default function CamaraAlbumEvento({
                   type="button"
                   onClick={handleDownloadZip}
                   disabled={downloadingZip}
-                  className="w-full cursor-pointer rounded-full border border-[#343857] bg-[#141526] px-4 py-2 text-center text-xs font-extrabold text-[#D5D8F0] transition hover:border-[#8A4FFF] hover:bg-[#1B1D34] hover:text-white sm:w-auto"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#343857] bg-[#141526] px-4 py-2 text-center text-xs font-extrabold text-[#D5D8F0] transition hover:border-[#8A4FFF] hover:bg-[#1B1D34] hover:text-white sm:w-auto"
                 >
-                  {downloadingZip
-                    ? "⏳ Generando archivo .ZIP..."
-                    : `⬇️ Descargar las ${fotos.length} fotos en .ZIP`}
+                  {downloadingZip ? (
+                    <>
+                      <Hourglass className="h-3.5 w-3.5 shrink-0" />
+                      <span>Generando archivo .ZIP...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-3.5 w-3.5 shrink-0" />
+                      <span>Descargar las {fotos.length} fotos en .ZIP</span>
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -1813,7 +1905,7 @@ export default function CamaraAlbumEvento({
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-2.5">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFB836]/20 text-base leading-none text-[#FFB836] ring-1 ring-[#FFB836]/35">
-                  ⏳
+                  <Hourglass className="h-4 w-4 shrink-0" />
                 </span>
                 <div className="min-w-0">
                   <p className="text-xs font-extrabold text-[#FFE2B8]">
@@ -1831,8 +1923,9 @@ export default function CamaraAlbumEvento({
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2 self-start rounded-full border border-[#FFAE73]/40 bg-[#141526] px-3.5 py-1.5 text-xs font-extrabold text-[#FFE2B8] shadow-2xs md:self-center">
-                <span>🗓️ Restan:</span>
+              <div className="flex shrink-0 items-center gap-1.5 self-start rounded-full border border-[#FFAE73]/40 bg-[#141526] px-3.5 py-1.5 text-xs font-extrabold text-[#FFE2B8] shadow-2xs md:self-center">
+                <Calendar className="h-3.5 w-3.5 shrink-0 text-[#FFB836]" />
+                <span>Restan:</span>
                 <span className="text-sm text-[#FFB836]">
                   {retention.daysRemaining} días
                 </span>
@@ -1842,13 +1935,14 @@ export default function CamaraAlbumEvento({
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-xs font-semibold text-[#8E92B2]">
-            ⏳ Cargando álbum fotográfico del evento...
+          <div className="flex items-center justify-center gap-2 py-12 text-center text-xs font-semibold text-[#8E92B2]">
+            <Hourglass className="h-4 w-4 shrink-0 text-[#4BA6FF]" />
+            <span>Cargando álbum fotográfico del evento...</span>
           </div>
         ) : fotos.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[#343857] bg-[#181A2C] px-4 py-10 text-center sm:py-12">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8A4FFF]/25 to-[#6E38E0]/25 text-2xl ring-1 ring-[#8A4FFF]/40">
-              📷
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8A4FFF]/25 to-[#6E38E0]/25 text-2xl text-[#B794FF] ring-1 ring-[#8A4FFF]/40">
+              <Camera className="h-7 w-7 shrink-0" />
             </div>
             <h4 className="mt-3 text-sm font-extrabold text-white">
               Aún no hay fotografías en el álbum de "{evento.nombre}"
@@ -1860,10 +1954,10 @@ export default function CamaraAlbumEvento({
                 <>
                   Presiona{" "}
                   <strong className="text-[#3CE7B6]">
-                    "📷 Abrir Cámara en Vivo"
+                    "Abrir Cámara en Vivo"
                   </strong>{" "}
                   o{" "}
-                  <strong className="text-[#B794FF]">"⬆️ Subir Foto(s)"</strong>{" "}
+                  <strong className="text-[#B794FF]">"Subir Foto(s)"</strong>{" "}
                   para capturar tus primeros recuerdos en Alta Definición y
                   personalízalos con los overlays al abrir cada foto.
                 </>
@@ -1905,8 +1999,9 @@ export default function CamaraAlbumEvento({
                     >
                       {foto.titulo}
                     </p>
-                    <p className="mt-0.5 text-[10px] text-[#8E92B2]">
-                      🕒 {formatDateTime(foto.capturadaEn)}
+                    <p className="mt-0.5 flex items-center gap-1 text-[10px] text-[#8E92B2]">
+                      <Clock className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{formatDateTime(foto.capturadaEn)}</span>
                     </p>
                   </div>
 
@@ -1918,37 +2013,50 @@ export default function CamaraAlbumEvento({
                     <button
                       type="button"
                       onClick={() => setLightboxIndex(idx)}
-                      className="cursor-pointer whitespace-nowrap rounded-full bg-[#4BA6FF]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#5EB2FF] ring-1 ring-[#4BA6FF]/30 transition hover:bg-[#4BA6FF] hover:text-white"
+                      className="inline-flex cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-full bg-[#4BA6FF]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#5EB2FF] ring-1 ring-[#4BA6FF]/30 transition hover:bg-[#4BA6FF] hover:text-white"
                       title="Abrir en el Visor HD"
                     >
-                      🔍 Ver
+                      <Eye className="h-3 w-3 shrink-0" />
+                      <span>Ver</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDownloadSinglePhoto(foto, idx)}
-                      className="cursor-pointer whitespace-nowrap rounded-full bg-[#38CB89]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#3CE7B6] ring-1 ring-[#38CB89]/30 transition hover:bg-[#38CB89] hover:text-white"
+                      className="inline-flex cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-full bg-[#38CB89]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#3CE7B6] ring-1 ring-[#38CB89]/30 transition hover:bg-[#38CB89] hover:text-white"
                       title="Descargar en resolución guardada (HD)"
                     >
-                      ⬇️ HD
+                      <Download className="h-3 w-3 shrink-0" />
+                      <span>HD</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDownloadPhoto2K(foto, idx)}
                       disabled={downloading2KId === foto.idFoto}
-                      className="cursor-pointer whitespace-nowrap rounded-full bg-[#FFB836]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#FFB836] ring-1 ring-[#FFB836]/35 transition hover:bg-[#FFB836] hover:text-[#141526] disabled:opacity-45"
+                      className="inline-flex cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-full bg-[#FFB836]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#FFB836] ring-1 ring-[#FFB836]/35 transition hover:bg-[#FFB836] hover:text-[#141526] disabled:opacity-45"
                       title="Convertir al momento a 2K (2560px) en memoria y descargar sin guardar en servidor"
                     >
-                      {downloading2KId === foto.idFoto ? "⏳..." : "✨ 2K"}
+                      {downloading2KId === foto.idFoto ? (
+                        <Hourglass className="h-3 w-3 shrink-0" />
+                      ) : (
+                        <>
+                          <Sparkles className="h-3 w-3 shrink-0" />
+                          <span>2K</span>
+                        </>
+                      )}
                     </button>
                     {!modoInvitado && (
                       <button
                         type="button"
                         onClick={() => handleDeletePhoto(foto)}
                         disabled={deletingPhotoId === foto.idFoto}
-                        className="cursor-pointer whitespace-nowrap rounded-full bg-[#F25767]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#FF7A88] ring-1 ring-[#F25767]/30 transition hover:bg-[#F25767] hover:text-white disabled:opacity-45"
+                        className="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-full bg-[#F25767]/15 px-1 py-1.5 text-[10px] font-extrabold text-[#FF7A88] ring-1 ring-[#F25767]/30 transition hover:bg-[#F25767] hover:text-white disabled:opacity-45"
                         title="Eliminar fotografía"
                       >
-                        {deletingPhotoId === foto.idFoto ? "..." : "🗑️"}
+                        {deletingPhotoId === foto.idFoto ? (
+                          "..."
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                        )}
                       </button>
                     )}
                   </div>
@@ -1966,8 +2074,8 @@ export default function CamaraAlbumEvento({
         <div className="rounded-2xl border border-[#2F324D] bg-[#222437] p-3.5 shadow-[0_12px_30px_rgba(8,9,20,0.45)] sm:p-6">
           <div className="mb-4 flex flex-col gap-2.5 border-b border-[#2E314B] pb-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-2.5">
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] text-xs shadow-[0_4px_12px_rgba(225,48,108,0.35)]">
-                🎬
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8A4FFF] via-[#E1306C] to-[#FF8E53] text-xs text-white shadow-[0_4px_12px_rgba(225,48,108,0.35)]">
+                <Film className="h-3.5 w-3.5 shrink-0" />
               </span>
               <div className="min-w-0">
                 <h3 className="text-sm font-extrabold uppercase tracking-wider text-white">
@@ -2028,13 +2136,13 @@ export default function CamaraAlbumEvento({
                               className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-3xl">
-                              🎬
+                            <div className="flex h-full w-full items-center justify-center text-3xl text-[#8E92B2]">
+                              <Film className="h-8 w-8 shrink-0" />
                             </div>
                           )}
                           <div className="absolute inset-0 flex items-center justify-center bg-black/35 transition group-hover:bg-black/20">
                             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-base text-[#0F141D] shadow-lg transition group-hover:scale-110">
-                              ▶
+                              <Play className="h-5 w-5 shrink-0 fill-current" />
                             </span>
                           </div>
                           <span className="absolute right-2.5 top-2.5 rounded-full bg-[#141526]/85 px-2.5 py-0.5 text-[10px] font-extrabold text-[#7DD3FC] ring-1 ring-white/15">
@@ -2052,9 +2160,12 @@ export default function CamaraAlbumEvento({
                         >
                           {reel.titulo}
                         </p>
-                        <p className="mt-0.5 text-[10px] text-[#8E92B2]">
-                          🎞️ {reel.photosCount || 1} fotos ·{" "}
-                          {reel.sizeKb ? `${reel.sizeKb} KB` : "HD 9:16"}
+                        <p className="mt-0.5 flex items-center gap-1 text-[10px] text-[#8E92B2]">
+                          <Film className="h-3 w-3 shrink-0" />
+                          <span>
+                            {reel.photosCount || 1} fotos ·{" "}
+                            {reel.sizeKb ? `${reel.sizeKb} KB` : "HD 9:16"}
+                          </span>
                         </p>
                       </div>
 
@@ -2064,16 +2175,27 @@ export default function CamaraAlbumEvento({
                           onClick={() =>
                             setGuestActiveReel(isPlayingInline ? null : reel)
                           }
-                          className="flex-1 cursor-pointer whitespace-nowrap rounded-full bg-[#4BA6FF]/15 px-2 py-1.5 text-center text-[10px] font-extrabold text-[#5EB2FF] ring-1 ring-[#4BA6FF]/30 transition hover:bg-[#4BA6FF] hover:text-white"
+                          className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-full bg-[#4BA6FF]/15 px-2 py-1.5 text-center text-[10px] font-extrabold text-[#5EB2FF] ring-1 ring-[#4BA6FF]/30 transition hover:bg-[#4BA6FF] hover:text-white"
                         >
-                          {isPlayingInline ? "⏹ Detener" : "▶ Ver Reel"}
+                          {isPlayingInline ? (
+                            <>
+                              <Square className="h-3 w-3 shrink-0 fill-current" />
+                              <span>Detener</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play className="h-3 w-3 shrink-0 fill-current" />
+                              <span>Ver Reel</span>
+                            </>
+                          )}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDownloadSavedReel(reel, idx)}
-                          className="flex-1 cursor-pointer whitespace-nowrap rounded-full bg-[#38CB89]/15 px-2 py-1.5 text-center text-[10px] font-extrabold text-[#3CE7B6] ring-1 ring-[#38CB89]/30 transition hover:bg-[#38CB89] hover:text-white"
+                          className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-full bg-[#38CB89]/15 px-2 py-1.5 text-center text-[10px] font-extrabold text-[#3CE7B6] ring-1 ring-[#38CB89]/30 transition hover:bg-[#38CB89] hover:text-white"
                         >
-                          ⬇️ Descargar
+                          <Download className="h-3 w-3 shrink-0" />
+                          <span>Descargar</span>
                         </button>
                       </div>
                     </div>
@@ -2110,22 +2232,30 @@ export default function CamaraAlbumEvento({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#56B4FC]/35 bg-[#56B4FC]/15 text-xs text-[#7DD3FC] shadow-[0_0_14px_rgba(56,189,248,0.2)] sm:h-7 sm:w-7">
-                    📸
+                    <Camera className="h-3.5 w-3.5 shrink-0" />
                   </span>
                   <h3 className="max-w-[180px] truncate text-xs font-semibold tracking-tight text-white/95 min-[400px]:max-w-[240px] sm:max-w-md sm:text-lg">
                     {activeLightboxPhoto.titulo}
                   </h3>
                   {applyingOverlayInVisor ? (
                     <span className="inline-flex items-center gap-1 rounded-full border border-[#38BDF8]/40 bg-[#38BDF8]/15 px-2 py-0.5 text-[10px] font-medium text-[#7DD3FC] sm:px-2.5 sm:text-[11px]">
-                      ⏳ Aplicando overlay...
+                      <Hourglass className="h-3 w-3 shrink-0" />
+                      <span>Aplicando overlay...</span>
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.09] bg-[#232936]/90 px-2 py-0.5 text-[10px] font-medium text-[#CBD5E1] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-2.5 sm:text-[11px]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#34D399] shadow-[0_0_8px_#34D399]" />
-                      Overlay:{" "}
-                      <strong className="font-semibold text-white">
-                        {OVERLAY_DESIGNS.find((d) => d.id === visorOverlayId)
-                          ?.shortName || "🚫 Sin Overlay"}
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#34D399] shadow-[0_0_8px_#34D399]" />
+                      <span>Overlay:</span>
+                      <strong className="inline-flex items-center gap-1 font-semibold text-white">
+                        {visorOverlayId === "none" ? (
+                          <>
+                            <Ban className="h-3 w-3 shrink-0 text-[#9AA4B8]" />
+                            <span>Sin Overlay</span>
+                          </>
+                        ) : (
+                          OVERLAY_DESIGNS.find((d) => d.id === visorOverlayId)
+                            ?.shortName
+                        )}
                       </strong>
                     </span>
                   )}
@@ -2147,9 +2277,10 @@ export default function CamaraAlbumEvento({
                   onClick={() =>
                     handleDownloadSinglePhoto(activeLightboxPhoto, lightboxIndex)
                   }
-                  className="cursor-pointer rounded-full border border-[#56B4FC]/45 bg-gradient-to-r from-[#2563EB] to-[#38BDF8] px-3 py-1.5 text-center text-[11px] font-semibold text-white shadow-[0_6px_18px_rgba(56,189,248,0.32),inset_0_1px_0_rgba(255,255,255,0.22)] transition hover:brightness-110 sm:px-4 sm:text-xs"
+                  className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-[#56B4FC]/45 bg-gradient-to-r from-[#2563EB] to-[#38BDF8] px-3 py-1.5 text-center text-[11px] font-semibold text-white shadow-[0_6px_18px_rgba(56,189,248,0.32),inset_0_1px_0_rgba(255,255,255,0.22)] transition hover:brightness-110 sm:px-4 sm:text-xs"
                 >
-                  ⬇️ Descargar HD
+                  <Download className="h-3.5 w-3.5 shrink-0" />
+                  <span>Descargar HD</span>
                 </button>
                 <button
                   type="button"
@@ -2161,28 +2292,38 @@ export default function CamaraAlbumEvento({
                       visorOverlayId
                     )
                   }
-                  className="cursor-pointer rounded-full border border-white/[0.12] bg-[#2B3344] px-3 py-1.5 text-center text-[11px] font-medium text-[#7DD3FC] shadow-[0_4px_12px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:bg-[#353F54] hover:text-white disabled:opacity-50 sm:px-4 sm:text-xs"
+                  className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-white/[0.12] bg-[#2B3344] px-3 py-1.5 text-center text-[11px] font-medium text-[#7DD3FC] shadow-[0_4px_12px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:bg-[#353F54] hover:text-white disabled:opacity-50 sm:px-4 sm:text-xs"
                   title="Convierte la imagen y el overlay activo a 2K (2560px) en memoria RAM y la descarga al instante sin guardarla en BD local"
                 >
-                  {downloading2KId === activeLightboxPhoto.idFoto
-                    ? "⏳ Generando 2K..."
-                    : "✨ Descargar 2K"}
+                  {downloading2KId === activeLightboxPhoto.idFoto ? (
+                    <>
+                      <Hourglass className="h-3.5 w-3.5 shrink-0" />
+                      <span>Generando 2K...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                      <span>Descargar 2K</span>
+                    </>
+                  )}
                 </button>
                 {!modoInvitado && (
                   <button
                     type="button"
                     onClick={() => handleDeletePhoto(activeLightboxPhoto)}
-                    className="cursor-pointer rounded-full border border-white/[0.08] bg-[#222836] px-3 py-1.5 text-center text-[11px] font-medium text-[#FCA5A5] shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:border-[#F87171]/40 hover:bg-[#35232B] hover:text-white sm:px-3.5 sm:text-xs"
+                    className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-white/[0.08] bg-[#222836] px-3 py-1.5 text-center text-[11px] font-medium text-[#FCA5A5] shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:border-[#F87171]/40 hover:bg-[#35232B] hover:text-white sm:px-3.5 sm:text-xs"
                   >
-                    🗑️ Eliminar
+                    <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                    <span>Eliminar</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => setLightboxIndex(null)}
-                  className="cursor-pointer rounded-full border border-white/[0.09] bg-[#232936]/90 px-3 py-1.5 text-center text-[11px] font-medium text-[#CBD5E1] shadow-[0_4px_12px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.10)] transition hover:bg-[#2E3646] hover:text-white sm:px-4 sm:text-xs"
+                  className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-white/[0.09] bg-[#232936]/90 px-3 py-1.5 text-center text-[11px] font-medium text-[#CBD5E1] shadow-[0_4px_12px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.10)] transition hover:bg-[#2E3646] hover:text-white sm:px-4 sm:text-xs"
                 >
-                  ✕ Cerrar
+                  <X className="h-3.5 w-3.5 shrink-0" />
+                  <span>Cerrar</span>
                 </button>
               </div>
             </div>
@@ -2222,7 +2363,7 @@ export default function CamaraAlbumEvento({
                       className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/[0.12] bg-[#242B38]/90 text-xs font-semibold text-[#E2E8F0] shadow-[0_6px_18px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-md transition hover:border-[#56B4FC]/50 hover:bg-[#30394B] hover:text-white sm:left-4 sm:h-11 sm:w-11 sm:text-sm"
                       title="Fotografía anterior"
                     >
-                      ◀
+                      <ChevronLeft className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
                     </button>
                     <button
                       type="button"
@@ -2232,7 +2373,7 @@ export default function CamaraAlbumEvento({
                       className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/[0.12] bg-[#242B38]/90 text-xs font-semibold text-[#E2E8F0] shadow-[0_6px_18px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-md transition hover:border-[#56B4FC]/50 hover:bg-[#30394B] hover:text-white sm:right-4 sm:h-11 sm:w-11 sm:text-sm"
                       title="Siguiente fotografía"
                     >
-                      ▶
+                      <ChevronRight className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
                     </button>
                   </>
                 )}
@@ -2244,7 +2385,7 @@ export default function CamaraAlbumEvento({
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#56B4FC]/35 bg-[#56B4FC]/15 text-xs text-[#7DD3FC]">
-                      🎨
+                      <Palette className="h-3.5 w-3.5 shrink-0" />
                     </span>
                     <span className="text-xs font-semibold tracking-tight text-white/95 sm:text-sm">
                       Selecciona un Overlay para aplicarlo al instante a esta fotografía
@@ -2257,11 +2398,19 @@ export default function CamaraAlbumEvento({
                       onClick={() =>
                         handleSelectAndApplyOverlayInVisor(visorOverlayId)
                       }
-                      className="w-full cursor-pointer rounded-full border border-[#56B4FC]/45 bg-gradient-to-r from-[#2563EB] via-[#38BDF8] to-[#818CF8] px-4 py-1.5 text-center text-xs font-semibold text-white shadow-[0_6px_18px_rgba(56,189,248,0.32),inset_0_1px_0_rgba(255,255,255,0.22)] transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
+                      className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-[#56B4FC]/45 bg-gradient-to-r from-[#2563EB] via-[#38BDF8] to-[#818CF8] px-4 py-1.5 text-center text-xs font-semibold text-white shadow-[0_6px_18px_rgba(56,189,248,0.32),inset_0_1px_0_rgba(255,255,255,0.22)] transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
                     >
-                      {applyingOverlayInVisor
-                        ? "⏳ Guardando en foto..."
-                        : "✨ Actualizar Texto en Foto"}
+                      {applyingOverlayInVisor ? (
+                        <>
+                          <Hourglass className="h-3.5 w-3.5 shrink-0" />
+                          <span>Guardando en foto...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                          <span>Actualizar Texto en Foto</span>
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -2444,7 +2593,7 @@ export default function CamaraAlbumEvento({
                   onClick={() => setReelModalOpen(false)}
                   className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-white/[0.09] bg-[#232936]/90 px-3 text-xs font-medium text-[#CBD5E1] shadow-[0_4px_12px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.10)] transition hover:bg-[#2E3646] hover:text-white disabled:opacity-50 sm:h-9 sm:px-3.5"
                 >
-                  <span>✕</span>
+                  <X className="h-3.5 w-3.5 shrink-0" />
                   <span>Cerrar</span>
                 </button>
               </div>
@@ -2459,7 +2608,7 @@ export default function CamaraAlbumEvento({
               <div className="mb-3.5 rounded-[18px] border border-white/[0.08] bg-gradient-to-r from-[#212735]/90 via-[#1D222E]/90 to-[#221F30]/90 p-3 shadow-[0_10px_28px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] sm:mb-4 sm:rounded-[20px] sm:p-3.5">
                 <div className="flex items-start gap-2.5 sm:gap-3">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#38BDF8]/35 bg-[#38BDF8]/15 text-xs text-[#38BDF8] shadow-[0_0_14px_rgba(56,189,248,0.2)] sm:h-8 sm:w-8 sm:text-sm">
-                    ⏳
+                    <Hourglass className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                   </span>
                   <div className="min-w-0 text-[11px] leading-relaxed text-[#B0B8C8] sm:text-xs">
                     <strong className="font-semibold text-white/95">
@@ -2626,9 +2775,10 @@ export default function CamaraAlbumEvento({
                             setActivePreviewReel(null);
                             setReelSelectedIds(fotos.map((f) => f.idFoto));
                           }}
-                          className="cursor-pointer rounded-full border border-white/[0.10] bg-[#2B3242] px-2.5 py-1 text-[10px] font-medium text-[#E2E8F0] shadow-[0_3px_10px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition hover:bg-[#353E52] hover:text-white sm:px-3 sm:text-[11px]"
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-white/[0.10] bg-[#2B3242] px-2.5 py-1 text-[10px] font-medium text-[#E2E8F0] shadow-[0_3px_10px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition hover:bg-[#353E52] hover:text-white sm:px-3 sm:text-[11px]"
                         >
-                          ✓ Seleccionar Todas
+                          <Check className="h-3 w-3 shrink-0" />
+                          <span>Seleccionar Todas</span>
                         </button>
                         <button
                           type="button"
@@ -2639,9 +2789,10 @@ export default function CamaraAlbumEvento({
                               handleRemoveReelAudio(true);
                             }
                           }}
-                          className="cursor-pointer rounded-full border border-white/[0.08] bg-[#1B202B] px-2.5 py-1 text-[10px] font-medium text-[#9AA4B8] transition hover:border-[#F87171]/40 hover:bg-[#2A2028] hover:text-[#FCA5A5] sm:px-3 sm:text-[11px]"
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-white/[0.08] bg-[#1B202B] px-2.5 py-1 text-[10px] font-medium text-[#9AA4B8] transition hover:border-[#F87171]/40 hover:bg-[#2A2028] hover:text-[#FCA5A5] sm:px-3 sm:text-[11px]"
                         >
-                          ✕ Limpiar
+                          <X className="h-3 w-3 shrink-0" />
+                          <span>Limpiar</span>
                         </button>
                       </div>
                     </div>
@@ -2663,11 +2814,19 @@ export default function CamaraAlbumEvento({
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={uploadingFiles}
-                            className="cursor-pointer rounded-full bg-gradient-to-r from-[#8A4FFF] to-[#6E38E0] px-4 py-2 text-xs font-extrabold text-white shadow-md transition hover:brightness-110 disabled:opacity-50"
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-gradient-to-r from-[#8A4FFF] to-[#6E38E0] px-4 py-2 text-xs font-extrabold text-white shadow-md transition hover:brightness-110 disabled:opacity-50"
                           >
-                            {uploadingFiles
-                              ? "⏳ Subiendo foto(s)..."
-                              : "⬆️ Subir Foto(s) Ahora"}
+                            {uploadingFiles ? (
+                              <>
+                                <Hourglass className="h-3.5 w-3.5 shrink-0" />
+                                <span>Subiendo foto(s)...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-3.5 w-3.5 shrink-0" />
+                                <span>Subir Foto(s) Ahora</span>
+                              </>
+                            )}
                           </button>
                           <button
                             type="button"
@@ -2681,9 +2840,10 @@ export default function CamaraAlbumEvento({
                                 });
                               }, 150);
                             }}
-                            className="cursor-pointer rounded-full bg-gradient-to-r from-[#2ED47A] to-[#1E9E63] px-4 py-2 text-xs font-extrabold text-white shadow-md transition hover:brightness-110"
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-gradient-to-r from-[#2ED47A] to-[#1E9E63] px-4 py-2 text-xs font-extrabold text-white shadow-md transition hover:brightness-110"
                           >
-                            📷 Ir a Cámara en Vivo
+                            <Camera className="h-3.5 w-3.5 shrink-0" />
+                            <span>Ir a Cámara en Vivo</span>
                           </button>
                         </div>
                       </div>
@@ -2758,13 +2918,15 @@ export default function CamaraAlbumEvento({
                         <button
                           type="button"
                           onClick={() => handleRemoveReelAudio(false)}
-                          className="cursor-pointer rounded-full border border-white/[0.09] bg-[#262B38] px-3 py-1 text-[11px] font-medium text-[#FCA5A5] transition hover:border-[#F87171]/40 hover:bg-[#33242B] hover:text-white"
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-white/[0.09] bg-[#262B38] px-3 py-1 text-[11px] font-medium text-[#FCA5A5] transition hover:border-[#F87171]/40 hover:bg-[#33242B] hover:text-white"
                         >
-                          ✕ Quitar Audio
+                          <X className="h-3 w-3 shrink-0" />
+                          <span>Quitar Audio</span>
                         </button>
                       ) : (
-                        <span className="rounded-full border border-white/[0.08] bg-[#181C26] px-2.5 py-0.5 text-[10px] font-medium text-[#9AA4B8]">
-                          🎵 .MP3 / .M4A / .WAV
+                        <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#181C26] px-2.5 py-0.5 text-[10px] font-medium text-[#9AA4B8]">
+                          <Music className="h-3 w-3 shrink-0 text-[#7DD3FC]" />
+                          <span>.MP3 / .M4A / .WAV</span>
                         </span>
                       )}
                     </div>
@@ -2772,15 +2934,17 @@ export default function CamaraAlbumEvento({
                     {reelSelectedIds.length === 0 ? (
                       <div className="rounded-[16px] border border-white/[0.07] bg-[#171B24] px-3.5 py-3">
                         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="text-xs font-medium text-[#9AA4B8]">
-                            ⚠️ Selecciona primero al menos 1 fotografía en el Paso 2 para poder subir audio al Reel.
+                          <p className="flex items-start gap-1.5 text-xs font-medium text-[#9AA4B8]">
+                            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FFB836]" />
+                            <span>Selecciona primero al menos 1 fotografía en el Paso 2 para poder subir audio al Reel.</span>
                           </p>
                           <button
                             type="button"
                             onClick={handleClickSelectReelAudio}
-                            className="w-full shrink-0 cursor-not-allowed rounded-full border border-white/[0.06] bg-[#1E232E] px-3.5 py-1.5 text-center text-[11px] font-medium text-[#647084] opacity-60 sm:w-auto"
+                            className="inline-flex w-full shrink-0 cursor-not-allowed items-center justify-center gap-1.5 rounded-full border border-white/[0.06] bg-[#1E232E] px-3.5 py-1.5 text-center text-[11px] font-medium text-[#647084] opacity-60 sm:w-auto"
                           >
-                            🔒 Subir Audio
+                            <Lock className="h-3 w-3 shrink-0" />
+                            <span>Subir Audio</span>
                           </button>
                         </div>
                       </div>
@@ -2800,7 +2964,8 @@ export default function CamaraAlbumEvento({
                           onClick={handleClickSelectReelAudio}
                           className="inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-white/[0.12] bg-[#2D3546] px-4 py-2 text-xs font-medium text-white shadow-[0_6px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.14)] transition hover:bg-[#384257] disabled:opacity-50 sm:w-auto"
                         >
-                          <span>🎵 Subir Audio</span>
+                          <Music className="h-3.5 w-3.5 shrink-0 text-[#7DD3FC]" />
+                          <span>Subir Audio</span>
                         </button>
                       </div>
                     ) : (
@@ -2808,7 +2973,7 @@ export default function CamaraAlbumEvento({
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex min-w-0 items-center gap-2.5">
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#34D399]/35 bg-[#34D399]/15 text-xs text-[#34D399]">
-                              🎵
+                              <Music className="h-4 w-4 shrink-0" />
                             </span>
                             <div className="min-w-0">
                               <p
@@ -2829,9 +2994,10 @@ export default function CamaraAlbumEvento({
                             type="button"
                             disabled={reelGenerating}
                             onClick={handleClickSelectReelAudio}
-                            className="cursor-pointer rounded-full border border-white/[0.10] bg-[#282F3E] px-3 py-1 text-[11px] font-medium text-[#E2E8F0] shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition hover:bg-[#333C4F] hover:text-white"
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-white/[0.10] bg-[#282F3E] px-3 py-1 text-[11px] font-medium text-[#E2E8F0] shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition hover:bg-[#333C4F] hover:text-white"
                           >
-                            🔄 Cambiar Audio
+                            <RefreshCw className="h-3 w-3 shrink-0" />
+                            <span>Cambiar Audio</span>
                           </button>
                         </div>
 
@@ -2888,19 +3054,22 @@ export default function CamaraAlbumEvento({
                         {/* Selector interactivo del punto de inicio y ventana de duración del audio (10s, 15s o 20s) */}
                         <div className="space-y-3 rounded-[16px] border border-white/[0.07] bg-[#1E232F]/90 p-3 shadow-inner sm:p-3.5">
                           <div className="flex flex-wrap items-center justify-between gap-1.5">
-                            <span className="text-xs font-medium text-white/95">
-                              ✂️ Elige desde qué punto empezará a sonar la canción:
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-white/95">
+                              <Scissors className="h-3.5 w-3.5 shrink-0 text-[#38BDF8]" />
+                              <span>Elige desde qué punto empezará a sonar la canción:</span>
                             </span>
-                            <span className="rounded-full border border-[#56B4FC]/30 bg-[#56B4FC]/15 px-2.5 py-0.5 text-[10px] font-medium text-[#7DD3FC]">
-                              ⏱️ Se tomarán {reelDurationSec}s de audio
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[#56B4FC]/30 bg-[#56B4FC]/15 px-2.5 py-0.5 text-[10px] font-medium text-[#7DD3FC]">
+                              <Clock className="h-3 w-3 shrink-0" />
+                              <span>Se tomarán {reelDurationSec}s de audio</span>
                             </span>
                           </div>
 
                           {/* Resumen de Inicio, Fin y Duración Tomada (responsivo en móviles pequeños, tablets y desktop) */}
                           <div className="grid grid-cols-1 gap-2 text-center min-[420px]:grid-cols-3">
                             <div className="rounded-[14px] border border-[#56B4FC]/35 bg-gradient-to-br from-[#253244] to-[#1C2330] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
-                              <span className="block text-[10px] font-medium text-[#9AA4B8]">
-                                📍 Inicia en
+                              <span className="inline-flex items-center justify-center gap-1 text-[10px] font-medium text-[#9AA4B8]">
+                                <MapPin className="h-3 w-3 shrink-0 text-[#7DD3FC]" />
+                                <span>Inicia en</span>
                               </span>
                               <span className="mt-0.5 block text-xs font-semibold text-white">
                                 {formatAudioMinSec(reelAudioStartSec)}{" "}
@@ -2910,8 +3079,9 @@ export default function CamaraAlbumEvento({
                               </span>
                             </div>
                             <div className="rounded-[14px] border border-white/[0.07] bg-[#181C26] px-2.5 py-2">
-                              <span className="block text-[10px] font-medium text-[#8A94A6]">
-                                🏁 Termina en
+                              <span className="inline-flex items-center justify-center gap-1 text-[10px] font-medium text-[#8A94A6]">
+                                <Flag className="h-3 w-3 shrink-0 text-[#34D399]" />
+                                <span>Termina en</span>
                               </span>
                               <span className="mt-0.5 block text-xs font-semibold text-white/95">
                                 {formatAudioMinSec(
@@ -2937,8 +3107,9 @@ export default function CamaraAlbumEvento({
                               </span>
                             </div>
                             <div className="rounded-[14px] border border-white/[0.07] bg-[#181C26] px-2.5 py-2">
-                              <span className="block text-[10px] font-medium text-[#8A94A6]">
-                                🎵 Fragmento Reel
+                              <span className="inline-flex items-center justify-center gap-1 text-[10px] font-medium text-[#8A94A6]">
+                                <Music className="h-3 w-3 shrink-0 text-[#7DD3FC]" />
+                                <span>Fragmento Reel</span>
                               </span>
                               <span className="mt-0.5 block text-xs font-semibold text-[#7DD3FC]">
                                 {reelDurationSec} segundos
@@ -3053,15 +3224,23 @@ export default function CamaraAlbumEvento({
                             <button
                               type="button"
                               onClick={handleTogglePreviewAudioSegment}
-                              className={`w-full cursor-pointer rounded-full px-3.5 py-2 text-center text-[11px] font-medium transition-all sm:w-auto sm:py-1.5 ${
+                              className={`inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full px-3.5 py-2 text-center text-[11px] font-medium transition-all sm:w-auto sm:py-1.5 ${
                                 reelAudioPreviewPlaying
                                   ? "border border-[#F472B6]/50 bg-gradient-to-r from-[#E11D48] to-[#EC4899] text-white shadow-[0_4px_14px_rgba(236,72,153,0.4)]"
                                   : "border border-[#56B4FC]/40 bg-gradient-to-r from-[#2563EB] to-[#38BDF8] text-white shadow-[0_4px_14px_rgba(56,189,248,0.32),inset_0_1px_0_rgba(255,255,255,0.2)] hover:brightness-110"
                               }`}
                             >
-                              {reelAudioPreviewPlaying
-                                ? "⏹️ Detener prueba"
-                                : `▶️ Escuchar tramo (${reelDurationSec}s)`}
+                              {reelAudioPreviewPlaying ? (
+                                <>
+                                  <Square className="h-3 w-3 shrink-0 fill-current" />
+                                  <span>Detener prueba</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="h-3 w-3 shrink-0 fill-current" />
+                                  <span>Escuchar tramo ({reelDurationSec}s)</span>
+                                </>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -3073,13 +3252,14 @@ export default function CamaraAlbumEvento({
                   <div className="rounded-[20px] border border-white/[0.08] bg-gradient-to-b from-[#232936]/90 to-[#1B202B]/90 p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md sm:rounded-[22px] sm:p-4">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                       <label className="flex items-center gap-2 text-xs font-semibold tracking-tight text-white/95 sm:text-sm">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#56B4FC]/40 bg-[#56B4FC]/15 text-xs">
-                          🎞️
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#56B4FC]/40 bg-[#56B4FC]/15 text-xs text-[#7DD3FC]">
+                          <Film className="h-3.5 w-3.5 shrink-0" />
                         </span>
                         <span>Reels Creados ({reels.length})</span>
                       </label>
-                      <span className="rounded-full border border-white/[0.08] bg-[#181C26] px-2.5 py-0.5 text-[10px] font-medium text-[#9AA4B8]">
-                        ⏳ Se borran a los {retention.retentionDays || 30} días
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#181C26] px-2.5 py-0.5 text-[10px] font-medium text-[#9AA4B8]">
+                        <Hourglass className="h-3 w-3 shrink-0 text-[#38BDF8]" />
+                        <span>Se borran a los {retention.retentionDays || 30} días</span>
                       </span>
                     </div>
 
@@ -3091,7 +3271,7 @@ export default function CamaraAlbumEvento({
                         <p className="mt-1 text-[11px] text-[#8A94A6]">
                           Selecciona tus fotos arriba, elige la duración (10s, 15s o 20s) y presiona{" "}
                           <strong className="font-semibold text-[#7DD3FC]">
-                            "🎬 Crear y Guardar Reel"
+                            "Crear y Guardar Reel"
                           </strong>{" "}
                           para que aparezcan aquí sus miniaturas listas para reproducir, descargar o eliminar.
                         </p>
@@ -3155,13 +3335,14 @@ export default function CamaraAlbumEvento({
                                         : "border-white/20 bg-[#232936]/90 text-white"
                                     }`}
                                   >
-                                    ▶️
+                                    <Play className="h-4 w-4 shrink-0 fill-current" />
                                   </span>
                                 </div>
 
                                 <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-[#0E1117]/85 to-transparent p-2">
-                                  <span className="rounded-full border border-white/15 bg-[#232936]/90 px-2 py-0.5 text-[9px] font-semibold text-white backdrop-blur-sm">
-                                    ⏱️ {reel.durationSec || 15}s
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-[#232936]/90 px-2 py-0.5 text-[9px] font-semibold text-white backdrop-blur-sm">
+                                    <Clock className="h-2.5 w-2.5 shrink-0" />
+                                    <span>{reel.durationSec || 15}s</span>
                                   </span>
                                   <span className="rounded-full border border-[#56B4FC]/30 bg-[#141821]/90 px-2 py-0.5 text-[9px] font-medium text-[#7DD3FC]">
                                     {reel.photosCount || 0} fotos
@@ -3188,35 +3369,49 @@ export default function CamaraAlbumEvento({
                                 <button
                                   type="button"
                                   onClick={() => handleSelectPreviewReel(reel)}
-                                  className={`w-full cursor-pointer rounded-full px-2.5 py-1.5 text-[10px] font-medium transition-all ${
+                                  className={`inline-flex w-full cursor-pointer items-center justify-center gap-1 rounded-full px-2.5 py-1.5 text-[10px] font-medium transition-all ${
                                     isPlayingInPreview
                                       ? "border border-[#56B4FC]/50 bg-gradient-to-r from-[#2563EB] to-[#38BDF8] text-white shadow-[0_4px_12px_rgba(56,189,248,0.3)]"
                                       : "border border-white/[0.09] bg-[#282F3E] text-[#E2E8F0] hover:bg-[#333C4F] hover:text-white"
                                   }`}
                                 >
-                                  {isPlayingInPreview
-                                    ? "🔊 Reproduciendo"
-                                    : "▶️ Reproducir en Vista Previa"}
+                                  {isPlayingInPreview ? (
+                                    <>
+                                      <Volume2 className="h-3 w-3 shrink-0" />
+                                      <span className="truncate">Reproduciendo</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Play className="h-3 w-3 shrink-0 fill-current" />
+                                      <span className="truncate">Reproducir en Vista Previa</span>
+                                    </>
+                                  )}
                                 </button>
                                 <div className="grid grid-cols-2 gap-1.5">
                                   <button
                                     type="button"
                                     onClick={() => handleDownloadSavedReel(reel, idx)}
-                                    className="cursor-pointer truncate rounded-full border border-white/[0.08] bg-[#222836] px-2 py-1.5 text-[10px] font-medium text-[#7DD3FC] transition hover:border-[#56B4FC]/40 hover:bg-[#2A3346] hover:text-white"
+                                    className="inline-flex cursor-pointer items-center justify-center gap-1 truncate rounded-full border border-white/[0.08] bg-[#222836] px-2 py-1.5 text-[10px] font-medium text-[#7DD3FC] transition hover:border-[#56B4FC]/40 hover:bg-[#2A3346] hover:text-white"
                                     title="Descargar este Reel"
                                   >
-                                    ⬇️ Descargar
+                                    <Download className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">Descargar</span>
                                   </button>
                                   <button
                                     type="button"
                                     disabled={deletingReelId === reel.idReel}
                                     onClick={() => handleDeleteSavedReel(reel)}
-                                    className="cursor-pointer truncate rounded-full border border-white/[0.08] bg-[#222836] px-2 py-1.5 text-[10px] font-medium text-[#FCA5A5] transition hover:border-[#F87171]/40 hover:bg-[#35232B] hover:text-white disabled:opacity-45"
+                                    className="inline-flex cursor-pointer items-center justify-center gap-1 truncate rounded-full border border-white/[0.08] bg-[#222836] px-2 py-1.5 text-[10px] font-medium text-[#FCA5A5] transition hover:border-[#F87171]/40 hover:bg-[#35232B] hover:text-white disabled:opacity-45"
                                     title="Eliminar este Reel"
                                   >
-                                    {deletingReelId === reel.idReel
-                                      ? "..."
-                                      : "🗑️ Eliminar"}
+                                    {deletingReelId === reel.idReel ? (
+                                      "..."
+                                    ) : (
+                                      <>
+                                        <Trash2 className="h-3 w-3 shrink-0" />
+                                        <span className="truncate">Eliminar</span>
+                                      </>
+                                    )}
                                   </button>
                                 </div>
                               </div>
@@ -3235,10 +3430,18 @@ export default function CamaraAlbumEvento({
                 >
                   <div className="flex flex-col items-center rounded-[22px] border border-white/[0.09] bg-gradient-to-b from-[#232936]/95 to-[#181C26]/95 p-3.5 shadow-[0_18px_42px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-md sm:rounded-[24px] sm:p-5">
                     <div className="mb-3 flex w-full items-center justify-between gap-2">
-                      <span className="truncate text-xs font-semibold tracking-tight text-white/95">
-                        {activePreviewReel
-                          ? "🎬 Reproductor de Reel · 9:16"
-                          : "📱 Vista Previa en Vivo · 9:16"}
+                      <span className="inline-flex min-w-0 items-center gap-1.5 truncate text-xs font-semibold tracking-tight text-white/95">
+                        {activePreviewReel ? (
+                          <>
+                            <Film className="h-3.5 w-3.5 shrink-0 text-[#7DD3FC]" />
+                            <span className="truncate">Reproductor de Reel · 9:16</span>
+                          </>
+                        ) : (
+                          <>
+                            <Smartphone className="h-3.5 w-3.5 shrink-0 text-[#7DD3FC]" />
+                            <span className="truncate">Vista Previa en Vivo · 9:16</span>
+                          </>
+                        )}
                       </span>
                       <span className="shrink-0 rounded-full border border-white/[0.09] bg-[#2B3242] px-2.5 py-0.5 text-[10px] font-medium text-[#7DD3FC]">
                         Instagram Reel ·{" "}
@@ -3276,15 +3479,17 @@ export default function CamaraAlbumEvento({
                     <div className="mt-3.5 flex w-full flex-col gap-2">
                       {activePreviewReel ? (
                         <div className="flex flex-wrap items-center justify-between gap-2 rounded-[16px] border border-white/[0.08] bg-[#141821] px-3 py-2">
-                          <span className="truncate text-[11px] font-medium text-[#34D399]">
-                            ▶️ {activePreviewReel.titulo}
+                          <span className="inline-flex min-w-0 items-center gap-1.5 truncate text-[11px] font-medium text-[#34D399]">
+                            <Play className="h-3 w-3 shrink-0 fill-current" />
+                            <span className="truncate">{activePreviewReel.titulo}</span>
                           </span>
                           <button
                             type="button"
                             onClick={() => setActivePreviewReel(null)}
-                            className="w-full cursor-pointer rounded-full border border-white/[0.10] bg-[#282F3E] px-3 py-1 text-center text-[10px] font-medium text-white shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition hover:bg-[#343D4F] sm:w-auto"
+                            className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-white/[0.10] bg-[#282F3E] px-3 py-1 text-center text-[10px] font-medium text-white shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition hover:bg-[#343D4F] sm:w-auto"
                           >
-                            🎨 Volver al editor en vivo
+                            <Palette className="h-3 w-3 shrink-0 text-[#7DD3FC]" />
+                            <span>Volver al editor en vivo</span>
                           </button>
                         </div>
                       ) : (
@@ -3298,9 +3503,17 @@ export default function CamaraAlbumEvento({
                               : "border border-white/[0.10] bg-[#282F3E] text-[#E2E8F0] shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-[#333C4F] hover:text-white"
                           }`}
                         >
-                          {liveReelPlaying || reelAudioPreviewPlaying
-                            ? "⏹️ Detener reproducción en Vista Previa"
-                            : `▶️ Reproducir Reel en Vista Previa (${reelDurationSec}s)`}
+                          {liveReelPlaying || reelAudioPreviewPlaying ? (
+                            <>
+                              <Square className="h-3.5 w-3.5 shrink-0 fill-current" />
+                              <span>Detener reproducción en Vista Previa</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play className="h-3.5 w-3.5 shrink-0 fill-current" />
+                              <span>Reproducir Reel en Vista Previa ({reelDurationSec}s)</span>
+                            </>
+                          )}
                         </button>
                       )}
                     </div>
@@ -3309,7 +3522,10 @@ export default function CamaraAlbumEvento({
                     {reelGenerating && (
                       <div className="mt-3.5 w-full space-y-1.5">
                         <div className="flex items-center justify-between text-[11px] font-medium text-[#7DD3FC]">
-                          <span>⏳ Renderizando y guardando Reel ({reelDurationSec}s)...</span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <Hourglass className="h-3.5 w-3.5 shrink-0" />
+                            <span>Renderizando y guardando Reel ({reelDurationSec}s)...</span>
+                          </span>
                           <span>{reelProgress}%</span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-[#11151D]">
@@ -3327,11 +3543,19 @@ export default function CamaraAlbumEvento({
                       onClick={handleGenerateAndSaveReel}
                       className="mt-3 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#56B4FC]/45 bg-gradient-to-r from-[#2563EB] via-[#38BDF8] to-[#818CF8] px-5 py-3 text-xs font-semibold text-white shadow-[0_10px_28px_rgba(56,189,248,0.32),inset_0_1px_0_rgba(255,255,255,0.25)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
                     >
-                      <span>
-                        {reelGenerating
-                          ? `⏳ Creando y Guardando (${reelProgress}%)...`
-                          : `🎬 Crear y Guardar Reel (${reelDurationSec}s · ${reelSelectedIds.length} fotos)`}
-                      </span>
+                      {reelGenerating ? (
+                        <>
+                          <Hourglass className="h-4 w-4 shrink-0" />
+                          <span>Creando y Guardando ({reelProgress}%)...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Film className="h-4 w-4 shrink-0" />
+                          <span>
+                            Crear y Guardar Reel ({reelDurationSec}s · {reelSelectedIds.length} fotos)
+                          </span>
+                        </>
+                      )}
                     </button>
 
                     <p className="mt-2.5 text-center text-[11px] leading-snug text-[#8A94A6]">
