@@ -7206,143 +7206,78 @@ function GestorEvento({
           TAB C: 📤 CENTRO DE ENVÍOS Y DIFUSIÓN (/events/[id]/broadcast) — ESTILO TARJETAS LIMPIAS & VIOLETA ELÉCTRICO (#6D28D9)
          ===================================================================== */}
       {currentTab === "broadcast" && (
-        <div className="space-y-5 rounded-3xl bg-[#F7F8FB] p-3 text-[#111827] sm:space-y-6 sm:p-6">
-          {/* Barra de control / advertencia de Número de Invitados Permitidos al compartir */}
-          <div
-            className={`flex flex-col justify-between gap-3 rounded-2xl border bg-white p-5 text-xs shadow-[0_4px_20px_rgba(17,24,39,0.03)] sm:flex-row sm:items-center sm:p-6 ${
-              isGuestLimitExceeded
-                ? "border-amber-200 text-[#111827]"
-                : "border-[#F0F1F6] text-[#111827]"
-            }`}
-          >
-            <div className="flex items-start gap-3.5">
-              <span
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base ${
-                  isGuestLimitExceeded
-                    ? "bg-amber-50 text-amber-600"
-                    : "bg-[#F4F5F8] text-[#6D28D9]"
-                }`}
-              >
-                {isGuestLimitExceeded ? (
-                  <AlertTriangle className="h-5 w-5 stroke-[2]" />
-                ) : (
-                  <Users className="h-5 w-5 stroke-[2]" />
-                )}
-              </span>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="text-sm font-bold text-[#111827]">
-                    {isGuestLimitExceeded
-                      ? "Advertencia: Se ha superado el número de invitados permitidos en la configuración"
-                      : "Control de Invitados Permitidos para Compartir por WhatsApp / Correo"}
-                  </h4>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 text-[10px] font-semibold ${
-                      isGuestLimitExceeded
-                        ? "border border-amber-200 bg-amber-50 text-amber-700"
-                        : "bg-[#ECFDF5] text-[#059669]"
-                    }`}
-                  >
-                    {isGuestLimitExceeded ? (
-                      <>
-                        <AlertTriangle className="h-3 w-3 stroke-[2]" />
-                        <span>+{excedenteInvitadosActual} sobre el límite</span>
-                      </>
-                    ) : (
-                      <>
-                        <Check className="h-3 w-3 stroke-[2.2]" />
-                        <span>Dentro del límite</span>
-                      </>
-                    )}
-                  </span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#9CA3AF]">
-                  Límite configurado:{" "}
-                  <strong className="font-semibold text-[#111827]">
-                    {limiteInvitadosPermitidos} invitados
-                  </strong>{" "}
-                  • En lista:{" "}
-                  <strong className="font-semibold text-[#111827]">
-                    {totalInvitadosCount} invitados ({totalPasesLista} pases)
-                  </strong>{" "}
-                  • Enviados:{" "}
-                  <strong className="font-semibold text-[#6D28D9]">
-                    {invitadosEnviadosCount} ({pasesEnviadosCount} pases)
-                  </strong>
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onChangeSubTab("config")}
-              className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-none border border-[#E5E7EB] bg-white px-4 py-2.5 text-xs font-semibold text-[#6D28D9] transition hover:border-[#6D28D9] hover:bg-[#F5F3FF]"
-            >
-              <Settings className="h-3.5 w-3.5 stroke-[2]" />
-              <span>Configurar Límite ({limiteInvitadosPermitidos})</span>
-            </button>
-          </div>
-
+        <div className="space-y-4 rounded-3xl bg-[#F7F8FB] p-3 text-[#111827] sm:space-y-6 sm:p-6">
           {/* 1. Enlace de Invitación del Evento */}
-          <div className="rounded-2xl border border-[#F0F1F6] bg-white p-5 shadow-[0_4px_20px_rgba(17,24,39,0.03)] sm:p-6">
+          <div className="rounded-2xl border border-[#F0F1F6] bg-white p-4 shadow-[0_4px_20px_rgba(17,24,39,0.03)] sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F2F6] pb-4">
-              <div className="flex items-center gap-3.5">
+              <div className="flex min-w-0 items-center gap-3 sm:gap-3.5">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F4F5F8] text-base text-[#6D28D9]">
                   <Link2 className="h-5 w-5 stroke-[2]" />
                 </div>
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#6D28D9]">
+                <div className="min-w-0">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-[#6D28D9]">
                     ENLACE PRINCIPAL DE COMPARTICIÓN
                   </span>
-                  <h3 className="text-sm font-bold text-[#111827] sm:text-base">
+                  <h3 className="truncate text-sm font-bold text-[#111827] sm:text-base">
                     Enlace de Invitación del Evento
                   </h3>
                 </div>
               </div>
-              <span className="rounded-lg bg-[#F3E8FF] px-3 py-1 text-[11px] font-semibold text-[#6D28D9]">
+              <span className="shrink-0 rounded-lg bg-[#F3E8FF] px-3 py-1 text-[11px] font-semibold text-[#6D28D9]">
                 Público y activo
               </span>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-4 flex flex-col gap-2.5 md:flex-row md:items-stretch">
               <input
                 type="text"
                 readOnly
                 value={baseShareUrl}
-                className="flex-1 rounded-xl border border-[#E5E7EB] bg-[#FAFAFC] px-4 py-2.5 font-mono text-xs font-medium text-[#6D28D9] outline-none"
+                className="w-full min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-[#FAFAFC] px-3.5 py-2.5 font-mono text-xs font-medium text-[#6D28D9] outline-none sm:px-4"
               />
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(baseShareUrl);
-                  showNotice("✓ Enlace general copiado al portapapeles.");
-                }}
-                className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-none bg-[#6D28D9] px-5 py-2.5 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(109,40,217,0.22)] transition hover:bg-[#5B21B6]"
-              >
-                <Copy className="h-3.5 w-3.5 stroke-[2]" />
-                <span>Copiar Enlace General</span>
-              </button>
+              <div className="flex flex-col gap-2.5 sm:flex-row md:shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(baseShareUrl);
+                    showNotice("✓ Enlace general copiado al portapapeles.");
+                  }}
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-none bg-[#6D28D9] px-4 py-2.5 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(109,40,217,0.22)] transition hover:bg-[#5B21B6] sm:flex-1 sm:px-5 md:w-auto md:flex-initial"
+                >
+                  <Copy className="h-3.5 w-3.5 shrink-0 stroke-[2]" />
+                  <span>Copiar Enlace General</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleWhatsAppCustomLink(allAvailableLinks[0])}
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-none bg-[#059669] px-4 py-2.5 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(5,150,105,0.22)] transition hover:bg-[#047857] sm:flex-1 sm:px-5 md:w-auto md:flex-initial"
+                  title="Compartir enlace principal en WhatsApp Web o en la app de WhatsApp móvil"
+                >
+                  <Share2 className="h-3.5 w-3.5 shrink-0 stroke-[2]" />
+                  <span>Compartir</span>
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
             {/* 2. Módulo WhatsApp */}
-            <div className="rounded-2xl border border-[#F0F1F6] bg-white p-5 shadow-[0_4px_20px_rgba(17,24,39,0.03)] sm:p-6">
+            <div className="min-w-0 rounded-2xl border border-[#F0F1F6] bg-white p-4 shadow-[0_4px_20px_rgba(17,24,39,0.03)] sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F1F2F6] pb-4">
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ECFDF5] text-base text-[#059669]">
                     <MessageCircle className="h-5 w-5 stroke-[2]" />
                   </div>
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6D28D9]">
+                  <div className="min-w-0">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-[#6D28D9]">
                       CANAL DIRECTO
                     </span>
-                    <h4 className="text-sm font-bold text-[#111827] sm:text-base">
+                    <h4 className="truncate text-sm font-bold text-[#111827] sm:text-base">
                       Módulo WhatsApp Directo
                     </h4>
                   </div>
                 </div>
-                <span className="rounded-lg bg-[#ECFDF5] px-3 py-1 text-[11px] font-semibold text-[#059669]">
+                <span className="shrink-0 rounded-lg bg-[#ECFDF5] px-3 py-1 text-[11px] font-semibold text-[#059669]">
                   Web / Móvil
                 </span>
               </div>
@@ -7352,16 +7287,16 @@ function GestorEvento({
               </p>
 
               {/* Selector de Link Creado para Enviar por WhatsApp */}
-              <div className="mt-3.5 rounded-xl border border-[#E5E7EB] bg-[#FAFAFC] p-3.5">
+              <div className="mt-3.5 rounded-xl border border-[#E5E7EB] bg-[#FAFAFC] p-3 sm:p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <label className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#111827]">
-                    <Link2 className="h-3.5 w-3.5 text-[#6D28D9]" />
+                    <Link2 className="h-3.5 w-3.5 shrink-0 text-[#6D28D9]" />
                     <span>
                       Selecciona el Link a Enviar ({allAvailableLinks.length}{" "}
                       disponible{allAvailableLinks.length === 1 ? "" : "s"}):
                     </span>
                   </label>
-                  <span className="rounded-md bg-[#F3E8FF] px-2.5 py-0.5 text-[10px] font-semibold text-[#6D28D9]">
+                  <span className="max-w-full truncate rounded-md bg-[#F3E8FF] px-2.5 py-0.5 text-[10px] font-semibold text-[#6D28D9]">
                     Activo: {selectedWhatsappLinkObj.etiqueta}
                   </span>
                 </div>
@@ -7383,7 +7318,7 @@ function GestorEvento({
                       <div
                         key={lnk.iditem}
                         onClick={() => setSelectedWhatsappLinkId(lnk.iditem)}
-                        className={`flex cursor-pointer flex-col justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-xs transition sm:flex-row sm:items-center ${
+                        className={`flex cursor-pointer flex-col justify-between gap-2.5 rounded-xl border px-3 py-2.5 text-xs transition sm:flex-row sm:items-center sm:px-3.5 lg:flex-col lg:items-stretch 2xl:flex-row 2xl:items-center ${
                           isSelected
                             ? "border-[aliceblue] bg-[#c3ebcb] shadow-xs ring-2 ring-[#6D28D9]/12"
                             : "border-[#E5E7EB] bg-white hover:border-[#6D28D9]/50"
@@ -7391,16 +7326,16 @@ function GestorEvento({
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1 font-bold text-[#111827]">
+                            <span className="inline-flex min-w-0 items-center gap-1 font-bold text-[#111827]">
                               {lnk.isPrincipal ? (
-                                <Star className="h-3 w-3 text-[#6D28D9]" />
+                                <Star className="h-3 w-3 shrink-0 text-[#6D28D9]" />
                               ) : (
-                                <Link2 className="h-3 w-3 text-[#6D28D9]" />
+                                <Link2 className="h-3 w-3 shrink-0 text-[#6D28D9]" />
                               )}
-                              <span>{lnk.etiqueta}</span>
+                              <span className="truncate">{lnk.etiqueta}</span>
                             </span>
                             <span className="inline-flex items-center gap-1 rounded-md bg-[#F3E8FF] px-2 py-0.5 text-[10px] font-semibold text-[#6D28D9]">
-                              <Ticket className="h-3 w-3 stroke-[2]" />
+                              <Ticket className="h-3 w-3 shrink-0 stroke-[2]" />
                               <span>{lnk.modalidad}</span>
                             </span>
                             {!soloNi && (
@@ -7436,20 +7371,36 @@ function GestorEvento({
                               </span>
                             )}
                           </div>
-                          <p className="mt-0.5 truncate font-mono text-[10px] text-[#6D28D9]">
+                          <p className="mt-1 truncate font-mono text-[10px] text-[#6D28D9]">
                             {lnk.url}
                           </p>
                         </div>
 
-                        <span
-                          className={`self-start shrink-0 rounded-none px-2.5 py-1 text-[10px] font-semibold sm:self-center ${
-                            isSelected
-                              ? "bg-[#437d4e] text-white"
-                              : "border border-[#E5E7EB] bg-white text-[#6B7280]"
-                          }`}
-                        >
-                          {isSelected ? "✓ Seleccionado" : "Seleccionar"}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5 self-start shrink-0 sm:self-center lg:self-end 2xl:self-center">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedWhatsappLinkId(lnk.iditem);
+                              handleWhatsAppCustomLink(lnk);
+                            }}
+                            className="inline-flex cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-md bg-[#059669] px-2.5 py-1 text-[10px] font-semibold text-white shadow-2xs transition hover:bg-[#047857]"
+                            title="Abrir WhatsApp Web o Móvil para compartir este link"
+                          >
+                            <Share2 className="h-3 w-3 shrink-0 stroke-[2.2]" />
+                            <span>Compartir</span>
+                          </button>
+
+                          <span
+                            className={` whitespace-nowrap rounded-none px-2.5 py-1 text-[10px] font-semibold ${
+                              isSelected
+                                ? "bg-[#437d4e] text-white"
+                                : "border border-[#E5E7EB] bg-white text-[#6B7280]"
+                            }`}
+                          >
+                            {isSelected ? "✓ Seleccionado" : "Seleccionar"}
+                          </span>
+                        </div>
                       </div>
                     );
                   })}
@@ -7562,17 +7513,17 @@ function GestorEvento({
             </div>
 
             {/* 3. Módulo Email / SMS Masivo con Plantillas HTML */}
-            <div className="rounded-2xl border border-[#F0F1F6] bg-white p-5 shadow-[0_4px_20px_rgba(17,24,39,0.03)] sm:p-6">
+            <div className="min-w-0 rounded-2xl border border-[#F0F1F6] bg-white p-4 shadow-[0_4px_20px_rgba(17,24,39,0.03)] sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F1F2F6] pb-4">
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F4F5F8] text-base text-[#6D28D9]">
                     <Mail className="h-5 w-5 stroke-[2]" />
                   </div>
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6D28D9]">
+                  <div className="min-w-0">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-[#6D28D9]">
                       DIFUSIÓN CON PLANTILLAS HTML
                     </span>
-                    <h4 className="text-sm font-bold text-[#111827] sm:text-base">
+                    <h4 className="truncate text-sm font-bold text-[#111827] sm:text-base">
                       Módulo Email HTML / SMS Masivo
                     </h4>
                   </div>
@@ -7580,7 +7531,7 @@ function GestorEvento({
                 <select
                   value={broadcastChannel}
                   onChange={(e) => setBroadcastChannel(e.target.value)}
-                  className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-semibold text-[#111827] outline-none transition focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/12"
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-semibold text-[#111827] outline-none transition focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/12 sm:w-auto"
                 >
                   <option value="Email HTML">Canal: Email HTML</option>
                   <option value="SMS Directo">Canal: SMS Directo</option>
@@ -7588,16 +7539,16 @@ function GestorEvento({
               </div>
 
               {/* Selector de Link Creado para Enviar por Correo / SMS */}
-              <div className="mt-3.5 rounded-xl border border-[#E5E7EB] bg-[#FAFAFC] p-3.5">
+              <div className="mt-3.5 rounded-xl border border-[#E5E7EB] bg-[#FAFAFC] p-3 sm:p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <label className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#111827]">
-                    <Link2 className="h-3.5 w-3.5 text-[#6D28D9]" />
+                    <Link2 className="h-3.5 w-3.5 shrink-0 text-[#6D28D9]" />
                     <span>
                       Selecciona el Link a Enviar ({allAvailableLinks.length}{" "}
                       disponible{allAvailableLinks.length === 1 ? "" : "s"}):
                     </span>
                   </label>
-                  <span className="rounded-md bg-[#F3E8FF] px-2.5 py-0.5 text-[10px] font-semibold text-[#6D28D9]">
+                  <span className="max-w-full truncate rounded-md bg-[#F3E8FF] px-2.5 py-0.5 text-[10px] font-semibold text-[#6D28D9]">
                     Activo: {selectedEmailLinkObj.etiqueta}
                   </span>
                 </div>
